@@ -1,15 +1,25 @@
 require('dotenv').config();
 const express = require('express');
+const loggerMiddleware = require('./middlewares/logger.middleware');
+const errorMiddleware = require('./middlewares/error.middleware');
 const { connectDB } = require('./config/database');
-
 const app = express();
+const cors = require('cors');
+const societeRoutes = require('./routes/partie1.routes');
+const routes_prefix = '/api/v1';
 
+app.use(loggerMiddleware);
+app.use(cors({
+  origin: 'http://localhost:4400'
+}));
 app.use(express.json());
-app.use('/api/v1', require('./routes'));
+app.use(routes_prefix, require('./routes'));
+app.use(routes_prefix, societeRoutes);
 // test route
-app.get('/api/v1', (req, res) => {
+app.get(routes_prefix, (req, res) => {
     res.send('API OK');
 });
+app.use(errorMiddleware); 
 
 // démarrage
 const start = async () => {
@@ -26,6 +36,3 @@ start();
 
 module.exports = app;
 
-// 7840
-
-// 7773
