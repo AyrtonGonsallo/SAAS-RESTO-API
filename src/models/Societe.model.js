@@ -19,8 +19,9 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: true
     },
     status: {
-      type: DataTypes.STRING(50),
-      allowNull: true
+      type: DataTypes.ENUM('active', 'inactive'),
+      allowNull: false,
+      defaultValue: 'active'
     },
     abonnement_id: {
       type: DataTypes.INTEGER,
@@ -44,6 +45,14 @@ module.exports = (sequelize, DataTypes) => {
     createdAt: 'created_at',
     updatedAt: 'updated_at'
   });
+
+   Societe.associate = (models) => {
+
+    Societe.belongsTo(models.Utilisateur, {
+      foreignKey: 'gestionnaire_id',
+      as: 'gestionnaire' // 👈 alias
+    });
+  };
 
   return Societe;
 };

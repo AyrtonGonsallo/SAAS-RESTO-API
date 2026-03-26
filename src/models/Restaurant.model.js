@@ -14,12 +14,20 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.TEXT,
       allowNull: true
     },
-    horaires: {
-      type: DataTypes.TEXT,
+    heure_debut: {
+      type: DataTypes.STRING(10),
       allowNull: true
     },
-    horaires_cc: {
-      type: DataTypes.TEXT,
+    heure_fin: {
+      type: DataTypes.STRING(10),
+      allowNull: true
+    },
+    heure_cc_debut: {
+      type: DataTypes.STRING(10),
+      allowNull: true
+    },
+    heure_cc_fin: {
+      type: DataTypes.STRING(10),
       allowNull: true
     },
     commandes_par_minutes: {
@@ -55,7 +63,8 @@ module.exports = (sequelize, DataTypes) => {
     });
 
     Restaurant.belongsTo(models.Utilisateur, {
-      foreignKey: 'utilisateur_id'
+      foreignKey: 'utilisateur_id',
+      as: 'gestionnaire' // 👈 alias
     });
   };
 

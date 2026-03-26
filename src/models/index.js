@@ -8,6 +8,9 @@ db.Utilisateur = require('./Utilisateur.model')(sequelize, Sequelize.DataTypes);
 db.Role = require('./Role.model')(sequelize, Sequelize.DataTypes);
 db.Societe = require('./Societe.model')(sequelize, Sequelize.DataTypes);
 db.Restaurant = require('./Restaurant.model')(sequelize, Sequelize.DataTypes);
+db.RestaurantTable = require('./RestaurantTable.model')(sequelize, Sequelize.DataTypes);
+db.UtilisateurRestaurant = require('./UtilisateurRestaurant.model')(sequelize, Sequelize.DataTypes);
+
 
 // 🔗 Associations
 Object.keys(db).forEach((modelName) => {

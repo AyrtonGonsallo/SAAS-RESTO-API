@@ -1,3 +1,4 @@
+
 // models/Utilisateur.model.js
 module.exports = (sequelize, DataTypes) => {
   const Utilisateur = sequelize.define('Utilisateur', {
@@ -39,10 +40,6 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: true
     },
     societe_id: {
-      type: DataTypes.INTEGER,
-      allowNull: true
-    },
-    restaurant_id: {
       type: DataTypes.INTEGER,
       allowNull: true
     },
@@ -106,9 +103,18 @@ module.exports = (sequelize, DataTypes) => {
       foreignKey: 'societe_id'
     });
 
-    Utilisateur.belongsTo(models.Restaurant, {
-      foreignKey: 'restaurant_id'
+    Utilisateur.belongsToMany(models.Restaurant, {
+      through: models.UtilisateurRestaurant,
+      foreignKey: 'utilisateur_id',
+      otherKey: 'restaurant_id'
     });
+
+    models.Restaurant.belongsToMany(models.Utilisateur, {
+      through: models.UtilisateurRestaurant,
+      foreignKey: 'restaurant_id',
+      otherKey: 'utilisateur_id'
+    });
+    
   };
 
   return Utilisateur;
