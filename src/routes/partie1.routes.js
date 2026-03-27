@@ -1,13 +1,15 @@
-//societe, restaurants, utilisateurs, roles
+//societe, utilisateurs, roles, portefeuille, abonnement
 // routes/partie1.routes.js
 const bcrypt = require('bcryptjs');
 const express = require('express');
 const router = express.Router();
 const db = require('../models');
 
-const { Societe, Utilisateur, Restaurant, Role, RestaurantTable } = db;
+const { Societe, Utilisateur, Restaurant, Role,Portefeuille,Abonnement } = db;
 
 router.post('/ajouter_societe', async (req, res) => {
+  const t = await db.sequelize.transaction();
+
   try {
     const {
       titre,
@@ -18,44 +20,88 @@ router.post('/ajouter_societe', async (req, res) => {
       telephone
     } = req.body;
 
-    // 🔐 hash password
-    const hashedPassword = await bcrypt.hash(mot_de_passe, 10);
-
-    const role  = await Role.findOne({
-      where: { type:'gestionnaire-societe' }
-    });
-    //console.log(role)
-
-    if (!role) {
-      return res.status(404).json({
-        message: 'Rôle non trouvé'
+    // Vérifier si email existe déjà
+    const existingUser = await Utilisateur.findOne({ where: { email } });
+    if (existingUser) {
+      return res.status(400).json({
+        message: 'Email déjà utilisé'
       });
     }
 
-    // 👤 1. Créer le gestionnaire
+    // Hash password
+    const hashedPassword = await bcrypt.hash(mot_de_passe, 10);
+
+    // Récupérer rôle
+    const role = await Role.findOne({
+      where: { type: 'gestionnaire-societe' },
+      transaction: t
+    });
+
+    if (!role) {
+      await t.rollback();
+      return res.status(404).json({ message: 'Rôle non trouvé' });
+    }
+
+    // 1. Créer utilisateur
     const gestionnaire = await Utilisateur.create({
       nom,
       prenom,
       email,
       telephone,
       mot_de_passe: hashedPassword,
-      role_id: role.id // gestionnaire
-    });
+      role_id: role.id
+    }, { transaction: t });
 
-    // 🏢 2. Créer la société
+    // Dates abonnement
+    const now = new Date();
+    const expiration = new Date();
+    expiration.setFullYear(expiration.getFullYear() + 1); // +1 an
+
+    
+
+    // 3. Créer société
     const societe = await db.Societe.create({
       titre,
-      date_creation: new Date(),
+      date_creation: now,
       status: 'active',
       abonnement_id: null,
-      portefeuille_id: null,
-      gestionnaire_id: gestionnaire.id // 👈 relation
-    });
+      gestionnaire_id: gestionnaire.id
+    }, { transaction: t });
 
-    // 🔗 3. Mettre à jour l'utilisateur avec la société
+    // 2. Créer abonnement
+    const abonnement = await db.Abonnement.create({
+      formule: 'free',
+      cout: 0,
+      date_debut: now,
+      date_expiration: expiration,
+      societe_id: societe.id
+    }, { transaction: t });
+
+    // 4. Créer portefeuille
+    const portefeuille = await db.Portefeuille.create({
+      solde_sms: 0,
+      solde_ia: 0,
+      alert_seuil_sms: 10,
+      alert_seuil_ia: 10,
+      societe_id: societe.id
+    }, { transaction: t });
+
+    // 5. Mise à jour relations
+    await societe.update({
+      portefeuille_id: portefeuille.id,
+      abonnement_id: abonnement.id,
+    }, { transaction: t });
+
+    await abonnement.update({
+      societe_id: societe.id
+    }, { transaction: t });
+
     await gestionnaire.update({
       societe_id: societe.id
-    });
+    }, { transaction: t });
+
+    // Commit final
+    await t.commit();
 
     return res.status(201).json({
       success: true,
@@ -63,9 +109,13 @@ router.post('/ajouter_societe', async (req, res) => {
     });
 
   } catch (error) {
+    // rollback total
+    await t.rollback();
+
     console.error(error);
     return res.status(500).json({
-      message: 'Erreur serveur'
+      message: 'Erreur serveur',
+      error: error.message
     });
   }
 });
@@ -79,8 +129,18 @@ router.get('/get_all_societes', async (req, res) => {
       include: [
         {
           model: Utilisateur,
-           as: 'gestionnaire',
+          as: 'gestionnaire',
           attributes: ['id', 'nom', 'prenom', 'email','telephone'],
+          required: false
+        },
+        {
+          model: Portefeuille,
+          as: 'portefeuille',
+          required: false
+        },
+        {
+          model: Abonnement,
+          as: 'abonnement',
           required: false
         }
       ],
@@ -479,317 +539,6 @@ router.delete('/delete_utilisateur/:id', async (req, res, next) => {
 
 
 
-router.post('/ajouter_restaurant', async (req, res,next) => {
-  try {
-    const {
-      nom,
-      lieu,
-      heure_debut,
-      heure_fin,
-      heure_cc_debut,
-      heure_cc_fin,
-      commandes_par_minutes,
-      societe_id,
-      utilisateur_id
-    } = req.body;
-
-
-
-    const resto = await Restaurant.create({
-      nom,
-      lieu,
-      heure_debut,
-      heure_fin,
-      heure_cc_debut,
-      heure_cc_fin,
-      commandes_par_minutes,
-      societe_id,
-      utilisateur_id
-    });
-
-    return res.status(201).json({
-      success: true,
-      data: resto
-    });
-
-  } catch (error) {
-    return res.status(500).json({
-      success: false,
-      message: error.message
-    });
-  }
-});
-
-
-router.get('/get_all_restaurants', async (req, res) => {
-  try {
-
-    const restaurants = await Restaurant.findAll({
-      
-      include: [
-        {
-          model: Utilisateur,
-          as: 'gestionnaire',
-          attributes: ['id', 'nom', 'prenom', 'email','telephone'],
-          required: false
-        },
-        {
-          model: Societe,
-          attributes: ['id', 'titre', 'status', ],
-          required: false,
-          
-        }
-      ],
-      order: [['created_at', 'DESC']]
-    });
-
-    return res.status(200).json(restaurants);
-
-  } catch (error) {
-    console.error(error);
-    return res.status(500).json({
-      message: 'Erreur serveur'
-    });
-  }
-});
-
-
-
-router.get('/get_restaurant_by_id/:id', async (req, res, next) => {
-  try {
-    const id = req.params.id;
-
-    const restaurant = await Restaurant.findByPk(id);
-
-    if (!restaurant) {
-      return res.status(404).json({
-        message: 'Restaurant non trouvé'
-      });
-    }
-
-    return res.status(200).json(restaurant);
-
-  } catch (error) {
-    next(error);
-  }
-});
-
-
-router.put('/update_restaurant/:id', async (req, res, next) => {
-  try {
-    const id = req.params.id;
-    const { 
-      nom,
-      lieu,
-      heure_debut,
-      heure_fin,
-      heure_cc_debut,
-      heure_cc_fin,
-      commandes_par_minutes,
-      societe_id,
-      utilisateur_id
-     } = req.body;
-
-    const restaurant = await Restaurant.findByPk(id);
-
-    if (!restaurant) {
-      return res.status(404).json({
-        message: 'Restaurant non trouvé'
-      });
-    }
-
-    await restaurant.update({
-      nom,
-      lieu,
-      heure_debut,
-      heure_fin,
-      heure_cc_debut,
-      heure_cc_fin,
-      commandes_par_minutes,
-      societe_id,
-      utilisateur_id
-    });
-
-    return res.status(200).json(restaurant);
-
-  } catch (error) {
-    next(error);
-  }
-});
-
-router.delete('/delete_restaurant/:id', async (req, res, next) => {
-  try {
-    const id = req.params.id;
-
-    const restaurant = await Restaurant.findByPk(id);
-
-    if (!restaurant) {
-      return res.status(404).json({
-        message: 'Restaurant non trouvé'
-      });
-    }
-
-     
-    await restaurant.destroy();
-
-   
-
-    return res.status(200).json({
-      message: 'Restaurant supprimé avec succès'
-    });
-
-  } catch (error) {
-    next(error);
-  }
-});
-
-
-router.post('/ajouter_table', async (req, res,next) => {
-  try {
-    const {
-      numero,
-      nb_places,
-      statut,
-      restaurant_id,
-      societe_id,
-    } = req.body;
-
-
-
-    const resto = await RestaurantTable.create({
-      numero,
-      nb_places,
-      statut,
-      restaurant_id,
-      societe_id,
-    });
-
-    return res.status(201).json({
-      success: true,
-      data: resto
-    });
-
-  } catch (error) {
-    return res.status(500).json({
-      success: false,
-      message: error.message
-    });
-  }
-});
-
-
-router.get('/get_all_tables', async (req, res) => {
-  try {
-
-    const tables = await RestaurantTable.findAll({
-      
-      include: [
-        {
-          model: Restaurant,
-          attributes: ['id', 'nom', 'lieu', 'heure_debut', 'heure_fin', 'commandes_par_minutes'],
-          required: false
-        },
-        {
-          model: Societe,
-          attributes: ['id', 'titre', 'status', ],
-          required: false,
-          
-        }
-      ],
-      order: [['created_at', 'DESC']]
-    });
-
-    return res.status(200).json(tables);
-
-  } catch (error) {
-    console.error(error);
-    return res.status(500).json({
-      message: 'Erreur serveur'
-    });
-  }
-});
-
-
-
-router.get('/get_table_by_id/:id', async (req, res, next) => {
-  try {
-    const id = req.params.id;
-
-    const table = await RestaurantTable.findByPk(id);
-
-    if (!table) {
-      return res.status(404).json({
-        message: 'Table non trouvée'
-      });
-    }
-
-    return res.status(200).json(table);
-
-  } catch (error) {
-    next(error);
-  }
-});
-
-
-router.put('/update_table/:id', async (req, res, next) => {
-  try {
-    const id = req.params.id;
-    const { 
-      numero,
-      nb_places,
-      statut,
-      restaurant_id,
-      societe_id,
-     } = req.body;
-
-    const table = await RestaurantTable.findByPk(id);
-
-    if (!table) {
-      return res.status(404).json({
-        message: 'Table non trouvée'
-      });
-    }
-
-    await table.update({
-      numero,
-      nb_places,
-      statut,
-      restaurant_id,
-      societe_id,
-    });
-
-    return res.status(200).json(table);
-
-  } catch (error) {
-    next(error);
-  }
-});
-
-router.delete('/delete_table/:id', async (req, res, next) => {
-  try {
-    const id = req.params.id;
-
-    const table = await RestaurantTable.findByPk(id);
-
-    if (!table) {
-      return res.status(404).json({
-        message: 'Table non trouvée'
-      });
-    }
-
-     
-    await table.destroy();
-
-   
-
-    return res.status(200).json({
-      message: 'RestaurantTable supprimé avec succès'
-    });
-
-  } catch (error) {
-    next(error);
-  }
-});
 
 
 

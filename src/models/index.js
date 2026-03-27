@@ -10,6 +10,11 @@ db.Societe = require('./Societe.model')(sequelize, Sequelize.DataTypes);
 db.Restaurant = require('./Restaurant.model')(sequelize, Sequelize.DataTypes);
 db.RestaurantTable = require('./RestaurantTable.model')(sequelize, Sequelize.DataTypes);
 db.UtilisateurRestaurant = require('./UtilisateurRestaurant.model')(sequelize, Sequelize.DataTypes);
+db.Portefeuille = require('./Portefeuille.model')(sequelize, Sequelize.DataTypes);
+db.Abonnement = require('./Abonnement.model')(sequelize, Sequelize.DataTypes);
+db.CategorieProduit = require('./CategorieProduit.model')(sequelize, Sequelize.DataTypes);
+db.Produit = require('./Produit.model')(sequelize, Sequelize.DataTypes);
+db.VariationProduit = require('./VariationProduit.model')(sequelize, Sequelize.DataTypes);
 
 
 // 🔗 Associations

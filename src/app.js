@@ -5,9 +5,13 @@ const errorMiddleware = require('./middlewares/error.middleware');
 const { connectDB } = require('./config/database');
 const app = express();
 const cors = require('cors');
-const societeRoutes = require('./routes/partie1.routes');
+const partie1Routes = require('./routes/partie1.routes');
+const partie2Routes = require('./routes/partie2.routes');
+const partie3Routes = require('./routes/partie3.routes');
 const authRoutes = require('./routes/partie-auth.routes');
 const routes_prefix = '/api/v1';
+
+const { getAllMethods } = require('./services/methods-liste.service');
 
 app.use(loggerMiddleware);
 app.use(cors({
@@ -15,12 +19,15 @@ app.use(cors({
 }));
 app.use(express.json());
 app.use(routes_prefix, require('./routes'));
-app.use(routes_prefix, societeRoutes);
+app.use(routes_prefix, partie1Routes);
+app.use(routes_prefix, partie2Routes);
+app.use(routes_prefix, partie3Routes);
 app.use(routes_prefix, authRoutes);
 
 // test route
 app.get(routes_prefix, (req, res) => {
-    res.send('API OK');
+    let liste = getAllMethods()
+    res.send(liste);
 });
 app.use(errorMiddleware); 
 

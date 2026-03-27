@@ -13,6 +13,7 @@
 .PNG
 .JPG
 .csv
+.env
 .sql
 # Node
 /node_modules

@@ -52,6 +52,16 @@ module.exports = (sequelize, DataTypes) => {
       foreignKey: 'gestionnaire_id',
       as: 'gestionnaire' // 👈 alias
     });
+
+    Societe.hasOne(models.Portefeuille, {
+      foreignKey: 'societe_id',
+      as: 'portefeuille'
+    });
+
+    Societe.hasOne(models.Abonnement, {
+      foreignKey: 'societe_id',
+      as: 'abonnement'
+    });
   };
 
   return Societe;
