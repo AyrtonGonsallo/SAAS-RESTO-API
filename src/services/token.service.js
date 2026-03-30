@@ -7,8 +7,9 @@ const REFRESH_EXPIRATION = process.env.REFRESH_EXPIRATION;
 const ACCESS_EXPIRATION= process.env.ACCESS_EXPIRATION;
 
 exports.generateAccessToken = (user) => {
+  const restaurantIds = user.Restaurants?.map(r => r.id) || [];
   return jwt.sign(
-    { id: user.id, email: user.email, role_id: user.role_id },
+    { id: user.id, email: user.email, role_id: user.role_id, role_type: user.Role.type,societe_id: user.societe_id,restos:restaurantIds },
     ACCESS_SECRET,
     { expiresIn: ACCESS_EXPIRATION}
   );

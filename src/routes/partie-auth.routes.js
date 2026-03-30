@@ -5,7 +5,7 @@ const express = require('express');
 const router = express.Router();
 const db = require('../models');
 const { generateAccessToken, generateRefreshToken, verifyRefreshToken } = require('../services/token.service');
-const { Societe, Utilisateur, Restaurant, Role, RestaurantTable } = db;
+const { Societe, Utilisateur, Restaurant, Role, Parametre } = db;
 const emailService = require('../services/mailer.service'); 
 const MAILS_ENABLED = process.env.MAILS_ENABLED;
 
@@ -23,6 +23,12 @@ router.post('/login', async (req, res) => {
           model: Societe,
           attributes: ['id', 'titre', 'status'],
           required: false,
+          include: [
+            {
+              model: Parametre,
+              as: 'parametres'
+            }
+          ]
         },
         {
           model: Restaurant,

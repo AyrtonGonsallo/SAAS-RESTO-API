@@ -55,7 +55,9 @@ router.get('/get_all_restaurants', async (req, res) => {
   try {
 
     const restaurants = await Restaurant.findAll({
-      
+       where: req.isSuperAdmin ? {} : {
+        societe_id: req.societe_id
+      },
       include: [
         {
           model: Utilisateur,
@@ -212,7 +214,9 @@ router.get('/get_all_tables', async (req, res) => {
   try {
 
     const tables = await RestaurantTable.findAll({
-      
+       where: req.isSuperAdmin ? {} : {
+        societe_id: req.societe_id
+      },
       include: [
         {
           model: Restaurant,
@@ -361,7 +365,9 @@ router.get('/get_all_categories_produit', async (req, res) => {
   try {
 
     const categories = await CategorieProduit.findAll({
-      
+       where: req.isSuperAdmin ? {} : {
+        societe_id: req.societe_id
+      },
       include: [
         
       ],

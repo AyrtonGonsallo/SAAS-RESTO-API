@@ -2,6 +2,8 @@ require('dotenv').config();
 const express = require('express');
 const loggerMiddleware = require('./middlewares/logger.middleware');
 const errorMiddleware = require('./middlewares/error.middleware');
+const auth = require('./middlewares/auth.middleware');
+const tenant = require('./middlewares/tenant.middleware');
 const { connectDB } = require('./config/database');
 const app = express();
 const cors = require('cors');
@@ -12,11 +14,30 @@ const authRoutes = require('./routes/partie-auth.routes');
 const routes_prefix = '/api/v1';
 
 const { getAllMethods } = require('./services/methods-liste.service');
-
+app.use(`${routes_prefix}/files`, express.static('uploads'));
 app.use(loggerMiddleware);
+
+const allowedOrigins = [
+  'http://localhost:4400',
+  'https://resto.orocom.io'
+];
+
 app.use(cors({
-  origin: 'http://localhost:4400'
+  origin: function (origin, callback) {
+    if (!origin) return callback(null, true);
+
+    if (allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('CORS blocked'));
+    }
+  },
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  credentials: true
 }));
+app.use(auth);
+app.use(tenant);
+app.options('/{*any}', cors());
 app.use(express.json());
 app.use(routes_prefix, require('./routes'));
 app.use(routes_prefix, partie1Routes);

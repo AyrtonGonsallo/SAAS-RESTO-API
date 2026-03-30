@@ -1,11 +1,11 @@
 //societe, utilisateurs, roles, portefeuille, abonnement
 // routes/partie1.routes.js
+const { Op } = require('sequelize');
 const bcrypt = require('bcryptjs');
 const express = require('express');
 const router = express.Router();
 const db = require('../models');
-
-const { Societe, Utilisateur, Restaurant, Role,Portefeuille,Abonnement } = db;
+const { Societe, Utilisateur, Restaurant, Role,Portefeuille,Abonnement,Parametre } = db;
 
 router.post('/ajouter_societe', async (req, res) => {
   const t = await db.sequelize.transaction();
@@ -124,8 +124,13 @@ router.post('/ajouter_societe', async (req, res) => {
 router.get('/get_all_societes', async (req, res) => {
   try {
 
+    console.log("req.societe_id,",req.societe_id,)
+  console.log("req.isSuperAdmin,",req.isSuperAdmin,)
+  console.log("req.restos,",req.restos,)
     const societes = await Societe.findAll({
-      
+       where: req.isSuperAdmin ? {} : {
+        id: req.societe_id
+      },
       include: [
         {
           model: Utilisateur,
@@ -142,6 +147,10 @@ router.get('/get_all_societes', async (req, res) => {
           model: Abonnement,
           as: 'abonnement',
           required: false
+        },
+        {
+          model: Parametre,
+          as: 'parametres'
         }
       ],
       order: [['created_at', 'DESC']]
@@ -346,6 +355,7 @@ router.post('/ajouter_utilisateur', async (req, res,next) => {
       mot_de_passe,
       role_id,
       societe_id,
+      restaurant_id
     } = req.body;
 
     // 🔐 hash password
@@ -358,8 +368,15 @@ router.post('/ajouter_utilisateur', async (req, res,next) => {
       telephone,
       mot_de_passe: hashedPassword,
       role_id,
-      societe_id,
+      societe_id:(societe_id>0)?societe_id:null,
     });
+
+    //  Mise à jour des restaurants (Many-to-Many)
+    if (Array.isArray(restaurant_id)) {
+      console.log("restaurant_id",restaurant_id)
+      // `setRestaurants` remplace les associations existantes
+      await user.setRestaurants(restaurant_id);
+    }
 
     return res.status(201).json({
       success: true,
@@ -378,8 +395,13 @@ router.post('/ajouter_utilisateur', async (req, res,next) => {
 router.get('/get_all_utilisateurs', async (req, res) => {
   try {
 
+     console.log("req.societe_id,",req.societe_id,)
+  console.log("req.isSuperAdmin,",req.isSuperAdmin,)
+  console.log("req.restos,",req.restos,)
     const utilisateurs = await Utilisateur.findAll({
-      
+      where: req.isSuperAdmin ? {} : {
+        societe_id: req.societe_id
+      },
       include: [
         {
           model: Role,
@@ -391,6 +413,13 @@ router.get('/get_all_utilisateurs', async (req, res) => {
           attributes: ['id', 'nom', 'lieu', 'heure_debut', 'heure_fin', 'commandes_par_minutes'],
           through: { attributes: [] }, // supprime les infos de la table pivot
           required: false,
+          ...(req.isSuperAdmin ? {} : {
+            where: {
+              id: {
+                [Op.in]: req.restos
+              }
+            }
+          })
         },
         {
           model: Societe,
@@ -417,7 +446,16 @@ router.get('/get_utilisateur_by_id/:id', async (req, res, next) => {
   try {
     const id = req.params.id;
 
-    const utilisateur = await Utilisateur.findByPk(id);
+    const utilisateur = await Utilisateur.findByPk(id,{
+      include: [
+        {
+          model: Restaurant,
+          attributes: ['id', 'nom', 'lieu', 'heure_debut', 'heure_fin', 'commandes_par_minutes'],
+          through: { attributes: [] }, // supprime les infos de la table pivot
+          required: false,
+        },
+      ]
+    } );
 
     if (!utilisateur) {
       return res.status(404).json({

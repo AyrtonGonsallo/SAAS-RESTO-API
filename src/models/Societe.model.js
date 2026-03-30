@@ -62,6 +62,11 @@ module.exports = (sequelize, DataTypes) => {
       foreignKey: 'societe_id',
       as: 'abonnement'
     });
+
+     Societe.hasMany(models.Parametre, {
+      foreignKey: 'societe_id',
+      as: 'parametres'
+    });
   };
 
   return Societe;
