@@ -1,15 +1,17 @@
 module.exports = (req, res, next) => {
+const routes_prefix = process.env.PREFIX;
 const publicRoutes = [
-  'login',
-  'refresh',
-  'get_change_password_code',
-  'resset_password',
-  'check_change_password_code',
+  '/login',
+  '/refresh',
+  '/get_change_password_code',
+  '/resset_password',
+  '/check_change_password_code',
+  '/',
 ];
 
- let chemin = req.path.split('/').filter(Boolean).pop();
+ let chemin = req.path.split(routes_prefix).filter(Boolean).pop();
 
-  console.log("chemin ",chemin)
+  console.log("Middleware tenant : chemin ",chemin)
   if (publicRoutes.includes(chemin)) {
     console.log("autoriser quand meme")
     return next();

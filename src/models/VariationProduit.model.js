@@ -45,9 +45,12 @@ module.exports = (sequelize, DataTypes) => {
   });
 
   VariationProduit.associate = (models) => {
-    models.VariationProduit.belongsTo(models.Produit, {
+    VariationProduit.belongsTo(models.Produit, {
       foreignKey: 'produit_id',
       as: 'produit'
+    });
+    VariationProduit.belongsTo(models.Restaurant, {
+      foreignKey: 'restaurant_id',
     });
   }
 

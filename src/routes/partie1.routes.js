@@ -395,9 +395,31 @@ router.post('/ajouter_utilisateur', async (req, res,next) => {
 router.get('/get_all_utilisateurs', async (req, res) => {
   try {
 
-     console.log("req.societe_id,",req.societe_id,)
-  console.log("req.isSuperAdmin,",req.isSuperAdmin,)
-  console.log("req.restos,",req.restos,)
+    const selectedRestaurantId = req.query.restaurant_id;
+    console.log("req.societe_id,",req.societe_id);
+    console.log("req.isSuperAdmin,",req.isSuperAdmin);
+    console.log("req.restos,",req.restos);
+    console.log("selectedRestaurantId", selectedRestaurantId);
+
+    // construire le filtre restaurant
+    let restaurantFilter = {};
+
+    if (!req.isSuperAdmin) {
+      if (selectedRestaurantId) {
+        // 🔥 filtre sur UN restaurant
+        restaurantFilter = {
+          id: selectedRestaurantId
+        };
+      } else {
+        // 🔥 filtre sur plusieurs restaurants autorisés
+        restaurantFilter = {
+          id: {
+            [Op.in]: req.restos
+          }
+        };
+      }
+    }
+
     const utilisateurs = await Utilisateur.findAll({
       where: req.isSuperAdmin ? {} : {
         societe_id: req.societe_id
@@ -410,15 +432,11 @@ router.get('/get_all_utilisateurs', async (req, res) => {
         },
         {
           model: Restaurant,
-          attributes: ['id', 'nom', 'lieu', 'heure_debut', 'heure_fin', 'commandes_par_minutes'],
+          attributes: ['id', 'nom', 'lieu', 'heure_debut', 'heure_fin', 'telephone'],
           through: { attributes: [] }, // supprime les infos de la table pivot
-          required: false,
+          required: !req.isSuperAdmin,
           ...(req.isSuperAdmin ? {} : {
-            where: {
-              id: {
-                [Op.in]: req.restos
-              }
-            }
+            where: restaurantFilter
           })
         },
         {
@@ -450,7 +468,7 @@ router.get('/get_utilisateur_by_id/:id', async (req, res, next) => {
       include: [
         {
           model: Restaurant,
-          attributes: ['id', 'nom', 'lieu', 'heure_debut', 'heure_fin', 'commandes_par_minutes'],
+          attributes: ['id', 'nom', 'lieu', 'heure_debut', 'heure_fin', 'telephone'],
           through: { attributes: [] }, // supprime les infos de la table pivot
           required: false,
         },
@@ -481,10 +499,43 @@ router.get('/get_all_utilisateurs_by_role/:role_type', async (req, res, next) =>
       where: { type:role_type }
     });
 
+    const selectedRestaurantId = req.query.restaurant_id;
+    let restaurantFilter = {};
+    let userFilter = {};
+
+    if (!req.isSuperAdmin) {
+      if (selectedRestaurantId) {
+        // 🔥 filtre sur UN restaurant
+        restaurantFilter = {
+          restaurant_id: selectedRestaurantId,
+          societe_id: req.societe_id,
+          role_id: role.id
+        };
+         userFilter = {
+          societe_id: req.societe_id,
+          role_id: role.id
+        };
+      } else {
+        // 🔥 filtre sur plusieurs restaurants autorisés
+        restaurantFilter = {
+          restaurant_id: {
+            [Op.in]: req.restos
+          },
+          societe_id: req.societe_id,
+          role_id: role.id
+        };
+        userFilter = {
+          societe_id: req.societe_id,
+          role_id: role.id
+        };
+      }
+    }else{
+       restaurantFilter = {role_id: role.id}
+       userFilter = {role_id: role.id}
+    }
+
     const utilisateurs = await Utilisateur.findAll({
-      where: {
-        role_id: role.id
-      },
+      where: userFilter,
       include: [
         {
           model: Role,
@@ -492,7 +543,7 @@ router.get('/get_all_utilisateurs_by_role/:role_type', async (req, res, next) =>
         },
         {
           model: Restaurant,
-          attributes: ['id', 'nom', 'lieu', 'heure_debut', 'heure_fin', 'commandes_par_minutes'],
+          attributes: ['id', 'nom', 'lieu', 'heure_debut', 'heure_fin', 'telephone'],
           through: { attributes: [] }, // supprime les infos de la table pivot
           required: false,
         },

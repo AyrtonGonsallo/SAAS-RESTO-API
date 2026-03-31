@@ -32,7 +32,7 @@ router.post('/login', async (req, res) => {
         },
         {
           model: Restaurant,
-          attributes: ['id', 'nom', 'lieu', 'heure_debut', 'heure_fin', 'commandes_par_minutes'],
+          attributes: ['id', 'nom', 'lieu', 'heure_debut', 'heure_fin', 'telephone'],
           through: { attributes: [] }, // supprime les infos de la table pivot
           required: false,
         },
@@ -61,8 +61,36 @@ router.post('/refresh', async (req, res) => {
 
   try {
     const decoded = verifyRefreshToken(refreshToken);
-
-    const user = await Utilisateur.findByPk(decoded.id);
+    
+    const user = await Utilisateur.findByPk(decoded.id,
+      {
+        include: [
+          {
+            model: Role,
+            required: false,
+          },
+          {
+            model: Societe,
+            attributes: ['id', 'titre', 'status'],
+            required: false,
+            include: [
+              {
+                model: Parametre,
+                as: 'parametres'
+              }
+            ]
+          },
+          {
+            model: Restaurant,
+            attributes: ['id', 'nom', 'lieu', 'heure_debut', 'heure_fin', 'telephone'],
+            through: { attributes: [] }, // supprime les infos de la table pivot
+            required: false,
+          },
+        ] 
+      }
+    );
+    console.log("!user",!user)
+    console.log("user.refresh_token !== refreshToken",user.refresh_token !== refreshToken)
     if (!user || user.refresh_token !== refreshToken) {
       return res.sendStatus(403);
     }
@@ -72,6 +100,7 @@ router.post('/refresh', async (req, res) => {
     res.json({ accessToken: newAccessToken });
 
   } catch (err) {
+    console.log("err",err)
     res.sendStatus(403);
   }
 });

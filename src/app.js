@@ -11,7 +11,7 @@ const partie1Routes = require('./routes/partie1.routes');
 const partie2Routes = require('./routes/partie2.routes');
 const partie3Routes = require('./routes/partie3.routes');
 const authRoutes = require('./routes/partie-auth.routes');
-const routes_prefix = '/api/v1';
+const routes_prefix = process.env.PREFIX;
 
 const { getAllMethods } = require('./services/methods-liste.service');
 app.use(`${routes_prefix}/files`, express.static('uploads'));

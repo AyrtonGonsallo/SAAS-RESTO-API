@@ -4,7 +4,7 @@ const express = require('express');
 const router = express.Router();
 const db = require('../models');
 const multer = require('multer');
-
+const { Op } = require('sequelize');
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
     cb(null, 'uploads/');
@@ -16,7 +16,7 @@ const storage = multer.diskStorage({
 });
 
 const upload = multer({ storage });
-const { Produit, CategorieProduit, VariationProduit,Parametre,  } = db;
+const { Produit, CategorieProduit, VariationProduit,Parametre,Restaurant  } = db;
 
 
 
@@ -72,10 +72,30 @@ router.post('/ajouter_produit', upload.single('image'),async (req, res,next) => 
 router.get('/get_all_produits', async (req, res) => {
   try {
 
+    const selectedRestaurantId = req.query.restaurant_id;
+    let restaurantFilter = {};
+
+    if (!req.isSuperAdmin) {
+      if (selectedRestaurantId) {
+        // 🔥 filtre sur UN restaurant
+        restaurantFilter = {
+          restaurant_id: selectedRestaurantId,
+          societe_id: req.societe_id
+        };
+      } else {
+        // 🔥 filtre sur plusieurs restaurants autorisés
+        restaurantFilter = {
+          restaurant_id: {
+            [Op.in]: req.restos
+          },
+          societe_id: req.societe_id
+        };
+      }
+    }else{
+       restaurantFilter = {}
+    }
     const produits = await Produit.findAll({
-       where: req.isSuperAdmin ? {} : {
-        societe_id: req.societe_id
-      },
+      where: restaurantFilter,
       include: [
         {
           model: CategorieProduit,
@@ -86,7 +106,13 @@ router.get('/get_all_produits', async (req, res) => {
         {
           model: VariationProduit,
           as: 'variations',
-        }
+        },
+        {
+          model: Restaurant,
+          attributes: ['id', 'nom', 'lieu', 'heure_debut', 'heure_fin', 'telephone'],
+          required: false,
+        
+        },
       ],
       order: [['created_at', 'DESC']]
     });
@@ -153,7 +179,6 @@ router.put('/update_produit/:id', upload.single('image'), async (req, res, next)
     await produit.update({
       statut,
       titre,
-      image,
       description,
       categorie_id,
       actif,
@@ -164,6 +189,12 @@ router.put('/update_produit/:id', upload.single('image'), async (req, res, next)
       societe_id,
       restaurant_id,
     });
+
+    if(image){
+      await produit.update({
+        image,
+      });
+    }
 
     return res.status(200).json(produit);
 
@@ -246,15 +277,41 @@ router.post('/ajouter_variation_produit', async (req, res,next) => {
 router.get('/get_all_variations_produit', async (req, res) => {
   try {
 
+    const selectedRestaurantId = req.query.restaurant_id;
+    let restaurantFilter = {};
+
+    if (!req.isSuperAdmin) {
+      if (selectedRestaurantId) {
+        // 🔥 filtre sur UN restaurant
+        restaurantFilter = {
+          restaurant_id: selectedRestaurantId,
+          societe_id: req.societe_id
+        };
+      } else {
+        // 🔥 filtre sur plusieurs restaurants autorisés
+        restaurantFilter = {
+          restaurant_id: {
+            [Op.in]: req.restos
+          },
+          societe_id: req.societe_id
+        };
+      }
+    }else{
+       restaurantFilter = {}
+    }
     const variation_produits = await VariationProduit.findAll({
-       where: req.isSuperAdmin ? {} : {
-        societe_id: req.societe_id
-      },
+       where: restaurantFilter,
       include: [
          {
           model: Produit,
           as: 'produit'
-        }
+        },
+        {
+          model: Restaurant,
+          attributes: ['id', 'nom', 'lieu', 'heure_debut', 'heure_fin', 'telephone'],
+          required: false,
+        
+        },
       ],
       order: [['created_at', 'DESC']]
     });
@@ -401,12 +458,37 @@ router.post('/ajouter_parametre', upload.single('image'),async (req, res,next) =
 router.get('/get_all_parametres', async (req, res) => {
   try {
 
+    const selectedRestaurantId = req.query.restaurant_id;
+    let restaurantFilter = {};
+
+    if (!req.isSuperAdmin) {
+      if (selectedRestaurantId) {
+        // 🔥 filtre sur UN restaurant
+        restaurantFilter = {
+          restaurant_id: selectedRestaurantId,
+          societe_id: req.societe_id
+        };
+      } else {
+        // 🔥 filtre sur plusieurs restaurants autorisés
+        restaurantFilter = {
+          restaurant_id: {
+            [Op.in]: req.restos
+          },
+          societe_id: req.societe_id
+        };
+      }
+    }else{
+       restaurantFilter = {}
+    }
     const parametres = await Parametre.findAll({
-       where: req.isSuperAdmin ? {} : {
-        societe_id: req.societe_id
-      },
+      where: restaurantFilter,
       include: [
-       
+       {
+          model: Restaurant,
+          attributes: ['id', 'nom', 'lieu', 'heure_debut', 'heure_fin', 'telephone'],
+          required: false,
+        
+        },
       ],
       order: [['created_at', 'DESC']]
     });

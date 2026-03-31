@@ -30,9 +30,8 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.STRING(10),
       allowNull: true
     },
-    commandes_par_minutes: {
-      type: DataTypes.INTEGER,
-      defaultValue: 0
+    telephone: {
+      type: DataTypes.STRING(20),
     },
     societe_id: {
       type: DataTypes.INTEGER,

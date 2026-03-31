@@ -36,5 +36,12 @@ module.exports = (sequelize, DataTypes) => {
     updatedAt: 'updated_at'
   });
 
+  CategorieProduit.associate = (models) => {
+   
+    CategorieProduit.belongsTo(models.Restaurant, {
+      foreignKey: 'restaurant_id',
+    });
+  }
+
   return CategorieProduit;
 };
