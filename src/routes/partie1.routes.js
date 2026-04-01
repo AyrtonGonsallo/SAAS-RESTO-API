@@ -241,11 +241,12 @@ router.delete('/delete_societe/:id', async (req, res, next) => {
 
 router.post('/ajouter_role', async (req, res,next) => {
   try {
-    const { titre, type } = req.body;
+    const { titre, type, priorite } = req.body;
 
     const role = await Role.create({
       titre,
-      type
+      type,
+      priorite
     });
 
     return res.status(201).json({
@@ -262,9 +263,24 @@ router.post('/ajouter_role', async (req, res,next) => {
 router.get('/get_all_roles', async (req, res) => {
   try {
 
-    const roles = await Role.findAll({
+    let roleFilter = {};
+    const user_priorite = req.query.priorite;
+    if (!req.isSuperAdmin) {
+     
+        roleFilter = {
+          priorite: {
+            [Op.gt]: user_priorite
+          },
+        };
       
-      order: [['created_at', 'DESC']]
+    }else{
+      roleFilter = {} 
+    }
+      
+
+    const roles = await Role.findAll({
+      where: roleFilter,
+      order: [['priorite', 'ASC']]
     });
 
     return res.status(200).json(roles);
@@ -322,7 +338,7 @@ router.delete('/delete_role/:id', async (req, res, next) => {
 router.put('/update_role/:id', async (req, res, next) => {
   try {
     const id = req.params.id;
-    const { titre, type } = req.body;
+    const { titre, type, priorite } = req.body;
 
     const role = await Role.findByPk(id);
 
@@ -334,7 +350,8 @@ router.put('/update_role/:id', async (req, res, next) => {
 
     await role.update({
       titre,
-      type
+      type,
+      priorite
     });
 
     return res.status(200).json(role);
