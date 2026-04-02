@@ -11,7 +11,7 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: true
     },
     type : {
-      type: DataTypes.ENUM('tva','coefficient','logo','couleur_principale','couleur_secondaire','max_commandes_par_minutes','alerte_stocke_min'),
+      type: DataTypes.ENUM('tva','coefficient','logo','couleur_principale','couleur_secondaire','max_commandes_par_minutes','alerte_stocke_min','max_couverts_par_jour','delai_rappel_reservation'),
       allowNull: false,
     },
     valeur: {

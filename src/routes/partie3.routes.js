@@ -75,7 +75,9 @@ router.get('/get_all_produits', async (req, res) => {
     const selectedRestaurantId = req.query.restaurant_id;
     let restaurantFilter = {};
 
-    if (!req.isSuperAdmin) {
+    let ishigh = req.role_priorite<4
+
+    if (!ishigh) {
       if (selectedRestaurantId) {
         // 🔥 filtre sur UN restaurant
         restaurantFilter = {
@@ -92,7 +94,11 @@ router.get('/get_all_produits', async (req, res) => {
         };
       }
     }else{
-       restaurantFilter = {}
+       if (req.isSuperAdmin) {
+        restaurantFilter = {}
+      }else{
+        restaurantFilter = {societe_id: req.societe_id}
+      }
     }
     const produits = await Produit.findAll({
       where: restaurantFilter,
@@ -280,7 +286,9 @@ router.get('/get_all_variations_produit', async (req, res) => {
     const selectedRestaurantId = req.query.restaurant_id;
     let restaurantFilter = {};
 
-    if (!req.isSuperAdmin) {
+    let ishigh = req.role_priorite<4
+
+    if (!ishigh) {
       if (selectedRestaurantId) {
         // 🔥 filtre sur UN restaurant
         restaurantFilter = {
@@ -297,7 +305,11 @@ router.get('/get_all_variations_produit', async (req, res) => {
         };
       }
     }else{
-       restaurantFilter = {}
+      if (req.isSuperAdmin) {
+        restaurantFilter = {}
+      }else{
+        restaurantFilter = {societe_id: req.societe_id}
+      }
     }
     const variation_produits = await VariationProduit.findAll({
        where: restaurantFilter,
@@ -461,7 +473,9 @@ router.get('/get_all_parametres', async (req, res) => {
     const selectedRestaurantId = req.query.restaurant_id;
     let restaurantFilter = {};
 
-    if (!req.isSuperAdmin) {
+    let ishigh = req.role_priorite<4
+
+    if (!ishigh) {
       if (selectedRestaurantId) {
         // 🔥 filtre sur UN restaurant
         restaurantFilter = {
@@ -478,7 +492,11 @@ router.get('/get_all_parametres', async (req, res) => {
         };
       }
     }else{
-       restaurantFilter = {}
+      if (req.isSuperAdmin) {
+        restaurantFilter = {}
+      }else{
+        restaurantFilter = {societe_id: req.societe_id}
+      }
     }
     const parametres = await Parametre.findAll({
       where: restaurantFilter,

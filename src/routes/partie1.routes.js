@@ -225,7 +225,9 @@ router.delete('/delete_societe/:id', async (req, res, next) => {
       });
     }
 
-     await Utilisateur.destroy({ where: { societe_id: id } });
+    await Abonnement.destroy({ where: { societe_id: id } });
+    await Portefeuille.destroy({ where: { societe_id: id } });
+    await Utilisateur.destroy({ where: { societe_id: id } });
     await societe.destroy();
 
    
@@ -416,12 +418,15 @@ router.get('/get_all_utilisateurs', async (req, res) => {
     console.log("req.societe_id,",req.societe_id);
     console.log("req.isSuperAdmin,",req.isSuperAdmin);
     console.log("req.restos,",req.restos);
+    console.log("req.role_priorite", req.role_priorite);
     console.log("selectedRestaurantId", selectedRestaurantId);
+    
+   let ishigh = req.role_priorite<4
 
     // construire le filtre restaurant
     let restaurantFilter = {};
 
-    if (!req.isSuperAdmin) {
+    if (!ishigh) {//pas sadm,gessos,adm,
       if (selectedRestaurantId) {
         // 🔥 filtre sur UN restaurant
         restaurantFilter = {
@@ -451,8 +456,8 @@ router.get('/get_all_utilisateurs', async (req, res) => {
           model: Restaurant,
           attributes: ['id', 'nom', 'lieu', 'heure_debut', 'heure_fin', 'telephone'],
           through: { attributes: [] }, // supprime les infos de la table pivot
-          required: !req.isSuperAdmin,
-          ...(req.isSuperAdmin ? {} : {
+          required: !ishigh,
+          ...(ishigh ? {} : {
             where: restaurantFilter
           })
         },

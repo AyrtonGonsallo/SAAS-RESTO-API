@@ -10,6 +10,7 @@ const cors = require('cors');
 const partie1Routes = require('./routes/partie1.routes');
 const partie2Routes = require('./routes/partie2.routes');
 const partie3Routes = require('./routes/partie3.routes');
+const partie4Routes = require('./routes/partie4.routes');
 const authRoutes = require('./routes/partie-auth.routes');
 const routes_prefix = process.env.PREFIX;
 
@@ -43,6 +44,7 @@ app.use(routes_prefix, require('./routes'));
 app.use(routes_prefix, partie1Routes);
 app.use(routes_prefix, partie2Routes);
 app.use(routes_prefix, partie3Routes);
+app.use(routes_prefix, partie4Routes);
 app.use(routes_prefix, authRoutes);
 
 // test route

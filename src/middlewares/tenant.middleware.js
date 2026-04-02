@@ -5,6 +5,7 @@ const publicRoutes = [
   '/refresh',
   '/get_change_password_code',
   '/resset_password',
+  '/ajouter_societe',
   '/check_change_password_code',
   '/',
 ];
@@ -22,6 +23,8 @@ const publicRoutes = [
 
   // 👑 SUPER ADMIN
   req.isSuperAdmin = user?.role_type === 'super-admin';
+
+   req.role_priorite = user?.role_priorite;
   console.log("user?.Role?.type",user?.role_type)
 
   if (!req.isSuperAdmin) {

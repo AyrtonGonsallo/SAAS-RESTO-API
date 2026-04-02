@@ -7,9 +7,10 @@ const publicRoutes = [
   '/get_change_password_code',
   '/resset_password',
   '/check_change_password_code',
+  '/ajouter_societe',
   '/',
 ];
-
+http://localhost:2026/api/v1/ajouter_societe
 module.exports = (req, res, next) => {
 
   let chemin = req.path.split(routes_prefix).filter(Boolean).pop();

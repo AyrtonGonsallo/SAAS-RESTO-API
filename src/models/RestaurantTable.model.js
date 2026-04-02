@@ -1,5 +1,6 @@
 // models/RestaurantTable.model.js
 module.exports = (sequelize, DataTypes) => {
+  
   const RestaurantTable = sequelize.define('RestaurantTable', {
     id: {
       type: DataTypes.INTEGER,
@@ -8,22 +9,22 @@ module.exports = (sequelize, DataTypes) => {
     },
     numero: {
       type: DataTypes.STRING(20),
-      allowNull: true
+      allowNull: false
     },
     nb_places: {
       type: DataTypes.INTEGER,
       defaultValue: 0,
       allowNull: true
     },
-    statut : {
-      type: DataTypes.ENUM('libre','occupée'),
+    statut: {
+      type: DataTypes.ENUM('libre', 'occupée'),
       allowNull: false,
       defaultValue: 'libre'
     },
     societe_id: {
       type: DataTypes.INTEGER,
     },
-    restaurant_id : {
+    restaurant_id: {
       type: DataTypes.INTEGER,
     },
     created_at: {
@@ -38,7 +39,14 @@ module.exports = (sequelize, DataTypes) => {
     tableName: 'RestaurantTable',
     timestamps: true,
     createdAt: 'created_at',
-    updatedAt: 'updated_at'
+    updatedAt: 'updated_at',
+
+    indexes: [
+      {
+        unique: true,
+        fields: ['restaurant_id', 'numero']
+      }
+    ]
   });
 
   RestaurantTable.associate = (models) => {

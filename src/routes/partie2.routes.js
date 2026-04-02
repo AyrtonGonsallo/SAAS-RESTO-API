@@ -4,7 +4,7 @@ const express = require('express');
 const router = express.Router();
 const db = require('../models');
 const { Op } = require('sequelize');
-const { CategorieProduit,RestaurantTable, Societe, Restaurant,Utilisateur } = db;
+const { CategorieProduit,RestaurantTable, Societe, Restaurant,Utilisateur,Parametre } = db;
 
 
 
@@ -37,6 +37,50 @@ router.post('/ajouter_restaurant', async (req, res,next) => {
       utilisateur_id
     });
 
+    const types = [
+      'tva',
+      'coefficient',
+      'max_commandes_par_minutes',
+      'alerte_stocke_min',
+      'max_couverts_par_jour',
+      'delai_rappel_reservation'
+    ];
+
+    // valeurs par défaut (important)
+    const defaultValues = {
+      tva: 20,
+      coefficient: 1,
+      max_commandes_par_minutes: 10,
+      alerte_stocke_min: 5,
+      max_couverts_par_jour: 100,
+      delai_rappel_reservation: 30
+    };
+
+    const parametres = types.map(type => ({
+      titre: type,
+      type: type,
+      valeur: defaultValues[type],
+      description: '',
+      est_actif: true,
+      societe_id,
+      restaurant_id: resto.id,
+      utilisateur_id
+    }));
+
+    await Parametre.bulkCreate(parametres);
+
+     const user = await Utilisateur.findByPk(utilisateur_id);
+
+    if (!user) {
+      return res.status(404).json({
+        message: 'Utilisateur non trouvé'
+      });
+    }
+
+    await user.addRestaurant(resto.id, {
+      ignoreDuplicates: true
+    });
+
     return res.status(201).json({
       success: true,
       data: resto
@@ -54,11 +98,12 @@ router.post('/ajouter_restaurant', async (req, res,next) => {
 router.get('/get_all_restaurants', async (req, res) => {
   try {
 
+    let ishigh = req.role_priorite<4
     const selectedRestaurantId = req.query.restaurant_id;
     // construire le filtre restaurant
     let restaurantFilter = {};
 
-    if (!req.isSuperAdmin) {
+    if (!ishigh) {
       if (selectedRestaurantId) {
         // 🔥 filtre sur UN restaurant
         restaurantFilter = {
@@ -75,7 +120,12 @@ router.get('/get_all_restaurants', async (req, res) => {
         };
       }
     }else{
-      restaurantFilter = {};
+       if (req.isSuperAdmin) {
+          restaurantFilter = {};
+       }else{
+          restaurantFilter = {societe_id: req.societe_id};
+       }
+      
     }
     const restaurants = await Restaurant.findAll({
       where: restaurantFilter,
@@ -182,7 +232,10 @@ router.delete('/delete_restaurant/:id', async (req, res, next) => {
       });
     }
 
-     
+    await Parametre.destroy({
+      where: { restaurant_id: id }
+    });
+        
     await restaurant.destroy();
 
    
@@ -237,8 +290,9 @@ router.get('/get_all_tables', async (req, res) => {
     const selectedRestaurantId = req.query.restaurant_id;
     // construire le filtre restaurant
     let restaurantFilter = {};
+    let ishigh = req.role_priorite<4
 
-    if (!req.isSuperAdmin) {
+    if (!ishigh) {
       if (selectedRestaurantId) {
         // 🔥 filtre sur UN restaurant
         restaurantFilter = {
@@ -255,7 +309,11 @@ router.get('/get_all_tables', async (req, res) => {
         };
       }
     }else{
-       restaurantFilter = {}
+       if (req.isSuperAdmin) {
+        restaurantFilter = {}
+       }else{
+        restaurantFilter = {societe_id: req.societe_id}
+       }
     }
     const tables = await RestaurantTable.findAll({
       where: restaurantFilter,
@@ -410,7 +468,9 @@ router.get('/get_all_categories_produit', async (req, res) => {
     // construire le filtre restaurant
     let restaurantFilter = {};
 
-    if (!req.isSuperAdmin) {
+    let ishigh = req.role_priorite<4
+
+    if (!ishigh) {
       if (selectedRestaurantId) {
         // 🔥 filtre sur UN restaurant
         restaurantFilter = {
@@ -427,7 +487,11 @@ router.get('/get_all_categories_produit', async (req, res) => {
         };
       }
     }else{
-      restaurantFilter = {} 
+      if (req.isSuperAdmin) {
+        restaurantFilter = {}
+      }else{
+        restaurantFilter = {societe_id: req.societe_id}
+      }
     }
     const categories = await CategorieProduit.findAll({
        where: restaurantFilter,
