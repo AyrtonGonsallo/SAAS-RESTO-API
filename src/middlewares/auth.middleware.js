@@ -6,6 +6,7 @@ const publicRoutes = [
   '/refresh',
   '/get_change_password_code',
   '/resset_password',
+  '/ajouter_reservation',
   '/check_change_password_code',
   '/ajouter_societe',
   '/',

@@ -16,6 +16,13 @@ db.CategorieProduit = require('./CategorieProduit.model')(sequelize, Sequelize.D
 db.Produit = require('./Produit.model')(sequelize, Sequelize.DataTypes);
 db.VariationProduit = require('./VariationProduit.model')(sequelize, Sequelize.DataTypes);
 db.Parametre = require('./Parametre.model')(sequelize, Sequelize.DataTypes);
+db.Tag = require('./Tag.model')(sequelize, Sequelize.DataTypes);
+db.Creneau = require('./Creneau.model')(sequelize, Sequelize.DataTypes);
+db.Reservation = require('./Reservation.model')(sequelize, Sequelize.DataTypes);
+db.Paiement = require('./Paiement.model')(sequelize, Sequelize.DataTypes);
+db.MessageReservation = require('./MessageReservation.model')(sequelize, Sequelize.DataTypes);
+db.Reservation = require('./Reservation.model')(sequelize, Sequelize.DataTypes);
+db.Service = require('./Service.model')(sequelize, Sequelize.DataTypes);
 
 
 // 🔗 Associations
