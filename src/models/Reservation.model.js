@@ -34,14 +34,18 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.INTEGER,
       allowNull: true
     },
+    creneau_du_jour_id: {
+      type: DataTypes.INTEGER,
+      allowNull: true
+    },
     service_id: {
       type: DataTypes.INTEGER,
       allowNull: true
     },
     statut: {
-      type: DataTypes.ENUM('En attente', ' Confirmée',' Annulée','Terminée','No-show'),
+      type: DataTypes.ENUM('En attente', 'Confirmée','Annulée','Terminée','No-show'),
       allowNull: false,
-      defaultValue: 'libre'
+      defaultValue: 'En attente'
     },
     table_id: {
       type: DataTypes.INTEGER,

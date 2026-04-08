@@ -6,248 +6,31 @@ const db = require('../models');
 const { Op } = require('sequelize');
 const { CategorieProduit,RestaurantTable, Societe, Restaurant,Utilisateur,Parametre } = db;
 
+const {
+  ajouterRestaurant,
+  getRestaurants, 
+  getRestaurantsWithParametres,
+  getRestaurantById,
+  updateRestaurant,
+  deleteRestaurant,
+  recreerParametresRestaurant
+} = require('../controllers/Restaurant.controller');
 
 
+router.post('/ajouter_restaurant', ajouterRestaurant);
 
-router.post('/ajouter_restaurant', async (req, res,next) => {
-  try {
-    const {
-      nom,
-      lieu,
-      heure_debut,
-      heure_fin,
-      heure_cc_debut,
-      heure_cc_fin,
-      telephone,
-      societe_id,
-      utilisateur_id
-    } = req.body;
+router.get('/get_all_restaurants_with_parametres', getRestaurantsWithParametres);
+
+router.get('/get_all_restaurants', getRestaurants);
+
+router.get('/get_restaurant_by_id/:id', getRestaurantById);
+
+router.get('/recreate_parametres_restaurant/:id', recreerParametresRestaurant);
 
 
+router.put('/update_restaurant/:id', updateRestaurant);
 
-    const resto = await Restaurant.create({
-      nom,
-      lieu,
-      heure_debut,
-      heure_fin,
-      heure_cc_debut,
-      heure_cc_fin,
-      telephone,
-      societe_id,
-      utilisateur_id
-    });
-
-    const types = [
-      'tva',
-      'coefficient',
-      'max_commandes_par_minutes',
-      'alerte_stocke_min',
-      'max_couverts_par_jour',
-      'delai_rappel_reservation'
-    ];
-
-    // valeurs par défaut (important)
-    const defaultValues = {
-      tva: 20,
-      coefficient: 1,
-      max_commandes_par_minutes: 10,
-      alerte_stocke_min: 5,
-      max_couverts_par_jour: 100,
-      delai_rappel_reservation: 30
-    };
-
-    const parametres = types.map(type => ({
-      titre: type,
-      type: type,
-      valeur: defaultValues[type],
-      description: '',
-      est_actif: true,
-      societe_id,
-      restaurant_id: resto.id,
-      utilisateur_id
-    }));
-
-    await Parametre.bulkCreate(parametres);
-
-     const user = await Utilisateur.findByPk(utilisateur_id);
-
-    if (!user) {
-      return res.status(404).json({
-        message: 'Utilisateur non trouvé'
-      });
-    }
-
-    await user.addRestaurant(resto.id, {
-      ignoreDuplicates: true
-    });
-
-    return res.status(201).json({
-      success: true,
-      data: resto
-    });
-
-  } catch (error) {
-    return res.status(500).json({
-      success: false,
-      message: error.message
-    });
-  }
-});
-
-
-router.get('/get_all_restaurants', async (req, res) => {
-  try {
-
-    let ishigh = req.role_priorite<4
-    const selectedRestaurantId = req.query.restaurant_id;
-    // construire le filtre restaurant
-    let restaurantFilter = {};
-
-    if (!ishigh) {
-      if (selectedRestaurantId) {
-        // 🔥 filtre sur UN restaurant
-        restaurantFilter = {
-          id: selectedRestaurantId,
-          societe_id: req.societe_id
-        };
-      } else {
-        // 🔥 filtre sur plusieurs restaurants autorisés
-        restaurantFilter = {
-          id: {
-            [Op.in]: req.restos
-          },
-          societe_id: req.societe_id
-        };
-      }
-    }else{
-       if (req.isSuperAdmin) {
-          restaurantFilter = {};
-       }else{
-          restaurantFilter = {societe_id: req.societe_id};
-       }
-      
-    }
-    const restaurants = await Restaurant.findAll({
-      where: restaurantFilter,
-      include: [
-        {
-          model: Utilisateur,
-          as: 'gestionnaire',
-          attributes: ['id', 'nom', 'prenom', 'email','telephone'],
-          required: false
-        },
-        {
-          model: Societe,
-          attributes: ['id', 'titre', 'status', ],
-          required: false,
-          
-        }
-      ],
-      order: [['created_at', 'DESC']]
-    });
-
-    return res.status(200).json(restaurants);
-
-  } catch (error) {
-    console.error(error);
-    return res.status(500).json({
-      message: 'Erreur serveur'
-    });
-  }
-});
-
-
-
-router.get('/get_restaurant_by_id/:id', async (req, res, next) => {
-  try {
-    const id = req.params.id;
-
-    const restaurant = await Restaurant.findByPk(id);
-
-    if (!restaurant) {
-      return res.status(404).json({
-        message: 'Restaurant non trouvé'
-      });
-    }
-
-    return res.status(200).json(restaurant);
-
-  } catch (error) {
-    next(error);
-  }
-});
-
-
-router.put('/update_restaurant/:id', async (req, res, next) => {
-  try {
-    const id = req.params.id;
-    const { 
-      nom,
-      lieu,
-      heure_debut,
-      heure_fin,
-      heure_cc_debut,
-      heure_cc_fin,
-      telephone,
-      societe_id,
-      utilisateur_id
-     } = req.body;
-
-    const restaurant = await Restaurant.findByPk(id);
-
-    if (!restaurant) {
-      return res.status(404).json({
-        message: 'Restaurant non trouvé'
-      });
-    }
-
-    await restaurant.update({
-      nom,
-      lieu,
-      heure_debut,
-      heure_fin,
-      heure_cc_debut,
-      heure_cc_fin,
-      telephone,
-      societe_id,
-      utilisateur_id
-    });
-
-    return res.status(200).json(restaurant);
-
-  } catch (error) {
-    next(error);
-  }
-});
-
-router.delete('/delete_restaurant/:id', async (req, res, next) => {
-  try {
-    const id = req.params.id;
-
-    const restaurant = await Restaurant.findByPk(id);
-
-    if (!restaurant) {
-      return res.status(404).json({
-        message: 'Restaurant non trouvé'
-      });
-    }
-
-    await Parametre.destroy({
-      where: { restaurant_id: id }
-    });
-        
-    await restaurant.destroy();
-
-   
-
-    return res.status(200).json({
-      message: 'Restaurant supprimé avec succès'
-    });
-
-  } catch (error) {
-    next(error);
-  }
-});
+router.delete('/delete_restaurant/:id', deleteRestaurant);
 
 
 router.post('/ajouter_table', async (req, res,next) => {

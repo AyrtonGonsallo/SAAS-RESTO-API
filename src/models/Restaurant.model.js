@@ -65,6 +65,11 @@ module.exports = (sequelize, DataTypes) => {
       foreignKey: 'utilisateur_id',
       as: 'gestionnaire' // 👈 alias
     });
+    Restaurant.hasMany(models.Parametre, {
+      foreignKey: 'restaurant_id',
+      as: 'parametres'
+    });
+
   };
 
   return Restaurant;

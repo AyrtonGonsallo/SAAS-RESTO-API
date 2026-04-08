@@ -23,6 +23,7 @@ db.Paiement = require('./Paiement.model')(sequelize, Sequelize.DataTypes);
 db.MessageReservation = require('./MessageReservation.model')(sequelize, Sequelize.DataTypes);
 db.Reservation = require('./Reservation.model')(sequelize, Sequelize.DataTypes);
 db.Service = require('./Service.model')(sequelize, Sequelize.DataTypes);
+db.CreneauDuJour = require('./CreneauDuJour.model')(sequelize, Sequelize.DataTypes);
 
 
 // 🔗 Associations

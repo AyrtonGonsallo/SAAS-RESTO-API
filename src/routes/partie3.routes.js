@@ -18,7 +18,14 @@ const storage = multer.diskStorage({
 const upload = multer({ storage });
 const { Produit, CategorieProduit, VariationProduit,Parametre,Restaurant  } = db;
 
-
+const {
+  ajouterParametre,
+  getParametres, 
+  getParametreById,
+  updateParametre,
+  deleteParametre,
+  getParametreByTypeAndRestaurant
+} = require('../controllers/Parametre.controller');
 
 router.post('/ajouter_produit', upload.single('image'),async (req, res,next) => {
   try {
@@ -425,191 +432,17 @@ router.delete('/delete_variation_produit/:id', async (req, res, next) => {
 });
 
 
-router.post('/ajouter_parametre', upload.single('image'),async (req, res,next) => {
-  try {
-    const {
-      titre,
-      type,
-      valeur,
-      description,
-      est_actif,
-      societe_id,
-      restaurant_id,
-      utilisateur_id,
+router.post('/ajouter_parametre', upload.single('image'), ajouterParametre);
 
-    } = req.body;
-    //console.log("file",req.file)
+router.get('/get_all_parametres', getParametres);
 
-    const image = req.file ? req.file.filename : null;
+router.get('/get_parametre_by_id/:id', getParametreById);
 
-    const parametre = await Parametre.create({
-      titre,
-      type,
-      valeur: type === 'logo' ? image : valeur,
-      description,
-      est_actif,
-      societe_id,
-      restaurant_id,
-      utilisateur_id,
-    });
+router.get('/get_parametre_by_type_and_restaurant/:type/:restaurant_id', getParametreByTypeAndRestaurant);
 
-    return res.status(201).json({
-      success: true,
-      data: parametre
-    });
+router.put('/update_parametre/:id', upload.single('image'), updateParametre);
 
-  } catch (error) {
-    return res.status(500).json({
-      success: false,
-      message: error.message
-    });
-  }
-});
-
-
-router.get('/get_all_parametres', async (req, res) => {
-  try {
-
-    const selectedRestaurantId = req.query.restaurant_id;
-    let restaurantFilter = {};
-
-    let ishigh = req.role_priorite<4
-
-    if (!ishigh) {
-      if (selectedRestaurantId) {
-        // 🔥 filtre sur UN restaurant
-        restaurantFilter = {
-          restaurant_id: selectedRestaurantId,
-          societe_id: req.societe_id
-        };
-      } else {
-        // 🔥 filtre sur plusieurs restaurants autorisés
-        restaurantFilter = {
-          restaurant_id: {
-            [Op.in]: req.restos
-          },
-          societe_id: req.societe_id
-        };
-      }
-    }else{
-      if (req.isSuperAdmin) {
-        restaurantFilter = {}
-      }else{
-        restaurantFilter = {societe_id: req.societe_id}
-      }
-    }
-    const parametres = await Parametre.findAll({
-      where: restaurantFilter,
-      include: [
-       {
-          model: Restaurant,
-          attributes: ['id', 'nom', 'lieu', 'heure_debut', 'heure_fin', 'telephone'],
-          required: false,
-        
-        },
-      ],
-      order: [['created_at', 'DESC']]
-    });
-
-    return res.status(200).json(parametres);
-
-  } catch (error) {
-    console.error(error);
-    return res.status(500).json({
-      message: 'Erreur serveur'
-    });
-  }
-});
-
-
-
-router.get('/get_parametre_by_id/:id', async (req, res, next) => {
-  try {
-    const id = req.params.id;
-
-    const parametre = await Parametre.findByPk(id);
-
-    if (!parametre) {
-      return res.status(404).json({
-        message: 'Parametre non trouvé'
-      });
-    }
-
-    return res.status(200).json(parametre);
-
-  } catch (error) {
-    next(error);
-  }
-});
-
-
-router.put('/update_parametre/:id', upload.single('image'), async (req, res, next) => {
-  try {
-    const id = req.params.id;
-    const { 
-      titre,
-      type,
-      valeur,
-      description,
-      est_actif,
-      societe_id,
-      restaurant_id,
-      utilisateur_id,
-     } = req.body;
-
-    const parametre = await Parametre.findByPk(id);
-
-    if (!parametre) {
-      return res.status(404).json({
-        message: 'Parametre non trouvé'
-      });
-    }
-
-    const image = req.file ? req.file.filename : null;
-
-    await parametre.update({
-      titre,
-      type,
-      valeur: type === 'logo' ? image : valeur,
-      description,
-      est_actif,
-      societe_id,
-      restaurant_id,
-      utilisateur_id,
-    });
-
-    return res.status(200).json(parametre);
-
-  } catch (error) {
-    next(error);
-  }
-});
-
-router.delete('/delete_parametre/:id', async (req, res, next) => {
-  try {
-    const id = req.params.id;
-
-    const parametre = await Parametre.findByPk(id);
-
-    if (!parametre) {
-      return res.status(404).json({
-        message: 'Parametre non trouvé'
-      });
-    }
-
-     
-    await parametre.destroy();
-
-   
-
-    return res.status(200).json({
-      message: 'Parametre supprimé avec succès'
-    });
-
-  } catch (error) {
-    next(error);
-  }
-});
+router.delete('/delete_parametre/:id', deleteParametre);
 
 
 

@@ -1,23 +1,23 @@
 module.exports = (sequelize, DataTypes) => {
-  const Creneau = sequelize.define('Creneau', {
+  const CreneauDuJour = sequelize.define('CreneauDuJour', {
     id: {
       type: DataTypes.INTEGER,
       primaryKey: true,
       autoIncrement: true
     },
-    heure_debut: {
-      type: DataTypes.STRING(10),
+    creneau_id: {
+      type: DataTypes.INTEGER,
       allowNull: false
     },
-    heure_fin: {
-      type: DataTypes.STRING(10),
+    date: {
+      type: DataTypes.DATEONLY,
       allowNull: false
     },
-    statut: {
-      type: DataTypes.ENUM('disponible', 'bloqué'),
-      defaultValue: 'disponible'
+    heure: {
+      type: DataTypes.INTEGER,
+      allowNull: false
     },
-    nb_reservations_max: {
+    nb_reservations_actuel: {
       type: DataTypes.INTEGER,
       allowNull: false
     },
@@ -34,21 +34,21 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: true
     }
   }, {
-    tableName: 'Creneau',
+    tableName: 'CreneauDuJour',
     timestamps: true,
     createdAt: 'created_at',
     updatedAt: 'updated_at'
   });
 
-  Creneau.associate = (models) => {
+  CreneauDuJour.associate = (models) => {
    
-    Creneau.belongsTo(models.Restaurant, {
+    CreneauDuJour.belongsTo(models.Restaurant, {
       foreignKey: 'restaurant_id',
     });
-    Creneau.belongsTo(models.Societe, {
+    CreneauDuJour.belongsTo(models.Societe, {
       foreignKey: 'societe_id',
     });
   }
 
-  return Creneau;
+  return CreneauDuJour;
 };
