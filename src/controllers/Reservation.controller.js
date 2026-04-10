@@ -1,6 +1,6 @@
 const db = require('../models');
 const bcrypt = require('bcryptjs');
-const {  Reservation,CreneauDuJour,Restaurant,Utilisateur,Role,Creneau } = db;
+const {  Reservation,CreneauDuJour,Restaurant,Utilisateur,Role,Creneau,Tag,Service,RestaurantTable,Societe } = db;
 const DEFAULT_PASS = process.env.DEFAULT_PASS;
 
 exports.createReservation = async (req, res) => {
@@ -359,6 +359,54 @@ exports.deleteReservation = async (req, res) => {
 
     res.json({ message: 'Reservation supprimé' });
   } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+
+exports.getReservationDatasBySocieteID = async (req, res) => {
+  try {
+
+    const societeID = req.params.societeID;
+
+    const societe = await Societe.findByPk(societeID);
+
+    if (!societe) {
+      return res.status(404).json({
+        message: 'Societe non trouvée'
+      });
+    }
+    restaurantFilter = {societe_id: societeID};
+
+
+    const tags = await Tag.findAll({where: restaurantFilter,});
+    const services = await Service.findAll({where: restaurantFilter,});
+    const creneaux = await Creneau.findAll({where: restaurantFilter,});
+    const tables = await RestaurantTable.findAll({where: restaurantFilter,});
+    const restaurants = await Restaurant.findAll({
+      where: restaurantFilter,
+      include: [
+        {
+          association: 'parametres',
+          where: { est_important: true },
+          required: false
+        }
+      ],
+      order: [['created_at', 'DESC']]
+    });
+    
+
+    res.json({
+      societe:societe,
+      tags:tags,
+      services:services,
+      creneaux:creneaux,
+      tables:tables,
+      restaurants:restaurants,
+
+    });
+  } catch (error) {
+    console.log(error.message)
     res.status(500).json({ message: error.message });
   }
 };

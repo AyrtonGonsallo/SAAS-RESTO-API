@@ -1,5 +1,6 @@
 // middleware/auth.middleware.js
 const { verifyAccessToken } = require('../services/token.service');
+const {middlewareLogger} = require('../utils/logger');
 const routes_prefix = process.env.PREFIX;
 const publicRoutes = [
   '/login',
@@ -9,18 +10,31 @@ const publicRoutes = [
   '/ajouter_reservation',
   '/check_change_password_code',
   '/ajouter_societe',
-  '/',
+  '/get_stripe_payment_link_for_resto',
+  '/get_reservation_data_by_societeID',
+  '/presentation',
+  '/stripe_reservation_payment_webhook'
 ];
-http://localhost:2026/api/v1/ajouter_societe
+
+
 module.exports = (req, res, next) => {
 
   let chemin = req.path.split(routes_prefix).filter(Boolean).pop();
 
-  console.log("Middleware auth : chemin ",chemin)
-  if (publicRoutes.includes(chemin)) {
-    console.log("autoriser quand meme")
-    return next();
-  }
+  console.log("Middleware auth : chemin ",chemin)//Middleware auth : chemin  /get_reservation_data_by_societeID/8
+
+  middlewareLogger.info(
+      `Middleware auth : ${chemin} ${res.statusCode}`
+    );
+
+
+ if (publicRoutes.some(route => chemin.startsWith(route))) {
+  console.log("autoriser quand meme");
+  middlewareLogger.info(
+      `autoriser quand meme`
+    );
+  return next();
+}
 
   const authHeader = req.headers['authorization'];
 

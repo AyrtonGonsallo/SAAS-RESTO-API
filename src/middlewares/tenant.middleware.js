@@ -8,14 +8,17 @@ const publicRoutes = [
   '/ajouter_societe',
   '/ajouter_reservation',
   '/check_change_password_code',
-  '/',
+  '/get_stripe_payment_link_for_resto',
+  '/get_reservation_data_by_societeID',
+  '/presentation',
+  '/stripe_reservation_payment_webhook'
 ];
 
  let chemin = req.path.split(routes_prefix).filter(Boolean).pop();
 
   console.log("Middleware tenant : chemin ",chemin)
-  if (publicRoutes.includes(chemin)) {
-    console.log("autoriser quand meme")
+  if (publicRoutes.some(route => chemin.startsWith(route))) {
+    console.log("autoriser quand meme");
     return next();
   }
 

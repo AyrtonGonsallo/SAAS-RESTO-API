@@ -1,4 +1,4 @@
-const logger = require('../utils/logger');
+const {logger} = require('../utils/logger');
 
 const loggerMiddleware = (req, res, next) => {
   const start = Date.now();

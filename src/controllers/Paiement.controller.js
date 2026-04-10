@@ -1,0 +1,231 @@
+const db = require('../models');
+const {  Paiement,Restaurant,Parametre } = db;
+const Stripe  = require('stripe')
+const STRIPE_SUCCESS_URL = process.env.STRIPE_SUCCESS_URL;
+const STRIPE_FAILURE_URL = process.env.STRIPE_FAILURE_URL;
+
+
+exports.createPaiement = async (req, res) => {
+  const t = await db.sequelize.transaction();
+
+  try {
+    const {
+      titre,
+      type,
+      moyen,
+      montant,
+      reference,
+      description,
+      reservation_id,
+      societe_id,
+      restaurant_id,
+      utilisateur_id,
+    } = req.body;
+
+   
+    //  2. DATE
+    const datepaiement = new Date();
+
+    let paiement = await Paiement.create({
+      titre,
+      date:datepaiement,
+      type,
+      moyen,
+      montant,
+      reference,
+      description,
+      reservation_id,
+      societe_id,
+      restaurant_id,
+      utilisateur_id,
+      }, { transaction: t });
+
+   
+    await t.commit();
+
+    
+
+    res.json(paiement);
+
+  } catch (error) {
+    await t.rollback();
+    console.log(error);
+    res.status(500).json({ message: error.message });
+  }
+};
+
+exports.getPaiements = async (req, res) => {
+  try {
+    const selectedRestaurantId = req.query.restaurant_id;
+    let restaurantFilter = {};
+
+    let ishigh = req.role_priorite<4
+
+    if (!ishigh) {
+        if (selectedRestaurantId) {
+        // 🔥 filtre sur UN restaurant
+        restaurantFilter = {
+            restaurant_id: selectedRestaurantId,
+            societe_id: req.societe_id
+        };
+        } else {
+        // 🔥 filtre sur plusieurs restaurants autorisés
+        restaurantFilter = {
+            restaurant_id: {
+            [Op.in]: req.restos
+            },
+            societe_id: req.societe_id
+        };
+        }
+    }else{
+        if (req.isSuperAdmin) {
+        restaurantFilter = {}
+        }else{
+        restaurantFilter = {societe_id: req.societe_id}
+        }
+    }
+    const where = {};
+
+    if (req.query.restaurant_id) {
+      where.restaurant_id = req.query.restaurant_id;
+    }
+    
+
+    const paiements = await Paiement.findAll({
+        where:restaurantFilter,
+        include: [
+          {
+              model: Restaurant,
+              attributes: ['id', 'nom', 'lieu', 'heure_debut', 'heure_fin', 'telephone'],
+              required: false,
+          },
+          
+      ],
+    });
+
+    res.json(paiements);
+  } catch (error) {
+    console.log(error)
+    res.status(500).json({ message: error.message });
+  }
+};
+
+exports.getPaiementById = async (req, res) => {
+  try {
+    const paiement = await Paiement.findByPk(req.params.id, {});
+
+    if (!paiement) {
+      return res.status(404).json({ message: 'Paiement non trouvé' });
+    }
+
+    res.json(paiement);
+  } catch (error) {
+    console.log(error.message)
+    res.status(500).json({ message: error.message });
+  }
+};
+
+exports.updatePaiement = async (req, res) => {
+  const t = await db.sequelize.transaction();
+
+  try {
+    const paiement = await Paiement.findByPk(req.params.id);
+
+    if (!paiement) {
+      return res.status(404).json({ message: 'Paiement non trouvé' });
+    }
+
+    await paiement.update(req.body);
+    res.json(paiement);
+
+  } catch (error) {
+    await t.rollback();
+    console.log(error);
+    res.status(500).json({ message: error.message });
+  }
+};
+
+exports.deletePaiement = async (req, res) => {
+  try {
+    const paiement = await Paiement.findByPk(req.params.id);
+
+    if (!paiement) {
+      return res.status(404).json({ message: 'Paiement non trouvé' });
+    }
+
+    await paiement.destroy();
+
+    res.json({ message: 'Paiement supprimé' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+
+
+exports.createStripePayment = async (req, res) => {
+
+  const restaurantId = req.params.restaurantId;
+
+  const final_reservation = req.body;
+
+  const restaurant = await Restaurant.findByPk(restaurantId);
+
+  if (!restaurant) {
+    return res.status(404).json({ message: 'Restaurant non trouvé' });
+  }
+
+  const params = await Parametre.findAll({
+    where: {
+      restaurant_id: restaurantId,
+      type: [
+        'cle_publique_stripe',
+        'cle_privee_stripe',
+        'montant_paiement_acompte_reservation',
+      ],
+      est_actif: true
+    }
+  });
+
+  //  transformation propre key/value
+  const config = Object.fromEntries(
+    params.map(p => [p.type, p.valeur])
+  );
+
+  const stripe = Stripe(config.cle_privee_stripe);
+
+  const montant = parseFloat(config.montant_paiement_acompte_reservation || 0);
+
+  const session = await stripe.checkout.sessions.create({
+    payment_method_types: ['card'],
+    mode: 'payment',
+    line_items: [
+      {
+        price_data: {
+          currency: 'eur',
+          product_data: {
+            name: `Paiement de la réservation de ${final_reservation.client.nom} ${final_reservation.client.prenom} au restaurant "${restaurant.nom}"`,
+          },
+          unit_amount: Math.round(montant * 100), // 
+        },
+        quantity: 1,
+      }
+    ],
+    success_url: `${STRIPE_SUCCESS_URL}`,
+    cancel_url: `${STRIPE_FAILURE_URL}`,
+    metadata: {
+      id_final_reservation: final_reservation.id,
+      id_client: final_reservation.client.id,
+      nom: final_reservation.client.nom,
+      prenom: final_reservation.client.prenom,
+      email: final_reservation.email,
+      statut: final_reservation.statut,
+      nombre_de_personnes: final_reservation.nombre_de_personnes,
+      nb_couverts: final_reservation.nb_couverts,
+      date_reservation: final_reservation.date_reservation,
+      montant: montant
+    }
+  });
+
+  return res.json({ url: session.url });
+};

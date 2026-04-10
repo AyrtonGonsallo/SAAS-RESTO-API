@@ -10,6 +10,7 @@ exports.ajouterParametre = async (req, res,next) => {
       valeur,
       description,
       est_actif,
+      est_important,
       societe_id,
       restaurant_id,
       utilisateur_id,
@@ -25,6 +26,7 @@ exports.ajouterParametre = async (req, res,next) => {
       valeur: type === 'logo' ? image : valeur,
       description,
       est_actif,
+      est_important,
       societe_id,
       restaurant_id,
       utilisateur_id,
@@ -84,7 +86,7 @@ exports.getParametres =  async (req, res) => {
         
         },
       ],
-      order: [['created_at', 'DESC']]
+      order: [['societe_id', 'ASC'],['restaurant_id', 'ASC'],['est_important', 'DESC'],['updated_at', 'DESC']]
     });
 
     return res.status(200).json(parametres);
@@ -151,6 +153,7 @@ exports.updateParametre = async (req, res, next) => {
       valeur,
       description,
       est_actif,
+      est_important,
       societe_id,
       restaurant_id,
       utilisateur_id,
@@ -172,6 +175,7 @@ exports.updateParametre = async (req, res, next) => {
       valeur: type === 'logo' ? image : valeur,
       description,
       est_actif,
+      est_important,
       societe_id,
       restaurant_id,
       utilisateur_id,

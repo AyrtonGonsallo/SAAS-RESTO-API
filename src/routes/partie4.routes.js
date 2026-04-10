@@ -30,8 +30,18 @@ const {
   getReservations, 
   getReservationById,
   updateReservation,
-  deleteReservation
+  deleteReservation,
+  getReservationDatasBySocieteID
 } = require('../controllers/Reservation.controller');
+
+const {
+  createPaiement,
+  getPaiements, 
+  getPaiementById,
+  updatePaiement,
+  deletePaiement,
+  createStripePayment
+} = require('../controllers/Paiement.controller');
 
 const { Portefeuille, Abonnement, } = db;
 
@@ -236,6 +246,24 @@ router.put('/update_reservation/:id', updateReservation);
 // DELETE
 router.delete('/delete_reservation/:id', deleteReservation);
 
+router.get('/get_reservation_data_by_societeID/:societeID', getReservationDatasBySocieteID);
 
+router.post('/get_stripe_payment_link_for_resto/:restaurantId', createStripePayment);
+
+
+// CREATE
+router.post('/ajouter_paiement', createPaiement);
+
+// READ ALL
+router.get('/get_all_paiements', getPaiements);
+
+// READ BY ID
+router.get('/get_paiement_by_id/:id', getPaiementById);
+
+// UPDATE
+router.put('/update_paiement/:id', updatePaiement);
+
+// DELETE
+router.delete('/delete_paiement/:id', deletePaiement);
 
 module.exports = router;

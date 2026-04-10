@@ -1,7 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 
-const logFile = path.join(__dirname, '../../logs/combined.log');
+const logFile = path.join(__dirname, '../../logs/app_combined.log');
 
 
 exports.getAllMethods = () => {

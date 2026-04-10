@@ -11,10 +11,12 @@ const partie1Routes = require('./routes/partie1.routes');
 const partie2Routes = require('./routes/partie2.routes');
 const partie3Routes = require('./routes/partie3.routes');
 const partie4Routes = require('./routes/partie4.routes');
+const stripeRoutes = require('./routes/stripe.routes');
 const authRoutes = require('./routes/partie-auth.routes');
 const routes_prefix = process.env.PREFIX;
-
 const { getAllMethods } = require('./services/methods-liste.service');
+
+
 app.use(`${routes_prefix}/files`, express.static('uploads'));
 app.use(loggerMiddleware);
 
@@ -38,6 +40,7 @@ app.use(cors({
 }));
 app.use(auth);
 app.use(tenant);
+app.use(routes_prefix, stripeRoutes);
 app.options('/{*any}', cors());
 app.use(express.json());
 app.use(routes_prefix, require('./routes'));
@@ -48,7 +51,7 @@ app.use(routes_prefix, partie4Routes);
 app.use(routes_prefix, authRoutes);
 
 // test route
-app.get(routes_prefix, (req, res) => {
+app.get(`${routes_prefix}/presentation`, (req, res) => {
     let liste = getAllMethods()
     res.send(liste);
 });
@@ -64,6 +67,10 @@ const start = async () => {
         console.log(`🚀 Serveur lancé sur le port ${PORT}`);
     });
 };
+
+
+
+
 
 start();
 

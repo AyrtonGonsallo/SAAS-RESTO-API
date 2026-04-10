@@ -1,6 +1,6 @@
 const db = require('../models');
 const {  Societe, Restaurant,Utilisateur,Parametre  } = db;
-
+const { Op } = require('sequelize');
 exports.ajouterRestaurant = async (req, res,next) => {
   try {
     const {
@@ -37,7 +37,12 @@ exports.ajouterRestaurant = async (req, res,next) => {
       'max_couverts_par_jour',
       'delai_rappel_reservation',
       'cle_publique_stripe',
-      'cle_privee_stripe'
+      'cle_privee_stripe',
+      'etat_des_reservations',
+      'etat_paiement_acompte_reservation',
+      'montant_paiement_acompte_reservation',
+      'etat_paiement_acompte_click_and_collect',
+      'montant_paiement_acompte_click_and_collect'
     ];
 
     // valeurs par défaut (important)
@@ -50,6 +55,11 @@ exports.ajouterRestaurant = async (req, res,next) => {
       delai_rappel_reservation: 30,
       cle_publique_stripe: '',
       cle_privee_stripe: '',
+      etat_des_reservations: 1,
+      etat_paiement_acompte_reservation: 1,
+      montant_paiement_acompte_reservation: 50,
+      etat_paiement_acompte_click_and_collect: 1,
+      montant_paiement_acompte_click_and_collect: 50,
     };
 
     const parametres = types.map(type => ({
@@ -112,7 +122,11 @@ exports.recreerParametresRestaurant = async (req, res,next) => {
       'delai_rappel_reservation',
       'cle_publique_stripe',
       'cle_privee_stripe',
-      'etat_des_reservations'
+      'etat_des_reservations',
+      'etat_paiement_acompte_reservation',
+      'montant_paiement_acompte_reservation',
+      'etat_paiement_acompte_click_and_collect',
+      'montant_paiement_acompte_click_and_collect'
     ];
 
     // valeurs par défaut (important)
@@ -126,6 +140,10 @@ exports.recreerParametresRestaurant = async (req, res,next) => {
       cle_publique_stripe: '',
       cle_privee_stripe: '',
       etat_des_reservations: 1,
+      etat_paiement_acompte_reservation: 1,
+      montant_paiement_acompte_reservation: 50,
+      etat_paiement_acompte_click_and_collect: 1,
+      montant_paiement_acompte_click_and_collect: 50,
     };
 
     const parametres = types.map(type => ({
@@ -267,7 +285,11 @@ exports.getRestaurantsWithParametres = async (req, res) => {
           required: false,
           
         },
-        { association: 'parametres' }
+        {
+          association: 'parametres',
+          where: { est_important: true },
+          required: false
+        }
       ],
       order: [['created_at', 'DESC']]
     });
