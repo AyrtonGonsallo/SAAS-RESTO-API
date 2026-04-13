@@ -1,17 +1,25 @@
 const db = require('../models');
-const {  Tag,Societe,Restaurant } = db;
+const {  TypeDeCuisine,Societe,Restaurant } = db;
 
-exports.createTag = async (req, res) => {
+exports.createTypeDeCuisine = async (req, res) => {
   try {
-    const tag = await Tag.create(req.body);
-    res.json(tag);
+    const { restaurant_id, ...data } = req.body;
+
+    const type_de_cuisine = await TypeDeCuisine.create(req.body);
+
+    //ajouter ou mettre a jour la relation
+    await type_de_cuisine.setRestaurants([restaurant_id]);
+
+    res.json(type_de_cuisine);
+
+    
   } catch (error) {
     console.log(error)
     res.status(500).json({ message: error.message });
   }
 };
 
-exports.getTags = async (req, res) => {
+exports.getTypeDeCuisines = async (req, res) => {
   try {
     const selectedRestaurantId = req.query.restaurant_id;
     let restaurantFilter = {};
@@ -48,7 +56,7 @@ exports.getTags = async (req, res) => {
     }
     
 
-    const tags = await Tag.findAll({
+    const type_de_cuisines = await TypeDeCuisine.findAll({
          where:restaurantFilter,
           include: [
             {
@@ -66,53 +74,58 @@ exports.getTags = async (req, res) => {
     }
 );
 
-    res.json(tags);
+    res.json(type_de_cuisines);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
 
-exports.getTagById = async (req, res) => {
+exports.getTypeDeCuisineById = async (req, res) => {
   try {
-    const tag = await Tag.findByPk(req.params.id);
+    const type_de_cuisine = await TypeDeCuisine.findByPk(req.params.id);
 
-    if (!tag) {
-      return res.status(404).json({ message: 'Tag non trouvé' });
+    if (!type_de_cuisine) {
+      return res.status(404).json({ message: 'TypeDeCuisine non trouvé' });
     }
 
-    res.json(tag);
+    res.json(type_de_cuisine);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
 
-exports.updateTag = async (req, res) => {
+exports.updateTypeDeCuisine = async (req, res) => {
   try {
-    const tag = await Tag.findByPk(req.params.id);
+    const type_de_cuisine = await TypeDeCuisine.findByPk(req.params.id);
 
-    if (!tag) {
-      return res.status(404).json({ message: 'Tag non trouvé' });
+    if (!type_de_cuisine) {
+      return res.status(404).json({ message: 'TypeDeCuisine non trouvé' });
     }
 
-    await tag.update(req.body);
+    const { restaurant_id, ...data } = req.body;
+    await type_de_cuisine.update(req.body);
+    if (restaurant_id) {
+      await type_de_cuisine.setRestaurants([restaurant_id]);
+    }
 
-    res.json(tag);
+    res.json(type_de_cuisine);
   } catch (error) {
+    console.log(error)
     res.status(500).json({ message: error.message });
   }
 };
 
-exports.deleteTag = async (req, res) => {
+exports.deleteTypeDeCuisine = async (req, res) => {
   try {
-    const tag = await Tag.findByPk(req.params.id);
+    const type_de_cuisine = await TypeDeCuisine.findByPk(req.params.id);
 
-    if (!tag) {
-      return res.status(404).json({ message: 'Tag non trouvé' });
+    if (!type_de_cuisine) {
+      return res.status(404).json({ message: 'TypeDeCuisine non trouvé' });
     }
 
-    await tag.destroy();
+    await type_de_cuisine.destroy();
 
-    res.json({ message: 'Tag supprimé' });
+    res.json({ message: 'TypeDeCuisine supprimé' });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

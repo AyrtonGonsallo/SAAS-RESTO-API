@@ -32,7 +32,7 @@ router.post('/login', async (req, res) => {
         },
         {
           model: Restaurant,
-          attributes: ['id', 'nom', 'lieu', 'heure_debut', 'heure_fin', 'telephone'],
+          attributes: ['id', 'nom', 'coordonnees_google_maps', 'ville', 'adresse', 'heure_debut', 'heure_fin', 'telephone'],
           through: { attributes: [] }, // supprime les infos de la table pivot
           required: false,
         },
@@ -82,7 +82,7 @@ router.post('/refresh', async (req, res) => {
           },
           {
             model: Restaurant,
-            attributes: ['id', 'nom', 'lieu', 'heure_debut', 'heure_fin', 'telephone'],
+            attributes: ['id', 'nom', 'coordonnees_google_maps', 'ville', 'adresse', 'heure_debut', 'heure_fin', 'telephone'],
             through: { attributes: [] }, // supprime les infos de la table pivot
             required: false,
           },

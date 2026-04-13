@@ -122,7 +122,7 @@ router.get('/get_all_produits', async (req, res) => {
         },
         {
           model: Restaurant,
-          attributes: ['id', 'nom', 'lieu', 'heure_debut', 'heure_fin', 'telephone'],
+          attributes: ['id', 'nom', 'coordonnees_google_maps', 'ville', 'adresse', 'heure_debut', 'heure_fin', 'telephone'],
           required: false,
         
         },
@@ -327,7 +327,7 @@ router.get('/get_all_variations_produit', async (req, res) => {
         },
         {
           model: Restaurant,
-          attributes: ['id', 'nom', 'lieu', 'heure_debut', 'heure_fin', 'telephone'],
+          attributes: ['id', 'nom', 'coordonnees_google_maps', 'ville', 'adresse', 'heure_debut', 'heure_fin', 'telephone'],
           required: false,
         
         },

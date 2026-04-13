@@ -5,7 +5,9 @@ exports.ajouterRestaurant = async (req, res,next) => {
   try {
     const {
       nom,
-      lieu,
+      coordonnees_google_maps,
+      ville,
+      adresse,
       heure_debut,
       heure_fin,
       heure_cc_debut,
@@ -19,7 +21,9 @@ exports.ajouterRestaurant = async (req, res,next) => {
 
     const resto = await Restaurant.create({
       nom,
-      lieu,
+      coordonnees_google_maps,
+      ville,
+      adresse,
       heure_debut,
       heure_fin,
       heure_cc_debut,
@@ -120,6 +124,8 @@ exports.recreerParametresRestaurant = async (req, res,next) => {
       'alerte_stocke_min',
       'max_couverts_par_jour',
       'delai_rappel_reservation',
+      'delai_annulation_reservation',
+      'delai_invitation_avis',
       'cle_publique_stripe',
       'cle_privee_stripe',
       'etat_des_reservations',
@@ -137,6 +143,8 @@ exports.recreerParametresRestaurant = async (req, res,next) => {
       alerte_stocke_min: 5,
       max_couverts_par_jour: 100,
       delai_rappel_reservation: 30,
+      delai_annulation_reservation: 30,
+      delai_invitation_avis: 30,
       cle_publique_stripe: '',
       cle_privee_stripe: '',
       etat_des_reservations: 1,
@@ -152,13 +160,14 @@ exports.recreerParametresRestaurant = async (req, res,next) => {
       valeur: defaultValues[type],
       description: '',
       est_actif: true,
+      est_important: false,
       societe_id:restaurant.societe_id,
       restaurant_id: restaurant.id,
       utilisateur_id:restaurant.utilisateur_id
     }));
 
     await Parametre.bulkCreate(parametres, {
-      updateOnDuplicate: ['valeur', 'description', 'est_actif']
+      updateOnDuplicate: [ 'description', 'est_important']
     });
 
      
@@ -222,7 +231,8 @@ exports.getRestaurants = async (req, res) => {
           attributes: ['id', 'titre', 'status', ],
           required: false,
           
-        }
+        },
+        { association: 'types_de_cuisine' }
       ],
       order: [['created_at', 'DESC']]
     });
@@ -328,7 +338,9 @@ exports.updateRestaurant = async (req, res, next) => {
     const id = req.params.id;
     const { 
       nom,
-      lieu,
+      coordonnees_google_maps,
+      ville,
+      adresse,
       heure_debut,
       heure_fin,
       heure_cc_debut,
@@ -348,7 +360,9 @@ exports.updateRestaurant = async (req, res, next) => {
 
     await restaurant.update({
       nom,
-      lieu,
+      coordonnees_google_maps,
+      ville,
+      adresse,
       heure_debut,
       heure_fin,
       heure_cc_debut,

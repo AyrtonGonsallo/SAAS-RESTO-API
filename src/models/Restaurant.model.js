@@ -7,10 +7,18 @@ module.exports = (sequelize, DataTypes) => {
       autoIncrement: true
     },
     nom: {
-      type: DataTypes.STRING(255),
+      type: DataTypes.STRING(150),
       allowNull: false
     },
-    lieu: {
+    adresse: {
+      type: DataTypes.STRING(150),
+      allowNull: true
+    },
+    ville: {
+      type: DataTypes.STRING(50),
+      allowNull: true
+    },
+    coordonnees_google_maps: {
       type: DataTypes.TEXT,
       allowNull: true
     },
@@ -68,6 +76,13 @@ module.exports = (sequelize, DataTypes) => {
     Restaurant.hasMany(models.Parametre, {
       foreignKey: 'restaurant_id',
       as: 'parametres'
+    });
+    // N ↔ N Tags
+    Restaurant.belongsToMany(models.TypeDeCuisine, {
+      through: 'RestaurantTypeCuisine',
+      foreignKey: 'restaurant_id',
+      otherKey: 'type_de_cuisine_id',
+      as: 'types_de_cuisine'
     });
 
   };

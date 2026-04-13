@@ -1,6 +1,6 @@
 const db = require('../models');
 const bcrypt = require('bcryptjs');
-const {  Reservation,CreneauDuJour,Restaurant,Utilisateur,Role,Creneau,Tag,Service,RestaurantTable,Societe } = db;
+const {  Reservation,CreneauDuJour,Restaurant,Utilisateur,Role,Creneau,Tag,Service,RestaurantTable,Societe,ZoneTable,Notification } = db;
 const DEFAULT_PASS = process.env.DEFAULT_PASS;
 
 exports.createReservation = async (req, res) => {
@@ -18,6 +18,7 @@ exports.createReservation = async (req, res) => {
       restaurant_id,
       creneau_id,
       tags,
+      table_id,
       ...rest
     } = req.body;
 
@@ -47,6 +48,8 @@ exports.createReservation = async (req, res) => {
       }, { transaction: t });
 
       await client.setRestaurants([restaurant_id], { transaction: t });
+    }else{
+      await client.addRestaurant(restaurant_id, { transaction: t });
     }
 
     //  2. DATE
@@ -103,6 +106,7 @@ exports.createReservation = async (req, res) => {
     //  7. CRÉATION RÉSERVATION
     const reservation = await Reservation.create({
       ...rest,
+      table_id,
       creneau_id,
       societe_id,
       restaurant_id,
@@ -116,7 +120,38 @@ exports.createReservation = async (req, res) => {
       await reservation.setTags(tags, { transaction: t });
     }
 
+    //  9. table
+
+    const table = await RestaurantTable.findByPk(table_id);
+
+    if (!table) {
+      return res.status(404).json({
+        message: 'Table non trouvée'
+      });
+    }
+
+    await table.update({
+      statut:'réservée',
+    },{ transaction: t });
+
+     
+    
+    const dateReservation = new Date(reservation.date_reservation).toLocaleString('fr-FR');
+    let notificationOthers = await Notification.create({
+      titre:`Nouvelle reservation ${reservation.id}`,
+      date_rappel:new Date(Date.now() + 60 * 60 * 1000),
+      type:'message de confirmation',
+      canal:'site',
+      texte:`Vous avez une nouvelle réservation ${reservation.id} : Client "${prenom} ${nom}" pour le "${dateReservation}" dans le restaurant ${restaurant_id}`,
+      statut_lecture:'non lue',
+      societe_id:reservation.societe_id,
+      restaurant_id:reservation.restaurant_id,
+      utilisateur_id:0,
+      }, { transaction: t });
+    
+         
     await t.commit();
+
 
     //  9. RELOAD (hors transaction → plus rapide)
     const reservationObjet = await Reservation.findByPk(reservation.id, {
@@ -181,7 +216,7 @@ exports.getReservations = async (req, res) => {
           include: [
             {
                 model: Restaurant,
-                attributes: ['id', 'nom', 'lieu', 'heure_debut', 'heure_fin', 'telephone'],
+                attributes: ['id', 'nom', 'coordonnees_google_maps', 'ville', 'adresse', 'heure_debut', 'heure_fin', 'telephone'],
                 required: false,
             },
             { association: 'client' },
@@ -252,6 +287,7 @@ exports.updateReservation = async (req, res) => {
       statut,
       creneau_du_jour_id,
       creneau_id,
+      table_id,
       tags,
       ...rest
     } = req.body;
@@ -286,11 +322,28 @@ exports.updateReservation = async (req, res) => {
 
     let delta = 0;
 
+    const table = await RestaurantTable.findByPk(table_id);
+    if (!table) {
+      return res.status(404).json({
+        message: 'Table non trouvée'
+      });
+    }
+
     // 🔥 LOGIQUE UNIQUE
     if (actifs.includes(former_statut) && inactifs.includes(statut)) {
       delta = -1;
+
+      //  liberer. table
+      await table.update({
+        statut:'libre',
+      },{ transaction: t });
+
     } else if (inactifs.includes(former_statut) && actifs.includes(statut)) {
       delta = +1;
+
+      await table.update({
+        statut:'réservée',
+      },{ transaction: t });
     }
 
     //  Appliquer delta
@@ -315,6 +368,7 @@ exports.updateReservation = async (req, res) => {
     await reservation.update({
       ...rest,
       statut,
+      table_id,
       creneau_id,
       date_reservation: dateObj
     }, { transaction: t });
@@ -382,7 +436,20 @@ exports.getReservationDatasBySocieteID = async (req, res) => {
     const tags = await Tag.findAll({where: restaurantFilter,});
     const services = await Service.findAll({where: restaurantFilter,});
     const creneaux = await Creneau.findAll({where: restaurantFilter,});
-    const tables = await RestaurantTable.findAll({where: restaurantFilter,});
+    const tables = await RestaurantTable.findAll({
+      where: {
+      ...restaurantFilter,
+        statut: 'libre'
+      },
+      include: [
+        {
+          model: ZoneTable,
+          attributes: ['id', 'titre',  ],
+          required: false,
+        }
+      ],
+    },
+  );
     const restaurants = await Restaurant.findAll({
       where: restaurantFilter,
       include: [

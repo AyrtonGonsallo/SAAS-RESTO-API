@@ -17,11 +17,14 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: true
     },
     statut: {
-      type: DataTypes.ENUM('libre', 'occupée'),
+      type: DataTypes.ENUM('libre', 'occupée','réservée'),
       allowNull: false,
       defaultValue: 'libre'
     },
     societe_id: {
+      type: DataTypes.INTEGER,
+    },
+    zone_id: {
       type: DataTypes.INTEGER,
     },
     restaurant_id: {
@@ -56,6 +59,10 @@ module.exports = (sequelize, DataTypes) => {
 
     RestaurantTable.belongsTo(models.Restaurant, {
       foreignKey: 'restaurant_id',
+    });
+
+    RestaurantTable.belongsTo(models.ZoneTable, {
+      foreignKey: 'zone_id'
     });
   };
 

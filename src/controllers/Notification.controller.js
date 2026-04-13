@@ -1,17 +1,17 @@
 const db = require('../models');
-const {  Tag,Societe,Restaurant } = db;
+const {  Notification,Societe,Restaurant,Utilisateur } = db;
 
-exports.createTag = async (req, res) => {
+exports.createNotification = async (req, res) => {
   try {
-    const tag = await Tag.create(req.body);
-    res.json(tag);
+    const notification = await Notification.create(req.body);
+    res.json(notification);
   } catch (error) {
     console.log(error)
     res.status(500).json({ message: error.message });
   }
 };
 
-exports.getTags = async (req, res) => {
+exports.getNotifications = async (req, res) => {
   try {
     const selectedRestaurantId = req.query.restaurant_id;
     let restaurantFilter = {};
@@ -48,7 +48,7 @@ exports.getTags = async (req, res) => {
     }
     
 
-    const tags = await Tag.findAll({
+    const notifications = await Notification.findAll({
          where:restaurantFilter,
           include: [
             {
@@ -66,53 +66,83 @@ exports.getTags = async (req, res) => {
     }
 );
 
-    res.json(tags);
+    res.json(notifications);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
 
-exports.getTagById = async (req, res) => {
+exports.getNotificationById = async (req, res) => {
   try {
-    const tag = await Tag.findByPk(req.params.id);
+    const notification = await Notification.findByPk(req.params.id);
 
-    if (!tag) {
-      return res.status(404).json({ message: 'Tag non trouvé' });
+    if (!notification) {
+      return res.status(404).json({ message: 'Notification non trouvé' });
     }
 
-    res.json(tag);
+    res.json(notification);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
 
-exports.updateTag = async (req, res) => {
+exports.getNotificationsByUserId = async (req, res) => {
   try {
-    const tag = await Tag.findByPk(req.params.id);
 
-    if (!tag) {
-      return res.status(404).json({ message: 'Tag non trouvé' });
-    }
+    const utilisateur = await Utilisateur.findByPk(req.params.userid,{
+      
+    } );
+    const notifications = await Notification.findAll({
+      where: {
+        utilisateur_id: req.params.userid
+      }
+    });
 
-    await tag.update(req.body);
+    const notificationsAdmin = await Notification.findAll({
+      where: {
+        utilisateur_id: 0,
+        societe_id:utilisateur.societe_id
+      }
+    });
 
-    res.json(tag);
+      const allNotifications = [
+      ...notifications,
+      ...notificationsAdmin
+    ];
+
+    res.json(allNotifications);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
 
-exports.deleteTag = async (req, res) => {
+exports.updateNotification = async (req, res) => {
   try {
-    const tag = await Tag.findByPk(req.params.id);
+    const notification = await Notification.findByPk(req.params.id);
 
-    if (!tag) {
-      return res.status(404).json({ message: 'Tag non trouvé' });
+    if (!notification) {
+      return res.status(404).json({ message: 'Notification non trouvé' });
     }
 
-    await tag.destroy();
+    await notification.update(req.body);
 
-    res.json({ message: 'Tag supprimé' });
+    res.json(notification);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+exports.deleteNotification = async (req, res) => {
+  try {
+    const notification = await Notification.findByPk(req.params.id);
+
+    if (!notification) {
+      return res.status(404).json({ message: 'Notification non trouvé' });
+    }
+
+    await notification.destroy();
+
+    res.json({ message: 'Notification supprimé' });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

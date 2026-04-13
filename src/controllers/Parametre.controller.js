@@ -81,7 +81,7 @@ exports.getParametres =  async (req, res) => {
       include: [
        {
           model: Restaurant,
-          attributes: ['id', 'nom', 'lieu', 'heure_debut', 'heure_fin', 'telephone'],
+          attributes: ['id', 'nom', 'coordonnees_google_maps', 'ville', 'adresse', 'heure_debut', 'heure_fin', 'telephone'],
           required: false,
         
         },

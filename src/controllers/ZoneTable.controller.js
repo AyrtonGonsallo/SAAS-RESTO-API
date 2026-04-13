@@ -1,17 +1,17 @@
 const db = require('../models');
-const {  Tag,Societe,Restaurant } = db;
+const {  ZoneTable,Societe,Restaurant } = db;
 
-exports.createTag = async (req, res) => {
+exports.createZoneTable = async (req, res) => {
   try {
-    const tag = await Tag.create(req.body);
-    res.json(tag);
+    const zone = await ZoneTable.create(req.body);
+    res.json(zone);
   } catch (error) {
     console.log(error)
     res.status(500).json({ message: error.message });
   }
 };
 
-exports.getTags = async (req, res) => {
+exports.getZoneTables = async (req, res) => {
   try {
     const selectedRestaurantId = req.query.restaurant_id;
     let restaurantFilter = {};
@@ -48,7 +48,7 @@ exports.getTags = async (req, res) => {
     }
     
 
-    const tags = await Tag.findAll({
+    const zones = await ZoneTable.findAll({
          where:restaurantFilter,
           include: [
             {
@@ -66,53 +66,53 @@ exports.getTags = async (req, res) => {
     }
 );
 
-    res.json(tags);
+    res.json(zones);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
 
-exports.getTagById = async (req, res) => {
+exports.getZoneTableById = async (req, res) => {
   try {
-    const tag = await Tag.findByPk(req.params.id);
+    const zone = await ZoneTable.findByPk(req.params.id);
 
-    if (!tag) {
-      return res.status(404).json({ message: 'Tag non trouvé' });
+    if (!zone) {
+      return res.status(404).json({ message: 'ZoneTable non trouvé' });
     }
 
-    res.json(tag);
+    res.json(zone);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
 
-exports.updateTag = async (req, res) => {
+exports.updateZoneTable = async (req, res) => {
   try {
-    const tag = await Tag.findByPk(req.params.id);
+    const zone = await ZoneTable.findByPk(req.params.id);
 
-    if (!tag) {
-      return res.status(404).json({ message: 'Tag non trouvé' });
+    if (!zone) {
+      return res.status(404).json({ message: 'ZoneTable non trouvé' });
     }
 
-    await tag.update(req.body);
+    await zone.update(req.body);
 
-    res.json(tag);
+    res.json(zone);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
 
-exports.deleteTag = async (req, res) => {
+exports.deleteZoneTable = async (req, res) => {
   try {
-    const tag = await Tag.findByPk(req.params.id);
+    const zone = await ZoneTable.findByPk(req.params.id);
 
-    if (!tag) {
-      return res.status(404).json({ message: 'Tag non trouvé' });
+    if (!zone) {
+      return res.status(404).json({ message: 'ZoneTable non trouvé' });
     }
 
-    await tag.destroy();
+    await zone.destroy();
 
-    res.json({ message: 'Tag supprimé' });
+    res.json({ message: 'ZoneTable supprimé' });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

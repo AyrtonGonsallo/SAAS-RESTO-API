@@ -138,7 +138,7 @@ router.get('/get_all_utilisateurs', async (req, res) => {
         },
         {
           model: Restaurant,
-          attributes: ['id', 'nom', 'lieu', 'heure_debut', 'heure_fin', 'telephone'],
+          attributes: ['id', 'nom', 'coordonnees_google_maps', 'ville', 'adresse', 'heure_debut', 'heure_fin', 'telephone'],
           through: { attributes: [] }, // supprime les infos de la table pivot
           required: !ishigh,
           ...(ishigh ? {} : {
@@ -179,7 +179,7 @@ router.get('/get_utilisateur_by_id/:id', async (req, res, next) => {
         },
         {
           model: Restaurant,
-          attributes: ['id', 'nom', 'lieu', 'heure_debut', 'heure_fin', 'telephone'],
+          attributes: ['id', 'nom', 'coordonnees_google_maps', 'ville', 'adresse', 'heure_debut', 'heure_fin', 'telephone'],
           through: { attributes: [] }, // supprime les infos de la table pivot
           required: false,
         },
@@ -254,7 +254,7 @@ router.get('/get_all_utilisateurs_by_role/:role_type', async (req, res, next) =>
         },
         {
           model: Restaurant,
-          attributes: ['id', 'nom', 'lieu', 'heure_debut', 'heure_fin', 'telephone'],
+          attributes: ['id', 'nom', 'coordonnees_google_maps', 'ville', 'adresse', 'heure_debut', 'heure_fin', 'telephone'],
           through: { attributes: [] }, // supprime les infos de la table pivot
           required: false,
         },

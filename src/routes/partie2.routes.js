@@ -4,7 +4,7 @@ const express = require('express');
 const router = express.Router();
 const db = require('../models');
 const { Op } = require('sequelize');
-const { CategorieProduit,RestaurantTable, Societe, Restaurant,Utilisateur,Parametre } = db;
+const { CategorieProduit,RestaurantTable, Societe, Restaurant,ZoneTable,Parametre } = db;
 
 const {
   ajouterRestaurant,
@@ -39,6 +39,7 @@ router.post('/ajouter_table', async (req, res,next) => {
       numero,
       nb_places,
       statut,
+      zone_id,
       restaurant_id,
       societe_id,
     } = req.body;
@@ -49,6 +50,7 @@ router.post('/ajouter_table', async (req, res,next) => {
       numero,
       nb_places,
       statut,
+      zone_id,
       restaurant_id,
       societe_id,
     });
@@ -103,12 +105,18 @@ router.get('/get_all_tables', async (req, res) => {
       include: [
         {
           model: Restaurant,
-          attributes: ['id', 'nom', 'lieu', 'heure_debut', 'heure_fin', 'telephone'],
+          attributes: ['id', 'nom', 'coordonnees_google_maps', 'ville', 'adresse', 'heure_debut', 'heure_fin', 'telephone'],
           required: false,
         },
         {
           model: Societe,
           attributes: ['id', 'titre', 'status', ],
+          required: false,
+          
+        },
+        {
+          model: ZoneTable,
+          attributes: ['id', 'titre',  ],
           required: false,
           
         }
@@ -156,6 +164,7 @@ router.put('/update_table/:id', async (req, res, next) => {
       nb_places,
       statut,
       restaurant_id,
+      zone_id,
       societe_id,
      } = req.body;
 
@@ -171,6 +180,7 @@ router.put('/update_table/:id', async (req, res, next) => {
       numero,
       nb_places,
       statut,
+      zone_id,
       restaurant_id,
       societe_id,
     });
@@ -281,7 +291,7 @@ router.get('/get_all_categories_produit', async (req, res) => {
       include: [
         {
           model: Restaurant,
-          attributes: ['id', 'nom', 'lieu', 'heure_debut', 'heure_fin', 'telephone'],
+          attributes: ['id', 'nom', 'coordonnees_google_maps', 'ville', 'adresse', 'heure_debut', 'heure_fin', 'telephone'],
           required: false,
         
         },

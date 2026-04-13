@@ -24,7 +24,9 @@ db.MessageReservation = require('./MessageReservation.model')(sequelize, Sequeli
 db.Reservation = require('./Reservation.model')(sequelize, Sequelize.DataTypes);
 db.Service = require('./Service.model')(sequelize, Sequelize.DataTypes);
 db.CreneauDuJour = require('./CreneauDuJour.model')(sequelize, Sequelize.DataTypes);
-
+db.ZoneTable = require('./ZoneTable.model')(sequelize, Sequelize.DataTypes);
+db.TypeDeCuisine = require('./TypeDeCuisine.model')(sequelize, Sequelize.DataTypes);
+db.Notification = require('./Notification.model')(sequelize, Sequelize.DataTypes);
 
 // 🔗 Associations
 Object.keys(db).forEach((modelName) => {

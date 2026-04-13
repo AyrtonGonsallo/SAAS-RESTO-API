@@ -1,5 +1,5 @@
 const db = require('../models');
-const {  Paiement,Restaurant,Parametre } = db;
+const {  Paiement,Restaurant,Parametre, Notification } = db;
 const Stripe  = require('stripe')
 const STRIPE_SUCCESS_URL = process.env.STRIPE_SUCCESS_URL;
 const STRIPE_FAILURE_URL = process.env.STRIPE_FAILURE_URL;
@@ -96,7 +96,7 @@ exports.getPaiements = async (req, res) => {
         include: [
           {
               model: Restaurant,
-              attributes: ['id', 'nom', 'lieu', 'heure_debut', 'heure_fin', 'telephone'],
+              attributes: ['id', 'nom', 'coordonnees_google_maps', 'ville', 'adresse', 'heure_debut', 'heure_fin', 'telephone'],
               required: false,
           },
           
@@ -226,6 +226,25 @@ exports.createStripePayment = async (req, res) => {
       montant: montant
     }
   });
+
+  const t = await db.sequelize.transaction();
+
+  let notificationUser = await Notification.create({
+      titre:`Lien de paiement pour votre réservation ${final_reservation.id}`,
+      date_rappel:new Date(Date.now() + 60 * 60 * 1000),
+      type:'rappel',
+      canal:'site',
+      texte:`Voici le lien de paiment de votre réservation ${final_reservation.id} : ${session.url}`,
+      statut_lecture:'non lue',
+      societe_id:final_reservation.societe_id,
+      restaurant_id:final_reservation.restaurant_id,
+      utilisateur_id:final_reservation.client_id,
+      }, { transaction: t });
+
+      
+
+   
+    await t.commit();
 
   return res.json({ url: session.url });
 };
