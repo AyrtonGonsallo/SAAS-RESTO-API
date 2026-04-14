@@ -130,6 +130,11 @@ exports.createReservation = async (req, res) => {
       });
     }
 
+    if (table.statut=="réservée") {
+      await t.rollback();
+      return res.status(400).json({ message: 'Table déja réservée' });
+    }
+
     await table.update({
       statut:'réservée',
     },{ transaction: t });
@@ -402,18 +407,49 @@ exports.updateReservation = async (req, res) => {
 };
 
 exports.deleteReservation = async (req, res) => {
+  const t = await db.sequelize.transaction();
+
   try {
-    const reservation = await Reservation.findByPk(req.params.id);
+    const reservation = await Reservation.findByPk(req.params.id, { transaction: t });
 
     if (!reservation) {
-      return res.status(404).json({ message: 'Reservation non trouvé' });
+      await t.rollback();
+      return res.status(404).json({ message: 'Reservation non trouvée' });
     }
 
-    await reservation.destroy();
+    const creneauDuJour = await CreneauDuJour.findByPk(
+      reservation.creneau_du_jour_id,
+      { transaction: t }
+    );
 
-    res.json({ message: 'Reservation supprimé' });
+    if (creneauDuJour && creneauDuJour.nb_reservations_actuel > 0) {
+      await creneauDuJour.increment('nb_reservations_actuel', {
+        by: -1,
+        transaction: t
+      });
+    }
+
+    const table = await RestaurantTable.findByPk(reservation.table_id, { transaction: t });
+
+    if (!table) {
+      await t.rollback();
+      return res.status(404).json({ message: 'Table non trouvée' });
+    }
+
+    await table.update(
+      { statut: 'libre' },
+      { transaction: t }
+    );
+
+    await reservation.destroy({ transaction: t });
+
+    await t.commit();
+
+    return res.json({ message: 'Reservation supprimée' });
+
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    await t.rollback();
+    return res.status(500).json({ message: error.message });
   }
 };
 
