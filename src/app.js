@@ -12,6 +12,7 @@ const partie2Routes = require('./routes/partie2.routes');
 const partie3Routes = require('./routes/partie3.routes');
 const partie4Routes = require('./routes/partie4.routes');
 const partie5Routes = require('./routes/partie5.routes');
+const cronReservationsRoutes = require('./routes/cronReservations.routes');
 const stripeRoutes = require('./routes/stripe.routes');
 const authRoutes = require('./routes/partie-auth.routes');
 const routes_prefix = process.env.PREFIX;
@@ -50,6 +51,7 @@ app.use(routes_prefix, partie2Routes);
 app.use(routes_prefix, partie3Routes);
 app.use(routes_prefix, partie4Routes);
 app.use(routes_prefix, partie5Routes);
+app.use(routes_prefix, cronReservationsRoutes);
 app.use(routes_prefix, authRoutes);
 
 // test route

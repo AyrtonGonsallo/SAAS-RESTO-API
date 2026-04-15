@@ -6,7 +6,7 @@ module.exports = (sequelize, DataTypes) => {
       autoIncrement: true
     },
     type: {
-      type: DataTypes.ENUM('message de confirmation', 'alerte', 'rappel',),
+      type: DataTypes.ENUM('message de confirmation', 'alerte', 'rappel','info'),
       allowNull: false,
       defaultValue: 'message de confirmation'
     },

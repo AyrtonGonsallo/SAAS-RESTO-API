@@ -1,8 +1,9 @@
 const db = require('../models');
 const bcrypt = require('bcryptjs');
-const {  Reservation,CreneauDuJour,Restaurant,Utilisateur,Role,Creneau,Tag,Service,RestaurantTable,Societe,ZoneTable,Notification } = db;
+const {  Reservation,TotalReservationsCreneauParJour,ReservationsTablesParCreneauJour,Restaurant,Utilisateur,Role,Creneau,Tag,Service,RestaurantTable,Societe,ZoneTable,Notification } = db;
 const DEFAULT_PASS = process.env.DEFAULT_PASS;
-
+const notificationService = require('../services/notifications.service');
+const { Op } = require('sequelize');
 exports.createReservation = async (req, res) => {
   const t = await db.sequelize.transaction();
 
@@ -21,6 +22,41 @@ exports.createReservation = async (req, res) => {
       table_id,
       ...rest
     } = req.body;
+
+     //  2. DATE
+    const dateObj = new Date(
+      date_reservation.year,
+      date_reservation.month - 1,
+      date_reservation.day,
+      heure_reservation.hour,
+      heure_reservation.minute,
+      heure_reservation.second || 0
+    );
+
+    
+    
+
+    const dateOnly = `${date_reservation.year}-${String(date_reservation.month).padStart(2,'0')}-${String(date_reservation.day).padStart(2,'0')}`;
+
+   
+    
+
+     //verifier si existe une reservation pour la table a cette date et annuler avec 400 si oui si non creer
+    const existingReservationTablesParCreneauJour = await ReservationsTablesParCreneauJour.findOne({
+      where: {
+        creneau_id,
+        date: dateOnly,
+        table_id,
+      },
+      transaction: t
+    });
+
+    // si existe → erreur
+    if (existingReservationTablesParCreneauJour) {
+      return res.status(400).json({ message: 'Table déjà réservée pour ce créneau' });
+    }
+
+ 
 
     //  1. CLIENT chercher ou creer
     let client = await Utilisateur.findOne({ where: { email }, transaction: t });
@@ -52,20 +88,9 @@ exports.createReservation = async (req, res) => {
       await client.addRestaurant(restaurant_id, { transaction: t });
     }
 
-    //  2. DATE
-    const dateObj = new Date(
-      date_reservation.year,
-      date_reservation.month - 1,
-      date_reservation.day,
-      heure_reservation.hour,
-      heure_reservation.minute,
-      heure_reservation.second || 0
-    );
+    
 
    
-
-    const dateOnly = `${date_reservation.year}-${String(date_reservation.month).padStart(2,'0')}-${String(date_reservation.day).padStart(2,'0')}`;
-
     //  3. CRÉNEAU chercher
     const creneau = await Creneau.findByPk(creneau_id, { transaction: t });
 
@@ -74,19 +99,16 @@ exports.createReservation = async (req, res) => {
     }
 
     console.log('creneau_id ',creneau_id,
-        'date ', dateOnly,
-        'heure ', heure_reservation.hour)
+        'date ', dateOnly,)
     //  4. CRÉNEAU DU JOUR (SAFE) chercher ou creer
-    const [creneauDuJour, created] = await CreneauDuJour.findOrCreate({
+    const [totalReservationsCreneauParJour, ] = await TotalReservationsCreneauParJour.findOrCreate({
       where: {
         creneau_id,
         date: dateOnly,
-        heure: heure_reservation.hour
       },
       defaults: {
         creneau_id,
         date: dateOnly,
-        heure: heure_reservation.hour,
         nb_reservations_actuel: 0,
         societe_id,
         restaurant_id
@@ -95,13 +117,13 @@ exports.createReservation = async (req, res) => {
     });
 
     //  5. CHECK CAPACITÉ (AVANT incrément)
-    if (creneauDuJour.nb_reservations_actuel >= creneau.nb_reservations_max) {
+    if (totalReservationsCreneauParJour.nb_reservations_actuel >= creneau.nb_reservations_max) {
       await t.rollback();
       return res.status(400).json({ message: 'Créneau complet' });
     }
 
     //  6. INCRÉMENT ATOMIQUE
-    await creneauDuJour.increment('nb_reservations_actuel', { transaction: t });
+    await totalReservationsCreneauParJour.increment('nb_reservations_actuel', { transaction: t });
 
     //  7. CRÉATION RÉSERVATION
     const reservation = await Reservation.create({
@@ -110,9 +132,21 @@ exports.createReservation = async (req, res) => {
       creneau_id,
       societe_id,
       restaurant_id,
-      creneau_du_jour_id: creneauDuJour.id,
+      total_reservations_creneau_par_jour_id: totalReservationsCreneauParJour.id,
       date_reservation: dateObj,
       client_id: client.id
+    }, { transaction: t });
+
+
+    // sinon créer
+    const newReservationTablesParCreneauJour = await ReservationsTablesParCreneauJour.create({
+      creneau_id,
+      date: dateOnly,
+      table_id,
+      societe_id,
+      reservation_id:reservation.id,
+      restaurant_id,
+      utilisateur_id: client.id
     }, { transaction: t });
 
     //  8. TAGS
@@ -135,24 +169,27 @@ exports.createReservation = async (req, res) => {
       return res.status(400).json({ message: 'Table déja réservée' });
     }
 
-    await table.update({
-      statut:'réservée',
-    },{ transaction: t });
+   
 
-     
     
     const dateReservation = new Date(reservation.date_reservation).toLocaleString('fr-FR');
-    let notificationOthers = await Notification.create({
-      titre:`Nouvelle reservation ${reservation.id}`,
-      date_rappel:new Date(Date.now() + 60 * 60 * 1000),
-      type:'message de confirmation',
-      canal:'site',
-      texte:`Vous avez une nouvelle réservation ${reservation.id} : Client "${prenom} ${nom}" pour le "${dateReservation}" dans le restaurant ${restaurant_id}`,
-      statut_lecture:'non lue',
-      societe_id:reservation.societe_id,
-      restaurant_id:reservation.restaurant_id,
-      utilisateur_id:0,
-      }, { transaction: t });
+
+    await notificationService.createNotification({
+        reservation,
+        titre: `Nouvelle reservation`,
+        type:'info',
+        texte: `Vous avez une nouvelle réservation ${reservation.id} : Client "${prenom} ${nom}" pour le "${dateReservation}" dans le restaurant ${restaurant_id}`,
+    });
+
+    await notificationService.createNotification({
+        reservation,
+        titre: `Nouvelle reservation`,
+        type:'rappel',
+        texte: `N'oubliez pas votre réservation ${reservation.id} pour ${dateReservation}`,
+        utilisateur_id: reservation.client_id
+    });
+
+    
     
          
     await t.commit();
@@ -181,32 +218,37 @@ exports.createReservation = async (req, res) => {
 
 exports.getReservations = async (req, res) => {
   try {
+
+  
     const selectedRestaurantId = req.query.restaurant_id;
     let restaurantFilter = {};
 
     let ishigh = req.role_priorite<4
 
     if (!ishigh) {
-        if (selectedRestaurantId) {
-        // 🔥 filtre sur UN restaurant
-        restaurantFilter = {
-            restaurant_id: selectedRestaurantId,
-            societe_id: req.societe_id
-        };
+        if(req.role_priorite==8){
+          restaurantFilter = {societe_id: req.societe_id,client_id:req.user_id}
+        }
+        else if (selectedRestaurantId) {
+          //  filtre sur UN restaurant
+          restaurantFilter = {
+              restaurant_id: selectedRestaurantId,
+              societe_id: req.societe_id
+          };
         } else {
-        // 🔥 filtre sur plusieurs restaurants autorisés
-        restaurantFilter = {
-            restaurant_id: {
-            [Op.in]: req.restos
-            },
-            societe_id: req.societe_id
-        };
+          //  filtre sur plusieurs restaurants autorisés
+          restaurantFilter = {
+              restaurant_id: {
+              [Op.in]: req.restos
+              },
+              societe_id: req.societe_id
+          };
         }
     }else{
         if (req.isSuperAdmin) {
         restaurantFilter = {}
         }else{
-        restaurantFilter = {societe_id: req.societe_id}
+            restaurantFilter = {societe_id: req.societe_id}
         }
     }
     const where = {};
@@ -217,25 +259,24 @@ exports.getReservations = async (req, res) => {
     
 
     const reservations = await Reservation.findAll({
-         where:restaurantFilter,
-          include: [
-            {
-                model: Restaurant,
-                attributes: ['id', 'nom', 'coordonnees_google_maps', 'ville', 'adresse', 'heure_debut', 'heure_fin', 'telephone'],
-                required: false,
-            },
-            { association: 'client' },
-            { association: 'table' },
-            { association: 'service' },
-            { association: 'creneau' },
-            { association: 'societe' },
-            { association: 'paiements' },
-            { association: 'tags' },
-            { association: 'messages' }
-        ],
-
-    }
-);
+      where:restaurantFilter,
+      include: [
+        {
+            model: Restaurant,
+            attributes: ['id', 'nom', 'coordonnees_google_maps', 'ville', 'adresse', 'heure_debut', 'heure_fin', 'telephone'],
+            required: false,
+        },
+        { association: 'client' },
+        { association: 'table' },
+        { association: 'service' },
+        { association: 'creneau' },
+        { association: 'societe' },
+        { association: 'paiements' },
+        { association: 'tags' },
+        { association: 'messages' }
+      ],
+      order: [['date_reservation', 'DESC']]
+    });
 
     res.json(reservations);
   } catch (error) {
@@ -290,7 +331,7 @@ exports.updateReservation = async (req, res) => {
       date_reservation,
       heure_reservation,
       statut,
-      creneau_du_jour_id,
+      total_reservations_creneau_par_jour_id,
       creneau_id,
       table_id,
       tags,
@@ -312,17 +353,17 @@ exports.updateReservation = async (req, res) => {
     if (!creneau) throw new Error('Créneau introuvable');
 
     //  Charger créneau du jour avec lock
-    const creneauDuJour = await CreneauDuJour.findByPk(creneau_du_jour_id, {
+    const totalReservationsCreneauParJour = await TotalReservationsCreneauParJour.findByPk(total_reservations_creneau_par_jour_id, {
       transaction: t,
       lock: t.LOCK.UPDATE
     });
 
-    if (!creneauDuJour) {
+    if (!totalReservationsCreneauParJour) {
       throw new Error('Créneau du jour introuvable');
     }
 
     //  Définir groupes de statuts
-    const actifs = ['En attente', 'Confirmée'];
+    const actifs = ['En attente', 'Confirmée','En cours'];
     const inactifs = ['Annulée','Terminée','No-show'];
 
     let delta = 0;
@@ -338,32 +379,58 @@ exports.updateReservation = async (req, res) => {
     if (actifs.includes(former_statut) && inactifs.includes(statut)) {
       delta = -1;
 
-      //  liberer. table
-      await table.update({
-        statut:'libre',
-      },{ transaction: t });
+      //  supprimer
+      const reservationsTablesParCreneauJour = await ReservationsTablesParCreneauJour.findOne({
+        where: {
+          reservation_id: reservation.id,
+        }}, 
+        { transaction: t }
+      );
+
+      if (reservationsTablesParCreneauJour) {
+        await reservationsTablesParCreneauJour.destroy({ transaction: t });
+      }
 
     } else if (inactifs.includes(former_statut) && actifs.includes(statut)) {
       delta = +1;
 
-      await table.update({
-        statut:'réservée',
-      },{ transaction: t });
+      //verifier si existe une reservation pour la table a cette date et annuler avec 400 si oui si non creer
+      const existingReservationTablesParCreneauJour = await ReservationsTablesParCreneauJour.findOne({
+        where: {
+          reservation_id: reservation.id,
+        },
+        transaction: t
+      });
+
+      // si existe → bon
+      if (!existingReservationTablesParCreneauJour) {
+         // sinon créer
+        const newReservationTablesParCreneauJour = await ReservationsTablesParCreneauJour.create({
+          creneau_id:reservation.creneau_id,
+          date: date_reservation,
+          table_id:reservation.table_id ,
+          societe_id:reservation.societe_id ,
+          reservation_id:reservation.id,
+          restaurant_id:reservation.restaurant_id ,
+          utilisateur_id:reservation.client_id ,
+        }, { transaction: t });
+        
+      }
     }
 
     //  Appliquer delta
     if (delta !== 0) {
-      if (delta === 1 && creneauDuJour.nb_reservations_actuel >= creneau.nb_reservations_max) {
+      if (delta === 1 && totalReservationsCreneauParJour.nb_reservations_actuel >= creneau.nb_reservations_max) {
         await t.rollback();
         return res.status(400).json({ message: 'Créneau complet' });
       }
 
-      if (delta === -1 && creneauDuJour.nb_reservations_actuel <= 0) {
+      if (delta === -1 && totalReservationsCreneauParJour.nb_reservations_actuel <= 0) {
         await t.rollback();
         return res.status(400).json({ message: 'Compteur invalide' });
       }
 
-      await creneauDuJour.increment('nb_reservations_actuel', {
+      await totalReservationsCreneauParJour.increment('nb_reservations_actuel', {
         by: delta,
         transaction: t
       });
@@ -417,29 +484,30 @@ exports.deleteReservation = async (req, res) => {
       return res.status(404).json({ message: 'Reservation non trouvée' });
     }
 
-    const creneauDuJour = await CreneauDuJour.findByPk(
-      reservation.creneau_du_jour_id,
+    const totalReservationsCreneauParJour = await TotalReservationsCreneauParJour.findByPk(
+      reservation.total_reservations_creneau_par_jour_id,
       { transaction: t }
     );
 
-    if (creneauDuJour && creneauDuJour.nb_reservations_actuel > 0) {
-      await creneauDuJour.increment('nb_reservations_actuel', {
+    if (totalReservationsCreneauParJour && totalReservationsCreneauParJour.nb_reservations_actuel > 0) {
+      await totalReservationsCreneauParJour.increment('nb_reservations_actuel', {
         by: -1,
         transaction: t
       });
     }
 
-    const table = await RestaurantTable.findByPk(reservation.table_id, { transaction: t });
-
-    if (!table) {
-      await t.rollback();
-      return res.status(404).json({ message: 'Table non trouvée' });
-    }
-
-    await table.update(
-      { statut: 'libre' },
+    const reservationsTablesParCreneauJour = await ReservationsTablesParCreneauJour.findOne({
+      where: {
+        reservation_id: reservation.id,
+      }}, 
       { transaction: t }
     );
+
+    if (reservationsTablesParCreneauJour) {
+      await reservationsTablesParCreneauJour.destroy({ transaction: t });
+    }
+
+    
 
     await reservation.destroy({ transaction: t });
 
@@ -484,6 +552,7 @@ exports.getReservationDatasBySocieteID = async (req, res) => {
           required: false,
         }
       ],
+      order: [['zone_id', 'ASC']]
     },
   );
     const restaurants = await Restaurant.findAll({

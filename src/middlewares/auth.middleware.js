@@ -13,7 +13,9 @@ const publicRoutes = [
   '/get_stripe_payment_link_for_resto',
   '/get_reservation_data_by_societeID',
   '/presentation',
-  '/stripe_reservation_payment_webhook'
+  '/stripe_reservation_payment_webhook',
+  '/update_reservations_statuts',
+  '/watch_reservations_delais'
 ];
 
 

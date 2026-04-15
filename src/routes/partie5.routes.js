@@ -25,6 +25,7 @@ const {
   createNotification,
   getNotificationById,
   getNotificationsByUserId, 
+  getUnreadNotificationsByUserId,
   getNotifications,
   updateNotification,
   deleteNotification
@@ -77,6 +78,8 @@ router.get('/get_notification_by_id/:id', getNotificationById);
 
 // READ BY USERID
 router.get('/get_all_notifications_by_id/:userid', getNotificationsByUserId);
+
+router.get('/get_all_unread_notifications_by_id/:userid', getUnreadNotificationsByUserId);
 
 // UPDATE
 router.put('/update_notification/:id', updateNotification);

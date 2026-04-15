@@ -49,22 +49,21 @@ exports.getNotifications = async (req, res) => {
     
 
     const notifications = await Notification.findAll({
-         where:restaurantFilter,
-          include: [
-            {
-                model: Restaurant,
-                attributes: ['id', 'nom', 'coordonnees_google_maps', 'ville', 'adresse', 'heure_debut', 'heure_fin', 'telephone'],
-                required: false,
-            },
-            {
-                model: Societe,
-                attributes: ['id', 'titre', ],
-                required: false,
-            },
-        ],
-
-    }
-);
+      where:restaurantFilter,
+      include: [
+        {
+            model: Restaurant,
+            attributes: ['id', 'nom', 'coordonnees_google_maps', 'ville', 'adresse', 'heure_debut', 'heure_fin', 'telephone'],
+            required: false,
+        },
+        {
+            model: Societe,
+            attributes: ['id', 'titre', ],
+            required: false,
+        },
+      ],
+      order: [['created_at', 'DESC']]
+    });
 
     res.json(notifications);
   } catch (error) {
@@ -81,6 +80,7 @@ exports.getNotificationById = async (req, res) => {
     }
 
     res.json(notification);
+    await notification.update({statut_lecture:'lue'});
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -95,23 +95,57 @@ exports.getNotificationsByUserId = async (req, res) => {
     const notifications = await Notification.findAll({
       where: {
         utilisateur_id: req.params.userid
-      }
+      },
     });
 
     const notificationsAdmin = await Notification.findAll({
       where: {
         utilisateur_id: 0,
         societe_id:utilisateur.societe_id
-      }
+      },
     });
 
-      const allNotifications = [
+    const allNotifications = [
       ...notifications,
       ...notificationsAdmin
-    ];
+    ].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 
     res.json(allNotifications);
   } catch (error) {
+    console.log(error)
+    res.status(500).json({ message: error.message });
+  }
+};
+
+exports.getUnreadNotificationsByUserId = async (req, res) => {
+  try {
+
+    const utilisateur = await Utilisateur.findByPk(req.params.userid,{
+      
+    } );
+    const notifications = await Notification.findAll({
+      where: {
+        utilisateur_id: req.params.userid,
+        statut_lecture:'non lue'
+      },
+    });
+
+    const notificationsAdmin = await Notification.findAll({
+      where: {
+        utilisateur_id: 0,
+        statut_lecture:'non lue',
+        societe_id:utilisateur.societe_id
+      },
+    });
+
+    const allNotifications = [
+      ...notifications,
+      ...notificationsAdmin
+    ].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
+    res.json(allNotifications);
+  } catch (error) {
+    console.log(error)
     res.status(500).json({ message: error.message });
   }
 };

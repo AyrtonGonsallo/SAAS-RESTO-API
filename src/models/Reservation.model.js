@@ -34,7 +34,7 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.INTEGER,
       allowNull: true
     },
-    creneau_du_jour_id: {
+    total_reservations_creneau_par_jour_id: {
       type: DataTypes.INTEGER,
       allowNull: true
     },
@@ -43,7 +43,7 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: true
     },
     statut: {
-      type: DataTypes.ENUM('En attente', 'Confirmée','Annulée','Terminée','No-show'),
+      type: DataTypes.ENUM('En attente', 'Confirmée','En cours','Annulée','Terminée','No-show'),
       allowNull: false,
       defaultValue: 'En attente'
     },

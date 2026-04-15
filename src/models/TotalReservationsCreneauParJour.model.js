@@ -1,5 +1,5 @@
 module.exports = (sequelize, DataTypes) => {
-  const CreneauDuJour = sequelize.define('CreneauDuJour', {
+  const TotalReservationsCreneauParJour = sequelize.define('TotalReservationsCreneauParJour', {
     id: {
       type: DataTypes.INTEGER,
       primaryKey: true,
@@ -11,10 +11,6 @@ module.exports = (sequelize, DataTypes) => {
     },
     date: {
       type: DataTypes.DATEONLY,
-      allowNull: false
-    },
-    heure: {
-      type: DataTypes.INTEGER,
       allowNull: false
     },
     nb_reservations_actuel: {
@@ -34,21 +30,21 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: true
     }
   }, {
-    tableName: 'CreneauDuJour',
+    tableName: 'TotalReservationsCreneauParJour',
     timestamps: true,
     createdAt: 'created_at',
     updatedAt: 'updated_at'
   });
 
-  CreneauDuJour.associate = (models) => {
+  TotalReservationsCreneauParJour.associate = (models) => {
    
-    CreneauDuJour.belongsTo(models.Restaurant, {
+    TotalReservationsCreneauParJour.belongsTo(models.Restaurant, {
       foreignKey: 'restaurant_id',
     });
-    CreneauDuJour.belongsTo(models.Societe, {
+    TotalReservationsCreneauParJour.belongsTo(models.Societe, {
       foreignKey: 'societe_id',
     });
   }
 
-  return CreneauDuJour;
+  return TotalReservationsCreneauParJour;
 };
