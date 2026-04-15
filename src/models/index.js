@@ -28,6 +28,8 @@ db.ReservationsTablesParCreneauJour = require('./ReservationsTablesParCreneauJou
 db.ZoneTable = require('./ZoneTable.model')(sequelize, Sequelize.DataTypes);
 db.TypeDeCuisine = require('./TypeDeCuisine.model')(sequelize, Sequelize.DataTypes);
 db.Notification = require('./Notification.model')(sequelize, Sequelize.DataTypes);
+db.Menu = require('./Menu.model')(sequelize, Sequelize.DataTypes);
+
 
 // 🔗 Associations
 Object.keys(db).forEach((modelName) => {

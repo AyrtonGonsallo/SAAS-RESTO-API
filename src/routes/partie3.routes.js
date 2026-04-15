@@ -16,7 +16,7 @@ const storage = multer.diskStorage({
 });
 
 const upload = multer({ storage });
-const { Produit, CategorieProduit, VariationProduit,Parametre,Restaurant  } = db;
+const { Produit, CategorieProduit, VariationProduit,Restaurant  } = db;
 
 const {
   ajouterParametre,
@@ -127,7 +127,7 @@ router.get('/get_all_produits', async (req, res) => {
         
         },
       ],
-      order: [['created_at', 'DESC']]
+      order: [['societe_id', 'ASC'],['restaurant_id', 'ASC'],['categorie_id', 'ASC'],['titre', 'ASC']]
     });
 
     return res.status(200).json(produits);

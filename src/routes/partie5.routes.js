@@ -2,7 +2,17 @@
 // routes/partie3.routes.js
 const express = require('express');
 const router = express.Router();
-
+const multer = require('multer');
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, 'uploads/');
+  },
+  filename: function (req, file, cb) {
+    const uniqueName = Date.now() + '-' + file.originalname;
+    cb(null, uniqueName);
+  }
+});
+const upload = multer({ storage });
 
 const {
   createTypeDeCuisine,
@@ -31,7 +41,13 @@ const {
   deleteNotification
 } = require('../controllers/Notification.controller');
 
-
+const {
+  ajouterMenu,
+  getMenuById, 
+  getMenus,
+  updateMenu,
+  deleteMenu
+} = require('../controllers/Menu.controller');
 
 
 
@@ -87,7 +103,20 @@ router.put('/update_notification/:id', updateNotification);
 // DELETE
 router.delete('/delete_notification/:id', deleteNotification);
 
+// CREATE
+router.post('/ajouter_menu', upload.single('image'),ajouterMenu);
 
+// READ ALL
+router.get('/get_all_menus', getMenus);
+
+// READ BY ID
+router.get('/get_menu_by_id/:id', getMenuById);
+
+// UPDATE
+router.put('/update_menu/:id', upload.single('image'),updateMenu);
+
+// DELETE
+router.delete('/delete_menu/:id', deleteMenu);
 
 
 module.exports = router;
