@@ -16,6 +16,7 @@
 .env
 .sql
 # Node
+/uploads
 /node_modules
 npm-debug.log
 yarn-error.log
