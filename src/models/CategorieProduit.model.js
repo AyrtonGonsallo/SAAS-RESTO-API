@@ -13,6 +13,10 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.TEXT,
       allowNull: true
     },
+    ordre: {
+      type: DataTypes.INTEGER,
+      allowNull: true
+    },
     est_actif: {
       type: DataTypes.BOOLEAN,
       defaultValue: true

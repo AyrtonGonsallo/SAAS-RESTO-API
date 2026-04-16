@@ -4,6 +4,18 @@ const express = require('express');
 const router = express.Router();
 const db = require('../models');
 const { Op } = require('sequelize');
+const multer = require('multer');
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, 'uploads/');
+  },
+  filename: function (req, file, cb) {
+    const uniqueName = Date.now() + '-' + file.originalname;
+    cb(null, uniqueName);
+  }
+});
+
+const upload = multer({ storage });
 const { CategorieProduit,RestaurantTable, Societe, Restaurant,ZoneTable,Parametre } = db;
 
 const {
@@ -28,7 +40,7 @@ router.get('/get_restaurant_by_id/:id', getRestaurantById);
 router.get('/recreate_parametres_restaurant/:id', recreerParametresRestaurant);
 
 
-router.put('/update_restaurant/:id', updateRestaurant);
+router.put('/update_restaurant/:id',upload.single('image'), updateRestaurant);
 
 router.delete('/delete_restaurant/:id', deleteRestaurant);
 
@@ -224,6 +236,7 @@ router.post('/ajouter_categorie_produit', async (req, res,next) => {
       titre,
       description,
       est_actif,
+      ordre,
       societe_id,
       restaurant_id,
       utilisateur_id,
@@ -235,6 +248,7 @@ router.post('/ajouter_categorie_produit', async (req, res,next) => {
       titre,
       description,
       est_actif,
+      ordre,
       societe_id,
       restaurant_id,
       utilisateur_id,
@@ -296,7 +310,7 @@ router.get('/get_all_categories_produit', async (req, res) => {
         
         },
       ],
-      order: [['created_at', 'DESC']]
+      order: [['restaurant_id', 'DESC'],['ordre', 'ASC'],['created_at', 'DESC']]
     });
 
     return res.status(200).json(categories);
@@ -338,6 +352,7 @@ router.put('/update_categorie_produit/:id', async (req, res, next) => {
       titre,
       description,
       est_actif,
+      ordre,
       societe_id,
       restaurant_id,
       utilisateur_id,
@@ -355,6 +370,7 @@ router.put('/update_categorie_produit/:id', async (req, res, next) => {
       titre,
       description,
       est_actif,
+      ordre,
       societe_id,
       restaurant_id,
       utilisateur_id,

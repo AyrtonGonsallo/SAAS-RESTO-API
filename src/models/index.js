@@ -29,6 +29,8 @@ db.ZoneTable = require('./ZoneTable.model')(sequelize, Sequelize.DataTypes);
 db.TypeDeCuisine = require('./TypeDeCuisine.model')(sequelize, Sequelize.DataTypes);
 db.Notification = require('./Notification.model')(sequelize, Sequelize.DataTypes);
 db.Menu = require('./Menu.model')(sequelize, Sequelize.DataTypes);
+db.Commande = require('./Commande.model')(sequelize, Sequelize.DataTypes);
+db.Panier = require('./Panier.model')(sequelize, Sequelize.DataTypes);
 
 
 // 🔗 Associations

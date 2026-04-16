@@ -336,6 +336,7 @@ exports.getRestaurantById = async (req, res, next) => {
 exports.updateRestaurant = async (req, res, next) => {
   try {
     const id = req.params.id;
+    const image = req.file ? req.file.filename : null;
     const { 
       nom,
       coordonnees_google_maps,
@@ -371,6 +372,12 @@ exports.updateRestaurant = async (req, res, next) => {
       societe_id,
       utilisateur_id
     });
+
+    if(image){
+      await restaurant.update({
+        image,
+      });
+    }
 
     return res.status(200).json(restaurant);
 
