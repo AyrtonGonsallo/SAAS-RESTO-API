@@ -20,6 +20,11 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: false,
       defaultValue: 'Nouvelle'
     },
+    
+    panier_id: {
+      type: DataTypes.INTEGER,
+      allowNull: true
+    },
     societe_id: {
       type: DataTypes.INTEGER,
       allowNull: true

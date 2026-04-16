@@ -35,12 +35,18 @@ const {
 } = require('../controllers/Reservation.controller');
 
 const {
+  createCommande,
+  getCommandesDatasBySocieteID
+} = require('../controllers/Commande.controller');
+
+const {
   createPaiement,
   getPaiements, 
   getPaiementById,
   updatePaiement,
   deletePaiement,
-  createStripePayment
+  createStripePaymentForCommande,
+  createStripePaymentForReservation
 } = require('../controllers/Paiement.controller');
 
 const { Portefeuille, Abonnement, } = db;
@@ -246,9 +252,9 @@ router.put('/update_reservation/:id', updateReservation);
 // DELETE
 router.delete('/delete_reservation/:id', deleteReservation);
 
-router.get('/get_reservation_data_by_societeID/:societeID', getReservationDatasBySocieteID);
+router.get('/get_reservation_datas_by_societeID/:societeID', getReservationDatasBySocieteID);
 
-router.post('/get_stripe_payment_link_for_resto/:restaurantId', createStripePayment);
+router.post('/get_stripe_payment_link_for_reservation/:restaurantId', createStripePaymentForReservation);
 
 
 // CREATE
@@ -265,5 +271,14 @@ router.put('/update_paiement/:id', updatePaiement);
 
 // DELETE
 router.delete('/delete_paiement/:id', deletePaiement);
+
+// CREATE
+router.post('/ajouter_commande', createCommande);
+
+router.get('/get_commande_datas_by_societeID/:societeID', getCommandesDatasBySocieteID);
+
+router.post('/get_stripe_payment_link_for_commande/:restaurantId', createStripePaymentForCommande);
+
+
 
 module.exports = router;

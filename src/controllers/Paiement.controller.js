@@ -163,7 +163,95 @@ exports.deletePaiement = async (req, res) => {
 
 
 
-exports.createStripePayment = async (req, res) => {
+exports.createStripePaymentForReservation = async (req, res) => {
+
+  const restaurantId = req.params.restaurantId;
+
+  const final_reservation = req.body;
+
+  const restaurant = await Restaurant.findByPk(restaurantId);
+
+  if (!restaurant) {
+    return res.status(404).json({ message: 'Restaurant non trouvé' });
+  }
+
+  const params = await Parametre.findAll({
+    where: {
+      restaurant_id: restaurantId,
+      type: [
+        'cle_publique_stripe',
+        'cle_privee_stripe',
+        'montant_paiement_acompte_reservation',
+      ],
+      est_actif: true
+    }
+  });
+
+  //  transformation propre key/value
+  const config = Object.fromEntries(
+    params.map(p => [p.type, p.valeur])
+  );
+
+  const stripe = Stripe(config.cle_privee_stripe);
+
+  const montant = parseFloat(config.montant_paiement_acompte_reservation || 0);
+
+  const session = await stripe.checkout.sessions.create({
+    payment_method_types: ['card'],
+    mode: 'payment',
+    line_items: [
+      {
+        price_data: {
+          currency: 'eur',
+          product_data: {
+            name: `Paiement de la réservation de ${final_reservation.client.nom} ${final_reservation.client.prenom} au restaurant "${restaurant.nom}"`,
+          },
+          unit_amount: Math.round(montant * 100), // 
+        },
+        quantity: 1,
+      }
+    ],
+    success_url: `${STRIPE_SUCCESS_URL}`,
+    cancel_url: `${STRIPE_FAILURE_URL}`,
+    metadata: {
+      id_final_reservation: final_reservation.id,
+      id_client: final_reservation.client.id,
+      nom: final_reservation.client.nom,
+      prenom: final_reservation.client.prenom,
+      email: final_reservation.email,
+      statut: final_reservation.statut,
+      nombre_de_personnes: final_reservation.nombre_de_personnes,
+      nb_couverts: final_reservation.nb_couverts,
+      date_reservation: final_reservation.date_reservation,
+      montant: montant
+    }
+  });
+
+  const t = await db.sequelize.transaction();
+
+  let notificationUser = await Notification.create({
+      titre:`Lien de paiement pour votre réservation ${final_reservation.id}`,
+      date_rappel:new Date(Date.now() + 60 * 60 * 1000),
+      type:'rappel',
+      canal:'site',
+      texte:`Voici le lien de paiment de votre réservation ${final_reservation.id} : ${session.url}`,
+      statut_lecture:'non lue',
+      societe_id:final_reservation.societe_id,
+      restaurant_id:final_reservation.restaurant_id,
+      utilisateur_id:final_reservation.client_id,
+      }, { transaction: t });
+
+      
+
+   
+    await t.commit();
+
+  return res.json({ url: session.url });
+};
+
+
+
+exports.createStripePaymentForCommande = async (req, res) => {
 
   const restaurantId = req.params.restaurantId;
 

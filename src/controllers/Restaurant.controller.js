@@ -43,6 +43,7 @@ exports.ajouterRestaurant = async (req, res,next) => {
       'cle_publique_stripe',
       'cle_privee_stripe',
       'etat_des_reservations',
+      'etat_du_click_and_collect',
       'etat_paiement_acompte_reservation',
       'montant_paiement_acompte_reservation',
       'etat_paiement_acompte_click_and_collect',
@@ -51,31 +52,43 @@ exports.ajouterRestaurant = async (req, res,next) => {
 
     // valeurs par défaut (important)
     const defaultValues = {
-      tva: 20,
-      coefficient: 1,
-      max_commandes_par_minutes: 10,
-      alerte_stocke_min: 5,
-      max_couverts_par_jour: 100,
-      delai_rappel_reservation: 30,
-      cle_publique_stripe: '',
-      cle_privee_stripe: '',
-      etat_des_reservations: 1,
-      etat_paiement_acompte_reservation: 1,
-      montant_paiement_acompte_reservation: 50,
-      etat_paiement_acompte_click_and_collect: 1,
-      montant_paiement_acompte_click_and_collect: 50,
+      tva: { valeur: 20, est_actif: true, est_important: false },
+      coefficient: { valeur: 1, est_actif: true, est_important: false },
+      max_commandes_par_minutes: { valeur: 10, est_actif: true, est_important: false },
+      alerte_stocke_min: { valeur: 5, est_actif: true, est_important: true },
+      max_couverts_par_jour: { valeur: 100, est_actif: true, est_important: false },
+      delai_rappel_reservation: { valeur: 30, est_actif: true, est_important: false },
+
+      cle_publique_stripe: { valeur: '', est_actif: true, est_important: false },
+      cle_privee_stripe: { valeur: '', est_actif: true, est_important: false },
+
+      etat_des_reservations: { valeur: 1, est_actif: true, est_important: true },
+      etat_du_click_and_collect: { valeur: 1, est_actif: true, est_important: true },
+      etat_paiement_acompte_reservation: { valeur: 1, est_actif: true, est_important: true },
+      montant_paiement_acompte_reservation: { valeur: 50, est_actif: true, est_important: false },
+      etat_paiement_acompte_click_and_collect: { valeur: 1, est_actif: true, est_important: true },
+      montant_paiement_acompte_click_and_collect: { valeur: 50, est_actif: true, est_important: false },
     };
 
-    const parametres = types.map(type => ({
-      titre: type,
-      type: type,
-      valeur: defaultValues[type],
-      description: '',
-      est_actif: true,
-      societe_id,
-      restaurant_id: resto.id,
-      utilisateur_id
-    }));
+    const parametres = types.map(type => {
+      const config = defaultValues[type] || {
+        valeur: null,
+        est_actif: true,
+        est_important: false
+      };
+
+      return {
+        titre: type,
+        type: type,
+        valeur: config.valeur,
+        description: '',
+        est_actif: config.est_actif,
+        est_important: config.est_important,
+        societe_id,
+        restaurant_id: resto.id,
+        utilisateur_id
+      };
+    });
 
     await Parametre.bulkCreate(parametres);
 
@@ -93,6 +106,7 @@ exports.ajouterRestaurant = async (req, res,next) => {
 
     return res.status(201).json({
       success: true,
+      total:parametres.length,
       data: resto
     });
 
@@ -124,11 +138,10 @@ exports.recreerParametresRestaurant = async (req, res,next) => {
       'alerte_stocke_min',
       'max_couverts_par_jour',
       'delai_rappel_reservation',
-      'delai_annulation_reservation',
-      'delai_invitation_avis',
       'cle_publique_stripe',
       'cle_privee_stripe',
       'etat_des_reservations',
+      'etat_du_click_and_collect',
       'etat_paiement_acompte_reservation',
       'montant_paiement_acompte_reservation',
       'etat_paiement_acompte_click_and_collect',
@@ -137,34 +150,45 @@ exports.recreerParametresRestaurant = async (req, res,next) => {
 
     // valeurs par défaut (important)
     const defaultValues = {
-      tva: 20,
-      coefficient: 1,
-      max_commandes_par_minutes: 10,
-      alerte_stocke_min: 5,
-      max_couverts_par_jour: 100,
-      delai_rappel_reservation: 30,
-      delai_annulation_reservation: 30,
-      delai_invitation_avis: 30,
-      cle_publique_stripe: '',
-      cle_privee_stripe: '',
-      etat_des_reservations: 1,
-      etat_paiement_acompte_reservation: 1,
-      montant_paiement_acompte_reservation: 50,
-      etat_paiement_acompte_click_and_collect: 1,
-      montant_paiement_acompte_click_and_collect: 50,
+      tva: { valeur: 20, est_actif: true, est_important: false },
+      coefficient: { valeur: 1, est_actif: true, est_important: false },
+      max_commandes_par_minutes: { valeur: 10, est_actif: true, est_important: false },
+      alerte_stocke_min: { valeur: 5, est_actif: true, est_important: true },
+      max_couverts_par_jour: { valeur: 100, est_actif: true, est_important: false },
+      delai_rappel_reservation: { valeur: 30, est_actif: true, est_important: false },
+
+      cle_publique_stripe: { valeur: '', est_actif: true, est_important: false },
+      cle_privee_stripe: { valeur: '', est_actif: true, est_important: false },
+
+      etat_des_reservations: { valeur: 1, est_actif: true, est_important: true },
+      etat_du_click_and_collect: { valeur: 1, est_actif: true, est_important: true },
+      etat_paiement_acompte_reservation: { valeur: 1, est_actif: true, est_important: true },
+      montant_paiement_acompte_reservation: { valeur: 50, est_actif: true, est_important: false },
+      etat_paiement_acompte_click_and_collect: { valeur: 1, est_actif: true, est_important: true },
+      montant_paiement_acompte_click_and_collect: { valeur: 50, est_actif: true, est_important: false },
     };
 
-    const parametres = types.map(type => ({
-      titre: type,
-      type: type,
-      valeur: defaultValues[type],
-      description: '',
-      est_actif: true,
-      est_important: false,
-      societe_id:restaurant.societe_id,
-      restaurant_id: restaurant.id,
-      utilisateur_id:restaurant.utilisateur_id
-    }));
+    const parametres = types.map(type => {
+      const config = defaultValues[type] || {
+        valeur: null,
+        est_actif: true,
+        est_important: false
+      };
+
+      return {
+        titre: type,
+        type: type,
+        valeur: config.valeur,
+        description: '',
+        est_actif: config.est_actif,
+        est_important: config.est_important,
+        societe_id:restaurant.societe_id,
+        restaurant_id: restaurant.id,
+        utilisateur_id:restaurant.utilisateur_id
+      };
+    });
+
+  
 
     await Parametre.bulkCreate(parametres, {
       updateOnDuplicate: [ 'description', 'est_important']
@@ -174,6 +198,7 @@ exports.recreerParametresRestaurant = async (req, res,next) => {
 
     return res.status(201).json({
       success: true,
+      total:parametres.length,
       data: restaurant
     });
 

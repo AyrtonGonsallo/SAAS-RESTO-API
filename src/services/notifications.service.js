@@ -3,7 +3,7 @@ const { Notification } = require('../models');
 class NotificationService {
 
   async createNotification({
-    reservation,
+    objet,
     titre,
     texte,
     utilisateur_id = 0,
@@ -19,8 +19,8 @@ class NotificationService {
       canal,
       texte,
       statut_lecture: 'non lue',
-      societe_id: reservation.societe_id,
-      restaurant_id: reservation.restaurant_id,
+      societe_id: objet.societe_id,
+      restaurant_id: objet.restaurant_id,
       utilisateur_id,
     });
   }

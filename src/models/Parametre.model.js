@@ -11,7 +11,7 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: true
     },
     type : {
-      type: DataTypes.ENUM('tva','coefficient','logo','couleur_principale','couleur_secondaire','max_commandes_par_minutes','alerte_stocke_min','max_couverts_par_jour','etat_des_reservations','delai_rappel_reservation','delai_annulation_reservation','delai_invitation_avis','cle_publique_stripe','cle_privee_stripe','etat_paiement_acompte_reservation','montant_paiement_acompte_reservation','etat_paiement_acompte_click_and_collect','montant_paiement_acompte_click_and_collect'),
+      type: DataTypes.ENUM('tva','coefficient','logo','couleur_principale','couleur_secondaire','max_commandes_par_minutes','alerte_stocke_min','max_couverts_par_jour','etat_des_reservations','etat_du_click_and_collect','delai_rappel_reservation','delai_annulation_reservation','delai_invitation_avis','cle_publique_stripe','cle_privee_stripe','etat_paiement_acompte_reservation','montant_paiement_acompte_reservation','etat_paiement_acompte_click_and_collect','montant_paiement_acompte_click_and_collect'),
       allowNull: false,
     },
     valeur: {
