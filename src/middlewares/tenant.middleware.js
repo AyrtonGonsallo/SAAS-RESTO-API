@@ -10,6 +10,7 @@ const publicRoutes = [
   '/check_change_password_code',
   '/get_stripe_payment_link_for_resto',
   '/get_reservation_data_by_societeID',
+  '/get_commande_datas_by_societeID',
   '/presentation',
   '/stripe_reservation_payment_webhook',
   '/update_reservations_statuts',

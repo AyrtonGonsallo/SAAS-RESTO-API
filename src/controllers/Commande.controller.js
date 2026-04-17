@@ -151,6 +151,11 @@ exports.getCommandesDatasBySocieteID = async (req, res) => {
             },
             {
               association: 'variations',
+              include: [
+                {
+                  association: 'categorie' // ← ICI tu ajoutes la catégorie de variation
+                }
+              ]
             }
           ]
         }
