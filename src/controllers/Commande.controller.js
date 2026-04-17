@@ -157,7 +157,7 @@ exports.getCommandesDatasBySocieteID = async (req, res) => {
                 }
               ]
             }
-          ]
+          ] 
         }
         
       ],
