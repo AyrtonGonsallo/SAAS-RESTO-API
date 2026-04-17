@@ -175,14 +175,14 @@ exports.createReservation = async (req, res) => {
     const dateReservation = new Date(reservation.date_reservation).toLocaleString('fr-FR');
 
     await notificationService.createNotification({
-        reservation,
+        objet:reservation,
         titre: `Nouvelle reservation`,
         type:'info',
         texte: `Vous avez une nouvelle réservation ${reservation.id} : Client "${prenom} ${nom}" pour le "${dateReservation}" dans le restaurant ${restaurant_id}`,
     });
 
     await notificationService.createNotification({
-        reservation,
+         objet:reservation,
         titre: `Nouvelle reservation`,
         type:'rappel',
         texte: `N'oubliez pas votre réservation ${reservation.id} pour ${dateReservation}`,

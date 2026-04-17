@@ -85,14 +85,14 @@ exports.createCommande = async (req, res) => {
     const dateRetrait = new Date(commande.date_retrait).toLocaleString('fr-FR');
 
     await notificationService.createNotification({
-        commande,
+         objet:commande,
         titre: `Nouvelle commande`,
         type:'info',
         texte: `Vous avez une nouvelle commande ${commande.id} : Client "${prenom} ${nom}" pour le "${dateRetrait}" dans le restaurant ${restaurant_id}`,
     });
 
     await notificationService.createNotification({
-        commande,
+         objet:commande,
         titre: `Nouvelle commande`,
         type:'rappel',
         texte: `N'oubliez pas votre commande ${commande.id} pour ${dateRetrait}`,

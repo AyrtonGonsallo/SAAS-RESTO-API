@@ -40,7 +40,7 @@ exports.updateReservationsStatuts = async (req, res) => {
         if (now >= start && now <= end) {
             statut = 'occupée';
             await notificationService.createNotification({
-                reservation,
+                 objet:reservation,
                 type:'info',
                 titre: `Changement de statut d'une reservation`,
                 texte: `Nouveau statut de la réservation ${reservation.id} : En cours. Nouveau statut de la table ${reservation.table.numero} : ${statut}`,
@@ -128,7 +128,7 @@ exports.watchReservationsDelais = async (req, res) => {
         if (now >= dateRappel && !reservation.rappel_envoye) {
 
             await notificationService.createNotification({
-                reservation,
+                 objet:reservation,
                 titre: `Rappel de réservation`,
                 type:'rappel',
                 texte: `N'oubliez pas votre réservation ${reservation.id} pour ${dateReservation}`,
@@ -143,7 +143,7 @@ exports.watchReservationsDelais = async (req, res) => {
         if (now >= dateAnnulation && reservation.statut === 'En attente') {
             await reservation.update({ statut: 'Annulée' });
             await notificationService.createNotification({
-                reservation,
+                 objet:reservation,
                 titre: `Reservation annuléé `,
                 type:'alerte',
                 texte: `Reservation ${reservation.id} annuléé car le delai de ${delai_avis} minutes est passé`,
