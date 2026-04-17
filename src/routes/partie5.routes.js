@@ -49,6 +49,14 @@ const {
   deleteMenu
 } = require('../controllers/Menu.controller');
 
+const {
+  createCategorieVariation,
+  getCategorieVariationById, 
+  getCategorieVariations,
+  updateCategorieVariation,
+  deleteCategorieVariation
+} = require('../controllers/CategorieVariation.controller');
+
 
 
 
@@ -118,5 +126,19 @@ router.put('/update_menu/:id', upload.single('image'),updateMenu);
 // DELETE
 router.delete('/delete_menu/:id', deleteMenu);
 
+// CREATE
+router.post('/ajouter_categorie_variation',createCategorieVariation);
+
+// READ ALL
+router.get('/get_all_categorie_variations', getCategorieVariations);
+
+// READ BY ID
+router.get('/get_categorie_variation_by_id/:id', getCategorieVariationById);
+
+// UPDATE
+router.put('/update_categorie_variation/:id',updateCategorieVariation);
+
+// DELETE
+router.delete('/delete_categorie_variation/:id', deleteCategorieVariation);
 
 module.exports = router;

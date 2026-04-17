@@ -13,6 +13,7 @@ db.UtilisateurRestaurant = require('./UtilisateurRestaurant.model')(sequelize, S
 db.Portefeuille = require('./Portefeuille.model')(sequelize, Sequelize.DataTypes);
 db.Abonnement = require('./Abonnement.model')(sequelize, Sequelize.DataTypes);
 db.CategorieProduit = require('./CategorieProduit.model')(sequelize, Sequelize.DataTypes);
+db.CategorieVariation = require('./CategorieVariation.model')(sequelize, Sequelize.DataTypes);
 db.Produit = require('./Produit.model')(sequelize, Sequelize.DataTypes);
 db.VariationProduit = require('./VariationProduit.model')(sequelize, Sequelize.DataTypes);
 db.Parametre = require('./Parametre.model')(sequelize, Sequelize.DataTypes);

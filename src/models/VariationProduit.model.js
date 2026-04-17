@@ -17,10 +17,6 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.TEXT,
       allowNull: true
     },
-    obligatoire: {
-      type: DataTypes.BOOLEAN,
-      defaultValue: false
-    },
     supplement_prix: {
       type: DataTypes.DECIMAL(10, 2),
       defaultValue: 0.00
@@ -28,6 +24,10 @@ module.exports = (sequelize, DataTypes) => {
     stock: {
       type: DataTypes.INTEGER,
       defaultValue: 0
+    },
+    categorie_id: {
+      type: DataTypes.INTEGER,
+      allowNull: false
     },
     societe_id: {
       type: DataTypes.INTEGER,
@@ -51,6 +51,10 @@ module.exports = (sequelize, DataTypes) => {
     });
     VariationProduit.belongsTo(models.Restaurant, {
       foreignKey: 'restaurant_id',
+    });
+    VariationProduit.belongsTo(models.CategorieVariation, {
+      foreignKey: 'categorie_id',
+      as: 'categorie'
     });
   }
 

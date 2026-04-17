@@ -16,7 +16,7 @@ const storage = multer.diskStorage({
 });
 
 const upload = multer({ storage });
-const { Produit, CategorieProduit, VariationProduit,Restaurant  } = db;
+const { Produit, CategorieProduit, VariationProduit,Restaurant,CategorieVariation  } = db;
 
 const {
   ajouterParametre,
@@ -249,9 +249,9 @@ router.post('/ajouter_variation_produit', async (req, res,next) => {
   try {
     const {
       produit_id,
+      categorie_id,
       titre,
       description,
-      obligatoire,
       supplement_prix,
       stock,
       societe_id,
@@ -264,9 +264,9 @@ router.post('/ajouter_variation_produit', async (req, res,next) => {
 
     const variation_produit = await VariationProduit.create({
       produit_id,
+      categorie_id,
       titre,
       description,
-      obligatoire,
       supplement_prix,
       stock,
       societe_id,
@@ -321,7 +321,7 @@ router.get('/get_all_variations_produit', async (req, res) => {
     const variation_produits = await VariationProduit.findAll({
        where: restaurantFilter,
       include: [
-         {
+        {
           model: Produit,
           as: 'produit'
         },
@@ -329,7 +329,10 @@ router.get('/get_all_variations_produit', async (req, res) => {
           model: Restaurant,
           attributes: ['id', 'nom', 'coordonnees_google_maps', 'ville', 'adresse', 'heure_debut', 'heure_fin', 'telephone'],
           required: false,
-        
+        },
+        {
+          model: CategorieVariation,
+          as: 'categorie'
         },
       ],
       order: [['created_at', 'DESC']]
@@ -373,8 +376,8 @@ router.put('/update_variation_produit/:id', async (req, res, next) => {
     const { 
       produit_id,
       titre,
+      categorie_id,
       description,
-      obligatoire,
       supplement_prix,
       stock,
       societe_id,
@@ -392,8 +395,8 @@ router.put('/update_variation_produit/:id', async (req, res, next) => {
     await variation_produit.update({
       produit_id,
       titre,
+      categorie_id,
       description,
-      obligatoire,
       supplement_prix,
       stock,
       societe_id,
