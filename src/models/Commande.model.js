@@ -60,6 +60,15 @@ module.exports = (sequelize, DataTypes) => {
     Commande.belongsTo(models.Restaurant, {
       foreignKey: 'restaurant_id',
     });
+    Commande.belongsTo(models.Utilisateur, {
+      foreignKey: 'client_id',
+      as: 'client'
+    });
+
+    Commande.belongsTo(models.Societe, {
+      foreignKey: 'societe_id',
+      as: 'societe'
+    });
 
   }
 

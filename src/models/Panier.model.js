@@ -24,7 +24,7 @@ module.exports = (sequelize, DataTypes) => {
     statut: {
       type: DataTypes.ENUM('en attente', 'payé'),
       allowNull: false,
-      defaultValue: 'Nouvelle'
+      defaultValue: 'en attente'
     },
     societe_id: {
       type: DataTypes.INTEGER,

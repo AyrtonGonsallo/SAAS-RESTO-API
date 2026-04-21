@@ -36,6 +36,10 @@ const {
 
 const {
   createCommande,
+  getCommandes, 
+  getCommandeById,
+  updateCommande,
+  deleteCommande,
   getCommandesDatasBySocieteID
 } = require('../controllers/Commande.controller');
 
@@ -274,6 +278,18 @@ router.delete('/delete_paiement/:id', deletePaiement);
 
 // CREATE
 router.post('/ajouter_commande', createCommande);
+
+// READ ALL
+router.get('/get_all_commandes', getCommandes);
+
+// READ BY ID
+router.get('/get_commande_by_id/:id', getCommandeById);
+
+// UPDATE
+router.put('/update_commande/:id', updateCommande);
+
+// DELETE
+router.delete('/delete_commande/:id', deleteCommande);
 
 router.get('/get_commande_datas_by_societeID/:societeID', getCommandesDatasBySocieteID);
 

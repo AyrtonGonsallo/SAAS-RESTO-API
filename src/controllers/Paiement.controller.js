@@ -255,7 +255,7 @@ exports.createStripePaymentForCommande = async (req, res) => {
 
   const restaurantId = req.params.restaurantId;
 
-  const final_reservation = req.body;
+  const final_commande = req.body;
 
   const restaurant = await Restaurant.findByPk(restaurantId);
 
@@ -269,7 +269,7 @@ exports.createStripePaymentForCommande = async (req, res) => {
       type: [
         'cle_publique_stripe',
         'cle_privee_stripe',
-        'montant_paiement_acompte_reservation',
+        'montant_paiement_acompte_click_and_collect',
       ],
       est_actif: true
     }
@@ -282,7 +282,7 @@ exports.createStripePaymentForCommande = async (req, res) => {
 
   const stripe = Stripe(config.cle_privee_stripe);
 
-  const montant = parseFloat(config.montant_paiement_acompte_reservation || 0);
+  const montant = parseFloat(config.montant_paiement_acompte_click_and_collect || 0);
 
   const session = await stripe.checkout.sessions.create({
     payment_method_types: ['card'],
@@ -292,7 +292,7 @@ exports.createStripePaymentForCommande = async (req, res) => {
         price_data: {
           currency: 'eur',
           product_data: {
-            name: `Paiement de la réservation de ${final_reservation.client.nom} ${final_reservation.client.prenom} au restaurant "${restaurant.nom}"`,
+            name: `Paiement de la caommande de ${final_commande.client.nom} ${final_commande.client.prenom} au restaurant "${restaurant.nom}"`,
           },
           unit_amount: Math.round(montant * 100), // 
         },
@@ -302,15 +302,13 @@ exports.createStripePaymentForCommande = async (req, res) => {
     success_url: `${STRIPE_SUCCESS_URL}`,
     cancel_url: `${STRIPE_FAILURE_URL}`,
     metadata: {
-      id_final_reservation: final_reservation.id,
-      id_client: final_reservation.client.id,
-      nom: final_reservation.client.nom,
-      prenom: final_reservation.client.prenom,
-      email: final_reservation.email,
-      statut: final_reservation.statut,
-      nombre_de_personnes: final_reservation.nombre_de_personnes,
-      nb_couverts: final_reservation.nb_couverts,
-      date_reservation: final_reservation.date_reservation,
+      id_final_commande: final_commande.id,
+      id_client: final_commande.client.id,
+      nom: final_commande.client.nom,
+      prenom: final_commande.client.prenom,
+      email: final_commande.email,
+      statut: final_commande.statut,
+      date_retrait: final_commande.date_retrait,
       montant: montant
     }
   });
@@ -318,15 +316,15 @@ exports.createStripePaymentForCommande = async (req, res) => {
   const t = await db.sequelize.transaction();
 
   let notificationUser = await Notification.create({
-      titre:`Lien de paiement pour votre réservation ${final_reservation.id}`,
+      titre:`Lien de paiement pour votre commande ${final_commande.id}`,
       date_rappel:new Date(Date.now() + 60 * 60 * 1000),
       type:'rappel',
       canal:'site',
-      texte:`Voici le lien de paiment de votre réservation ${final_reservation.id} : ${session.url}`,
+      texte:`Voici le lien de paiment de votre commande ${final_commande.id} : ${session.url}`,
       statut_lecture:'non lue',
-      societe_id:final_reservation.societe_id,
-      restaurant_id:final_reservation.restaurant_id,
-      utilisateur_id:final_reservation.client_id,
+      societe_id:final_commande.societe_id,
+      restaurant_id:final_commande.restaurant_id,
+      utilisateur_id:final_commande.client_id,
       }, { transaction: t });
 
       
