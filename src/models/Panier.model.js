@@ -54,6 +54,17 @@ module.exports = (sequelize, DataTypes) => {
     Panier.belongsTo(models.Restaurant, {
       foreignKey: 'restaurant_id',
     });
+    Panier.belongsTo(models.Paiement, {
+      foreignKey: 'paiement_id',
+      as: 'paiement'
+    });
+    Panier.belongsTo(models.Societe, {
+      foreignKey: 'societe_id',
+    });
+    Panier.belongsTo(models.Utilisateur, {
+      foreignKey: 'client_id',
+      as: 'client'
+    });
 
   }
 

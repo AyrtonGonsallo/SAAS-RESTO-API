@@ -1,5 +1,5 @@
 const db = require('../models');
-const {  Paiement,Restaurant,Parametre, Notification } = db;
+const {  Paiement,Restaurant,Parametre, Notification, Societe,Reservation,Commande,Utilisateur } = db;
 const Stripe  = require('stripe')
 const STRIPE_SUCCESS_URL = process.env.STRIPE_SUCCESS_URL;
 const STRIPE_FAILURE_URL = process.env.STRIPE_FAILURE_URL;
@@ -98,6 +98,22 @@ exports.getPaiements = async (req, res) => {
               model: Restaurant,
               attributes: ['id', 'nom', 'coordonnees_google_maps', 'ville', 'adresse', 'heure_debut', 'heure_fin', 'telephone'],
               required: false,
+          },
+          {
+              model: Societe,
+              attributes: ['id', 'titre', ],
+              required: false,
+          },
+          {
+              model: Reservation,
+              as:'reservation'
+          },
+          {
+              model: Commande,
+              as:'commande'
+          },
+          {
+              model: Utilisateur,
           },
           
       ],

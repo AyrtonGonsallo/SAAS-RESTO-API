@@ -39,6 +39,7 @@ const {
   getCommandes, 
   getCommandeById,
   updateCommande,
+  updateFormuleCommande,
   deleteCommande,
   getCommandesDatasBySocieteID
 } = require('../controllers/Commande.controller');
@@ -287,6 +288,9 @@ router.get('/get_commande_by_id/:id', getCommandeById);
 
 // UPDATE
 router.put('/update_commande/:id', updateCommande);
+
+// UPDATE
+router.put('/update_formule_commande/:id', updateFormuleCommande);
 
 // DELETE
 router.delete('/delete_commande/:id', deleteCommande);

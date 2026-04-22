@@ -68,21 +68,21 @@ exports.createCommande = async (req, res) => {
     }
 
     const [tva_resto, coefficient_resto] = await Promise.all([
-            Parametre.findOne({
-                where: {
-                type: 'tva',
-                restaurant_id: restaurant_id,
-                est_actif: true
-                }
-            }),
-            Parametre.findOne({
-                where: {
-                type: 'coefficient',
-                restaurant_id: restaurant_id,
-                est_actif: true
-                }
-            })
-        ]);
+        Parametre.findOne({
+            where: {
+            type: 'tva',
+            restaurant_id: restaurant_id,
+            est_actif: true
+            }
+        }),
+        Parametre.findOne({
+            where: {
+            type: 'coefficient',
+            restaurant_id: restaurant_id,
+            est_actif: true
+            }
+        })
+    ]);
 
         
 
@@ -90,6 +90,7 @@ exports.createCommande = async (req, res) => {
 
     let total_ht = 0;
     const tvaRate = parseFloat(tva_resto.valeur) || 0;
+     const coefficient_resto_value = parseFloat(coefficient_resto.valeur) || 0;
 
     for (const item of elements_panier) {
 
@@ -136,8 +137,9 @@ exports.createCommande = async (req, res) => {
       total_ht += ligne_ht;
     }
 
-    const total_tva = total_ht * (tvaRate / 100);
-    const total_ttc = total_ht + total_tva;
+     const total_coef_ht = total_ht * (coefficient_resto_value);
+     const total_tva = total_coef_ht * (tvaRate / 100);
+    const total_ttc = total_coef_ht + total_tva;
     
     nouveau_panier = await Panier.create({
         total_ht,
@@ -472,6 +474,128 @@ exports.updateCommande = async (req, res) => {
         { association: 'societe' },
       ]
     });
+
+    res.json(commandeUpdated);
+
+  } catch (error) {
+    await t.rollback();
+    console.log(error);
+    res.status(500).json({ message: error.message });
+  }
+};
+
+
+exports.updateFormuleCommande = async (req, res) => {
+  const t = await db.sequelize.transaction();
+
+  try {
+    const commande = await Commande.findByPk(req.params.id, {
+      transaction: t,
+      lock: t.LOCK.UPDATE //  important
+    });
+
+    if (!commande) {
+      await t.rollback();
+      return res.status(404).json({ message: 'Commande non trouvée' });
+    }
+
+    const [tva_resto, coefficient_resto] = await Promise.all([
+        Parametre.findOne({
+            where: {
+            type: 'tva',
+            restaurant_id: commande.restaurant_id,
+            est_actif: true
+            }
+        }),
+        Parametre.findOne({
+            where: {
+            type: 'coefficient',
+            restaurant_id: commande.restaurant_id,
+            est_actif: true
+            }
+        })
+    ]);
+    if (typeof commande.items === 'string') {
+      commande.items = JSON.parse(commande.items);
+    }
+
+        
+    let formule=''
+
+    console.log('elements_panier',commande.items)
+
+    let total_ht = 0;
+    const tvaRate = parseFloat(tva_resto.valeur) || 0;
+
+    const coefficient_resto_value = parseFloat(coefficient_resto.valeur) || 0;
+
+    
+
+    for (const item of commande.items) {
+
+    
+      // PRIX BASE
+      let prix_unitaire = parseFloat(item.prix_ht);
+      let titre = (item.titre);
+
+      formule+=`Titre : ${titre}<br>`
+      formule+=`Prix unitaire : ${prix_unitaire} €<br>`
+      
+
+      // CLEAN VARIATIONS
+      const variations = (item.variations || []).filter(v =>
+        v.id && v.prix_supplement != null
+      );
+
+      // AJOUT VARIATIONS
+      for (const v of variations) {
+        let prix_supp = parseFloat(v.prix_supplement || 0)
+        let titre_var = v.titre
+        prix_unitaire += prix_supp;
+        formule+=`Supplément : ${titre_var}<br>`
+        formule+=`Prix unitaire : ${prix_supp} €<br>`
+      }
+      formule+=`Quantité : ${item.quantite}<br>`
+
+      // TOTAL LIGNE
+      const ligne_ht = prix_unitaire * item.quantite;
+      total_ht += ligne_ht;
+      formule+=`Total HT "${titre}" = ${prix_unitaire} € * ${item.quantite} = ${ligne_ht} €<br>`
+    }
+
+    
+    const total_coef_ht = total_ht * (coefficient_resto_value);
+     const total_tva = total_coef_ht * (tvaRate / 100);
+    const total_ttc = total_coef_ht + total_tva;
+    formule+=`Total HT = ${total_ht} €<br>`
+    formule+=`Total Coef HT = Total HT (${total_ht} €) + coéfficient du restaurant (${coefficient_resto_value}) = ${total_coef_ht} €<br>`
+    formule+=`Total TVA = ${total_tva} €<br>`
+    formule+=`Total TTC = ${total_ttc} €<br>`
+
+    
+
+
+    //  UPDATE UNIQUE
+    await commande.update({
+      formule:formule,
+      totalPrice:total_ttc
+    }, { transaction: t });
+
+    
+    await t.commit();
+
+    //  Reload
+    const commandeUpdated = await Commande.findByPk(commande.id, {
+      include: [
+        { association: 'client' },
+        { association: 'societe' },
+      ]
+    });
+
+    if (typeof commandeUpdated.items === 'string') {
+      commandeUpdated.items = JSON.parse(commandeUpdated.items);
+    }
+
 
     res.json(commandeUpdated);
 

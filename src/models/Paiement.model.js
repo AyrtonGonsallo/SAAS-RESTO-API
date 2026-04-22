@@ -69,8 +69,15 @@ module.exports = (sequelize, DataTypes) => {
       foreignKey: 'reservation_id',
       as: 'reservation'
     });
+    Paiement.belongsTo(models.Commande, {
+      foreignKey: 'commande_id',
+      as: 'commande'
+    });
     Paiement.belongsTo(models.Societe, {
       foreignKey: 'societe_id',
+    });
+    Paiement.belongsTo(models.Utilisateur, {
+      foreignKey: 'utilisateur_id',
     });
   }
 

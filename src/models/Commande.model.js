@@ -20,6 +20,10 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: false,
       defaultValue: 'Nouvelle'
     },
+    formule: {
+      type: DataTypes.TEXT,
+      allowNull: true
+    },
     avis_envoye: {
       type: DataTypes.BOOLEAN,
       defaultValue: false

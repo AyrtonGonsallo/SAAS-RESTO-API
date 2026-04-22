@@ -67,7 +67,16 @@ const {
   deleteAvis
 } = require('../controllers/Avis.controller');
 
+const {
+  createPanier,
+  getPanierById, 
+  getPaniers,
+  updatePanier,
+  deletePanier
+} = require('../controllers/Panier.controller');
 
+
+router.get('/get_all_paniers', getPaniers);
 
 // CREATE
 router.post('/ajouter_avis', createAvis);
