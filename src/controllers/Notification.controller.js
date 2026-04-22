@@ -89,12 +89,16 @@ exports.getNotificationById = async (req, res) => {
 exports.getNotificationsByUserId = async (req, res) => {
   try {
 
-    const utilisateur = await Utilisateur.findByPk(req.params.userid,{
+    const user_id = req.params.userid
+
+    
+
+    const utilisateur = await Utilisateur.findByPk(user_id,{
       
     } );
     const notifications = await Notification.findAll({
       where: {
-        utilisateur_id: req.params.userid
+        utilisateur_id: user_id
       },
     });
 
@@ -119,16 +123,16 @@ exports.getNotificationsByUserId = async (req, res) => {
 
 exports.getUnreadNotificationsByUserId = async (req, res) => {
   try {
-
-    const utilisateur = await Utilisateur.findByPk(req.params.userid,{
-      
-    } );
+    const user_id = req.params.userid
+    const max = req.params.max
+    const utilisateur = await Utilisateur.findByPk(user_id,{} );
     const notifications = await Notification.findAll({
       where: {
-        utilisateur_id: req.params.userid,
+        utilisateur_id: user_id,
         statut_lecture:'non lue'
       },
     });
+    
 
     const notificationsAdmin = await Notification.findAll({
       where: {
@@ -141,7 +145,7 @@ exports.getUnreadNotificationsByUserId = async (req, res) => {
     const allNotifications = [
       ...notifications,
       ...notificationsAdmin
-    ].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+    ].sort((a, b) => new Date(b.created_at) - new Date(a.created_at)).slice(0,max);
 
     res.json(allNotifications);
   } catch (error) {

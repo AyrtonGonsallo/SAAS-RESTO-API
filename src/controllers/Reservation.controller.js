@@ -288,22 +288,22 @@ exports.getReservations = async (req, res) => {
 exports.getReservationById = async (req, res) => {
   try {
     const reservation = await Reservation.findByPk(req.params.id, {
-    include: [
-      {
-          model: Restaurant,
-          attributes: ['id', 'nom', 'coordonnees_google_maps', 'ville', 'adresse', 'heure_debut', 'heure_fin', 'telephone'],
-          required: false,
-      },
-      { association: 'client' },
-      { association: 'table' },
-      { association: 'service' },
-      { association: 'creneau' },
-      { association: 'societe' },
-      { association: 'paiements' },
-      { association: 'tags' },
-      { association: 'messages' }
-    ],
-});
+      include: [
+        {
+            model: Restaurant,
+            attributes: ['id', 'nom', 'coordonnees_google_maps', 'ville', 'adresse', 'heure_debut', 'heure_fin', 'telephone'],
+            required: false,
+        },
+        { association: 'client' },
+        { association: 'table' },
+        { association: 'service' },
+        { association: 'creneau' },
+        { association: 'societe' },
+        { association: 'paiements' },
+        { association: 'tags' },
+        { association: 'messages' }
+      ],
+    });
 
     if (!reservation) {
       return res.status(404).json({ message: 'Reservation non trouvé' });

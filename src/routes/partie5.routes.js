@@ -75,6 +75,12 @@ const {
   deletePanier
 } = require('../controllers/Panier.controller');
 
+const {
+  getStatsHome,
+} = require('../controllers/StatistiquesHome.controller');
+
+
+router.get('/get_all_statistiques', getStatsHome);
 
 router.get('/get_all_paniers', getPaniers);
 
@@ -142,7 +148,7 @@ router.get('/get_notification_by_id/:id', getNotificationById);
 // READ BY USERID
 router.get('/get_all_notifications_by_id/:userid', getNotificationsByUserId);
 
-router.get('/get_all_unread_notifications_by_id/:userid', getUnreadNotificationsByUserId);
+router.get('/get_all_unread_notifications_by_id/:userid/:max', getUnreadNotificationsByUserId);
 
 // UPDATE
 router.put('/update_notification/:id', updateNotification);

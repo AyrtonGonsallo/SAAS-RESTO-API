@@ -3,7 +3,7 @@ const {  Paiement,Restaurant,Parametre, Notification, Societe,Reservation,Comman
 const Stripe  = require('stripe')
 const STRIPE_SUCCESS_URL = process.env.STRIPE_SUCCESS_URL;
 const STRIPE_FAILURE_URL = process.env.STRIPE_FAILURE_URL;
-
+const { Op } = require('sequelize');
 
 exports.createPaiement = async (req, res) => {
   const t = await db.sequelize.transaction();
@@ -62,28 +62,34 @@ exports.getPaiements = async (req, res) => {
     let ishigh = req.role_priorite<4
 
     if (!ishigh) {
+      if(req.role_priorite==8){//si client
+        restaurantFilter = {utilisateur_id: req.user_id}
+      }else{
         if (selectedRestaurantId) {
-        // 🔥 filtre sur UN restaurant
-        restaurantFilter = {
-            restaurant_id: selectedRestaurantId,
-            societe_id: req.societe_id
-        };
+          //  filtre sur UN restaurant
+          restaurantFilter = {
+              restaurant_id: selectedRestaurantId,
+              societe_id: req.societe_id
+          };
         } else {
-        // 🔥 filtre sur plusieurs restaurants autorisés
-        restaurantFilter = {
-            restaurant_id: {
-            [Op.in]: req.restos
-            },
-            societe_id: req.societe_id
-        };
+          //  filtre sur plusieurs restaurants autorisés
+          restaurantFilter = {
+              restaurant_id: {
+              [Op.in]: req.restos
+              },
+              societe_id: req.societe_id
+          };
         }
+      }
     }else{
-        if (req.isSuperAdmin) {
-        restaurantFilter = {}
-        }else{
-        restaurantFilter = {societe_id: req.societe_id}
-        }
+      if (req.isSuperAdmin) {
+      restaurantFilter = {}
+      }
+      else{
+      restaurantFilter = {societe_id: req.societe_id}
+      }
     }
+
     const where = {};
 
     if (req.query.restaurant_id) {

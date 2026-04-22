@@ -1,6 +1,6 @@
 const db = require('../models');
 const {  Panier,Societe,Restaurant,Paiement,Utilisateur } = db;
-
+const { Op } = require('sequelize');
 exports.createPanier = async (req, res) => {
   try {
     const panier = await Panier.create(req.body);
@@ -19,27 +19,33 @@ exports.getPaniers = async (req, res) => {
     let ishigh = req.role_priorite<4
 
     if (!ishigh) {
+      if(req.role_priorite==8){//si client
+        restaurantFilter = {client_id: req.user_id}
+        console.log('eeee')
+      }else{
         if (selectedRestaurantId) {
-        // 🔥 filtre sur UN restaurant
-        restaurantFilter = {
-            restaurant_id: selectedRestaurantId,
-            societe_id: req.societe_id
-        };
+          //  filtre sur UN restaurant
+          restaurantFilter = {
+              restaurant_id: selectedRestaurantId,
+              societe_id: req.societe_id
+          };
         } else {
-        // 🔥 filtre sur plusieurs restaurants autorisés
-        restaurantFilter = {
-            restaurant_id: {
-            [Op.in]: req.restos
-            },
-            societe_id: req.societe_id
-        };
+          //  filtre sur plusieurs restaurants autorisés
+          restaurantFilter = {
+              restaurant_id: {
+              [Op.in]: req.restos
+              },
+              societe_id: req.societe_id
+          };
         }
+      }
     }else{
-        if (req.isSuperAdmin) {
-        restaurantFilter = {}
-        }else{
-        restaurantFilter = {societe_id: req.societe_id}
-        }
+      if (req.isSuperAdmin) {
+      restaurantFilter = {}
+      }
+      else{
+      restaurantFilter = {societe_id: req.societe_id}
+      }
     }
     const where = {};
 
@@ -74,6 +80,7 @@ exports.getPaniers = async (req, res) => {
 
     res.json(paniers);
   } catch (error) {
+    console.log(error)
     res.status(500).json({ message: error.message });
   }
 };
