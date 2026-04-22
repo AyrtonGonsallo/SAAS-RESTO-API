@@ -359,6 +359,11 @@ exports.getCommandeById = async (req, res) => {
   try {
     const commande = await Commande.findByPk(req.params.id, {
       include: [
+        {
+          model: Restaurant,
+          attributes: ['id', 'nom', 'coordonnees_google_maps', 'ville', 'adresse', 'heure_debut', 'heure_fin', 'telephone'],
+          required: false,
+        },
         { association: 'client' },
         { association: 'societe' },
       ],
@@ -369,7 +374,7 @@ exports.getCommandeById = async (req, res) => {
     }
 
     if (typeof commande.items === 'string') {
-        commande.commande = JSON.parse(commande.items);
+        commande.items = JSON.parse(commande.items);
       }
 
     res.json(commande);

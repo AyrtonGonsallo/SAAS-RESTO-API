@@ -57,8 +57,38 @@ const {
   deleteCategorieVariation
 } = require('../controllers/CategorieVariation.controller');
 
+const {
+  createAvis,
+  getAvisById, 
+  getAvisCommandeById,
+  getAvisReservationById,
+  getAvis,
+  updateAvis,
+  deleteAvis
+} = require('../controllers/Avis.controller');
 
 
+
+// CREATE
+router.post('/ajouter_avis', createAvis);
+
+// READ ALL
+router.get('/get_all_avis', getAvis);
+
+// READ BY ID
+router.get('/get_avis_by_id/:id', getAvisById);
+
+// READ BY ID
+router.get('/get_avis_commande_by_id/:id', getAvisCommandeById);
+
+// READ BY ID
+router.get('/get_avis_reservation_by_id/:id', getAvisReservationById);
+
+// UPDATE
+router.put('/update_avis/:id', updateAvis);
+
+// DELETE
+router.delete('/delete_avis/:id', deleteAvis);
 
 // CREATE
 router.post('/ajouter_type_cuisine', createTypeDeCuisine);

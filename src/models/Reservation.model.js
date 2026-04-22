@@ -47,6 +47,10 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: false,
       defaultValue: 'En attente'
     },
+    avis_envoye: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false
+    },
     table_id: {
       type: DataTypes.INTEGER,
       allowNull: true

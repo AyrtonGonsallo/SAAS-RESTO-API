@@ -215,10 +215,11 @@ exports.createStripePaymentForReservation = async (req, res) => {
     cancel_url: `${STRIPE_FAILURE_URL}`,
     metadata: {
       id_final_reservation: final_reservation.id,
+      type:'paiement_reservation',
       id_client: final_reservation.client.id,
       nom: final_reservation.client.nom,
       prenom: final_reservation.client.prenom,
-      email: final_reservation.email,
+      email: final_reservation.client.email,
       statut: final_reservation.statut,
       nombre_de_personnes: final_reservation.nombre_de_personnes,
       nb_couverts: final_reservation.nb_couverts,
@@ -292,9 +293,9 @@ exports.createStripePaymentForCommande = async (req, res) => {
         price_data: {
           currency: 'eur',
           product_data: {
-            name: `Paiement de la caommande de ${final_commande.client.nom} ${final_commande.client.prenom} au restaurant "${restaurant.nom}"`,
+            name: `Paiement de la commande de ${final_commande.client.nom} ${final_commande.client.prenom} au restaurant "${restaurant.nom}"`,
           },
-          unit_amount: Math.round(montant * 100), // 
+          unit_amount: Math.round(final_commande.totalPrice * 100), // 
         },
         quantity: 1,
       }
@@ -302,14 +303,15 @@ exports.createStripePaymentForCommande = async (req, res) => {
     success_url: `${STRIPE_SUCCESS_URL}`,
     cancel_url: `${STRIPE_FAILURE_URL}`,
     metadata: {
+      type:'paiement_commande',
       id_final_commande: final_commande.id,
       id_client: final_commande.client.id,
       nom: final_commande.client.nom,
       prenom: final_commande.client.prenom,
-      email: final_commande.email,
+      email: final_commande.client.email,
       statut: final_commande.statut,
       date_retrait: final_commande.date_retrait,
-      montant: montant
+      montant: final_commande.totalPrice
     }
   });
 

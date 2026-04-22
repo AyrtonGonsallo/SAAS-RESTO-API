@@ -20,7 +20,10 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: false,
       defaultValue: 'Nouvelle'
     },
-    
+    avis_envoye: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false
+    },
     panier_id: {
       type: DataTypes.INTEGER,
       allowNull: true
