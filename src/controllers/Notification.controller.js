@@ -124,28 +124,41 @@ exports.getNotificationsByUserId = async (req, res) => {
 exports.getUnreadNotificationsByUserId = async (req, res) => {
   try {
     const user_id = req.params.userid
-    const max = req.params.max
-    const utilisateur = await Utilisateur.findByPk(user_id,{} );
-    const notifications = await Notification.findAll({
-      where: {
-        utilisateur_id: user_id,
-        statut_lecture:'non lue'
-      },
-    });
+    const max = parseInt(req.params.max) 
+    let ishigh = req.role_priorite<4
+    
+    let allNotifications = []
+    if(ishigh){
+      allNotifications = await Notification.findAll({
+        where: {
+          statut_lecture:'non lue'
+        },
+        limit: max
+      });
+
+    }else{
+      const utilisateur = await Utilisateur.findByPk(user_id,{} );
+      const notifications = await Notification.findAll({
+        where: {
+          utilisateur_id: user_id,
+          statut_lecture:'non lue'
+        },
+      });
+      const notificationsAdmin = await Notification.findAll({
+        where: {
+          utilisateur_id: 0,
+          statut_lecture:'non lue',
+          societe_id:utilisateur.societe_id
+        },
+      });
+      allNotifications = [
+        ...notifications,
+        ...notificationsAdmin
+      ].sort((a, b) => new Date(b.created_at) - new Date(a.created_at)).slice(0,max);
     
 
-    const notificationsAdmin = await Notification.findAll({
-      where: {
-        utilisateur_id: 0,
-        statut_lecture:'non lue',
-        societe_id:utilisateur.societe_id
-      },
-    });
-
-    const allNotifications = [
-      ...notifications,
-      ...notificationsAdmin
-    ].sort((a, b) => new Date(b.created_at) - new Date(a.created_at)).slice(0,max);
+    }
+    
 
     res.json(allNotifications);
   } catch (error) {

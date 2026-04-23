@@ -25,15 +25,16 @@ exports.createCommande = async (req, res) => {
       ...rest
     } = commandeDatas;
 
-     //  2. DATE
-    const dateObj = new Date(
+   
+
+    const dateObj = new Date(Date.UTC(
       date_retrait.year,
       date_retrait.month - 1,
       date_retrait.day,
       heure_retrait.hour,
       heure_retrait.minute,
       heure_retrait.second || 0
-    );
+    ));
 
     
 
@@ -342,6 +343,79 @@ exports.getCommandes = async (req, res) => {
         { association: 'societe' },
       ],
       order: [['date_retrait', 'DESC']]
+    });
+
+    commandes.forEach(cmd => {
+      if (typeof cmd.items === 'string') {
+        cmd.items = JSON.parse(cmd.items);
+      }
+    });
+
+    res.json(commandes);
+  } catch (error) {
+    console.log(error)
+    res.status(500).json({ message: error.message });
+  }
+};
+
+
+
+
+exports.getMaxCommandes = async (req, res) => {
+  try {
+
+  
+    const selectedRestaurantId = req.query.restaurant_id;
+    let restaurantFilter = {};
+
+    let ishigh = req.role_priorite<4
+
+    if (!ishigh) {
+        if(req.role_priorite==8){
+          restaurantFilter = {societe_id: req.societe_id,client_id:req.user_id}
+        }
+        else if (selectedRestaurantId) {
+          //  filtre sur UN restaurant
+          restaurantFilter = {
+              restaurant_id: selectedRestaurantId,
+              societe_id: req.societe_id
+          };
+        } else {
+          //  filtre sur plusieurs restaurants autorisés
+          restaurantFilter = {
+              restaurant_id: {
+              [Op.in]: req.restos
+              },
+              societe_id: req.societe_id
+          };
+        }
+    }else{
+        if (req.isSuperAdmin) {
+        restaurantFilter = {}
+        }else{
+            restaurantFilter = {societe_id: req.societe_id}
+        }
+    }
+    const where = {};
+
+    if (req.query.restaurant_id) {
+      where.restaurant_id = req.query.restaurant_id;
+    }
+    
+
+    const commandes = await Commande.findAll({
+      where:restaurantFilter,
+      include: [
+        {
+            model: Restaurant,
+            attributes: ['id', 'nom', 'coordonnees_google_maps', 'ville', 'adresse', 'heure_debut', 'heure_fin', 'telephone', 'image'],
+            required: false,
+        },
+        { association: 'client' },
+        { association: 'societe' },
+      ],
+      order: [['date_retrait', 'DESC']],
+      limit: 4
     });
 
     commandes.forEach(cmd => {

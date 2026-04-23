@@ -28,6 +28,7 @@ const {
 const {
   createReservation,
   getReservations, 
+  getMaxReservations,
   getReservationById,
   updateReservation,
   deleteReservation,
@@ -37,6 +38,7 @@ const {
 const {
   createCommande,
   getCommandes, 
+  getMaxCommandes,
   getCommandeById,
   updateCommande,
   updateFormuleCommande,
@@ -248,6 +250,9 @@ router.post('/ajouter_reservation', createReservation);
 // READ ALL
 router.get('/get_all_reservations', getReservations);
 
+// READ ALL
+router.get('/get_max_reservations', getMaxReservations);
+
 // READ BY ID
 router.get('/get_reservation_by_id/:id', getReservationById);
 
@@ -282,6 +287,9 @@ router.post('/ajouter_commande', createCommande);
 
 // READ ALL
 router.get('/get_all_commandes', getCommandes);
+
+// READ ALL
+router.get('/get_max_commandes', getMaxCommandes);
 
 // READ BY ID
 router.get('/get_commande_by_id/:id', getCommandeById);

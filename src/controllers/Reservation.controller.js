@@ -24,14 +24,14 @@ exports.createReservation = async (req, res) => {
     } = req.body;
 
      //  2. DATE
-    const dateObj = new Date(
+    const dateObj = new Date(Date.UTC(
       date_reservation.year,
       date_reservation.month - 1,
       date_reservation.day,
       heure_reservation.hour,
       heure_reservation.minute,
       heure_reservation.second || 0
-    );
+    ));
 
     
     
@@ -276,6 +276,76 @@ exports.getReservations = async (req, res) => {
         { association: 'messages' }
       ],
       order: [['date_reservation', 'DESC']]
+    });
+
+    res.json(reservations);
+  } catch (error) {
+    console.log(error)
+    res.status(500).json({ message: error.message });
+  }
+};
+
+exports.getMaxReservations = async (req, res) => {
+  try {
+
+  
+    const selectedRestaurantId = req.query.restaurant_id;
+    let restaurantFilter = {};
+
+    let ishigh = req.role_priorite<4
+
+    if (!ishigh) {
+        if(req.role_priorite==8){
+          restaurantFilter = {societe_id: req.societe_id,client_id:req.user_id}
+        }
+        else if (selectedRestaurantId) {
+          //  filtre sur UN restaurant
+          restaurantFilter = {
+              restaurant_id: selectedRestaurantId,
+              societe_id: req.societe_id
+          };
+        } else {
+          //  filtre sur plusieurs restaurants autorisés
+          restaurantFilter = {
+              restaurant_id: {
+              [Op.in]: req.restos
+              },
+              societe_id: req.societe_id
+          };
+        }
+    }else{
+        if (req.isSuperAdmin) {
+        restaurantFilter = {}
+        }else{
+            restaurantFilter = {societe_id: req.societe_id}
+        }
+    }
+    const where = {};
+
+    if (req.query.restaurant_id) {
+      where.restaurant_id = req.query.restaurant_id;
+    }
+    
+
+    const reservations = await Reservation.findAll({
+      where:restaurantFilter,
+      include: [
+        {
+            model: Restaurant,
+            attributes: ['id', 'nom', 'coordonnees_google_maps', 'ville', 'adresse', 'heure_debut', 'heure_fin', 'telephone'],
+            required: false,
+        },
+        { association: 'client' },
+        { association: 'table' },
+        { association: 'service' },
+        { association: 'creneau' },
+        { association: 'societe' },
+        { association: 'paiements' },
+        { association: 'tags' },
+        { association: 'messages' }
+      ],
+      order: [['date_reservation', 'DESC']],
+      limit: 4
     });
 
     res.json(reservations);

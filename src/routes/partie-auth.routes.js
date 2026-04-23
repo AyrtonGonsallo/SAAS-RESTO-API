@@ -48,6 +48,7 @@ router.post('/login', async (req, res) => {
 
   // stocker refresh token en DB
   user.refresh_token = refreshToken;
+   user.derniere_connexion = new Date();
   await user.save();
 
   res.json({ accessToken, refreshToken,user });
