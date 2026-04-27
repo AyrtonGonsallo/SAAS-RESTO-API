@@ -122,7 +122,7 @@ exports.getStatsHome = async (req, res) => {
         if (!acc[restautrantId]) {
           acc[restautrantId] = {
             restaurant_id: restautrantId,
-            titre: restautrant?.titre || null,
+            nom: restautrant?.nom || null,
             total: 0,
             paiements: []
           };

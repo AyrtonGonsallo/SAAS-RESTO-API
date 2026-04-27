@@ -171,8 +171,8 @@ exports.createReservation = async (req, res) => {
 
    
 
-    
     const dateReservation = new Date(reservation.date_reservation).toLocaleString('fr-FR');
+    //const dateReservation = new Date(Date.UTC(reservation.date_reservation)).toLocaleString('fr-FR');
 
     await notificationService.createNotification({
         objet:reservation,

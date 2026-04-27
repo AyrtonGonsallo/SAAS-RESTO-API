@@ -235,11 +235,11 @@ exports.getCommandesDatasBySocieteID = async (req, res) => {
       },
       include: [
         {
-          association: 'produits',
+          association: 'produits', //ou actif=true
           through: { attributes: [] },
           include: [
             {
-              association: 'categorie' // correspond à ton alias
+              association: 'categorie' // correspond à ton alias ou est_actif=true
             },
             {
               association: 'variations',
