@@ -134,6 +134,63 @@ exports.getLivraisons = async (req, res) => {
   }
 };
 
+
+
+exports.getLivraisonsByUserId = async (req, res) => {
+  try {
+     const userID = req.params.userID;
+     const priorite =req.role_priorite
+     const societe_id =req.societe_id
+
+     console.log(userID,priorite,societe_id)
+      if(req.role_priorite<7 && req.role_priorite>3){
+          userFilter = {societe_id: societe_id}
+        }else if(req.role_priorite==8){
+          userFilter = {societe_id: societe_id,livreur_id:userID}
+        }
+    
+    
+
+    const livraisons = await Livraison.findAll({
+         where:userFilter,
+          include: [
+            {
+                model: Restaurant,
+                attributes: ['id', 'nom', 'coordonnees_google_maps', 'ville', 'adresse', 'heure_debut', 'heure_fin', 'telephone'],
+                required: false,
+            },
+            {
+              model: Utilisateur,
+              as: 'client',
+              required: false
+            },
+            {
+              model: Utilisateur,
+              as: 'livreur',
+              required: false
+            },
+            {
+              model: Commande,
+              as: 'commande',
+              required: false
+            },
+        ],
+
+    });
+
+    livraisons.forEach(cmd => {
+      if (typeof cmd.commande.items === 'string') {
+        cmd.commande.items = JSON.parse(cmd.commande.items);
+      }
+    });
+
+    res.json(livraisons);
+  } catch (error) {
+    console.log(error)
+    res.status(500).json({ message: error.message });
+  }
+};
+
 exports.getLivraisonById = async (req, res) => {
   try {
     const livraison = await Livraison.findByPk(req.params.id);
@@ -176,6 +233,33 @@ exports.updateLivraison = async (req, res) => {
       {
         date_livraison:dateObj,
         ...rest
+      }
+    );
+
+    res.json(livraison);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+
+exports.updatestatutLivraison = async (req, res) => {
+  try {
+
+     const {
+      statut
+    } = req.body;
+
+    
+    const livraison = await Livraison.findByPk(req.params.id);
+
+    if (!livraison) {
+      return res.status(404).json({ message: 'Livraison non trouvé' });
+    }
+
+    await livraison.update(
+      {
+        statut:statut,
       }
     );
 

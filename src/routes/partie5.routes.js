@@ -102,7 +102,9 @@ const {
   getLivraisonById,
   getLivraisons,
   updateLivraison,
-  deleteLivraison
+  updatestatutLivraison,
+  deleteLivraison,
+  getLivraisonsByUserId
 } = require('../controllers/Livraison.controller');
 
 
@@ -110,7 +112,10 @@ const {
 router.post('/ajouter_livraison', createLivraison);
 router.get('/get_all_livraisons', getLivraisons);
 router.get('/get_livraison_by_id/:id', getLivraisonById);
+router.get('/get_all_livraisons_by_user_id/:userID', getLivraisonsByUserId);
 router.put('/update_livraison/:id', updateLivraison);
+router.put('/update_livraison_statut/:id', updatestatutLivraison);
+
 router.delete('/delete_livraison/:id', deleteLivraison);
 
 router.post('/ajouter_message', createMessage);
