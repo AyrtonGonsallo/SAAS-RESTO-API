@@ -142,6 +142,70 @@ router.get('/get_all_produits', async (req, res) => {
 
 
 
+router.get('/get_low_stocks_produits', async (req, res) => {
+  try {
+
+    const selectedRestaurantId = req.query.restaurant_id;
+    let restaurantFilter = {};
+
+    let ishigh = req.role_priorite<4
+
+    if (!ishigh) {
+      if (selectedRestaurantId) {
+        // 🔥 filtre sur UN restaurant
+        restaurantFilter = {
+          restaurant_id: selectedRestaurantId,
+          societe_id: req.societe_id
+        };
+      } else {
+        // 🔥 filtre sur plusieurs restaurants autorisés
+        restaurantFilter = {
+          restaurant_id: {
+            [Op.in]: req.restos
+          },
+          societe_id: req.societe_id
+        };
+      }
+    }else{
+       if (req.isSuperAdmin) {
+        restaurantFilter = {}
+      }else{
+        restaurantFilter = {societe_id: req.societe_id}
+      }
+    }
+    const produits = await Produit.findAll({
+      where: {...restaurantFilter,stock: {
+        [Op.lt]: 5
+      }},
+      include: [
+        {
+          model: CategorieProduit,
+          as: 'categorie',
+          attributes: ['id', 'titre', 'est_actif'],
+          required: false
+        },
+        {
+          model: Restaurant,
+          attributes: ['id', 'nom', ],
+          required: false,
+        
+        },
+      ],
+      order: [['stock', 'DESC'],['restaurant_id', 'ASC'],['categorie_id', 'ASC'],['titre', 'ASC']]
+    });
+
+    return res.status(200).json(produits);
+
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({
+      message: 'Erreur serveur'
+    });
+  }
+});
+
+
+
 router.get('/get_produit_by_id/:id', async (req, res, next) => {
   try {
     const id = req.params.id;
@@ -336,6 +400,74 @@ router.get('/get_all_variations_produit', async (req, res) => {
         },
       ],
       order: [['created_at', 'DESC']]
+    });
+
+    return res.status(200).json(variation_produits);
+
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({
+      message: 'Erreur serveur'
+    });
+  }
+});
+
+
+
+router.get('/get_low_variations_produit', async (req, res) => {
+  try {
+
+    const selectedRestaurantId = req.query.restaurant_id;
+    let restaurantFilter = {};
+
+    let ishigh = req.role_priorite<4
+
+    if (!ishigh) {
+      if (selectedRestaurantId) {
+        // 🔥 filtre sur UN restaurant
+        restaurantFilter = {
+          restaurant_id: selectedRestaurantId,
+          societe_id: req.societe_id
+        };
+      } else {
+        // 🔥 filtre sur plusieurs restaurants autorisés
+        restaurantFilter = {
+          restaurant_id: {
+            [Op.in]: req.restos
+          },
+          societe_id: req.societe_id
+        };
+      }
+    }else{
+      if (req.isSuperAdmin) {
+        restaurantFilter = {}
+      }else{
+        restaurantFilter = {societe_id: req.societe_id}
+      }
+    }
+    const variation_produits = await VariationProduit.findAll({
+      where: {
+        ...restaurantFilter,
+        stock: {
+          [Op.lt]: 5
+        }
+      },
+      include: [
+        {
+          model: Produit,
+          as: 'produit'
+        },
+        {
+          model: Restaurant,
+          attributes: ['id', 'nom', ],
+          required: false,
+        },
+        {
+          model: CategorieVariation,
+          as: 'categorie'
+        },
+      ],
+      order: [['stock', 'DESC']]
     });
 
     return res.status(200).json(variation_produits);

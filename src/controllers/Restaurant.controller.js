@@ -47,7 +47,8 @@ exports.ajouterRestaurant = async (req, res,next) => {
       'etat_paiement_acompte_reservation',
       'montant_paiement_acompte_reservation',
       'etat_paiement_acompte_click_and_collect',
-      'montant_paiement_acompte_click_and_collect'
+      'montant_paiement_acompte_click_and_collect',
+      'montant_livraison_click_and_collect'
     ];
 
     // valeurs par défaut (important)
@@ -68,6 +69,7 @@ exports.ajouterRestaurant = async (req, res,next) => {
       montant_paiement_acompte_reservation: { valeur: 50, est_actif: true, est_important: false },
       etat_paiement_acompte_click_and_collect: { valeur: 1, est_actif: true, est_important: true },
       montant_paiement_acompte_click_and_collect: { valeur: 50, est_actif: true, est_important: false },
+      montant_livraison_click_and_collect: { valeur: 15, est_actif: true, est_important: true },
     };
 
     const parametres = types.map(type => {
@@ -145,7 +147,8 @@ exports.recreerParametresRestaurant = async (req, res,next) => {
       'etat_paiement_acompte_reservation',
       'montant_paiement_acompte_reservation',
       'etat_paiement_acompte_click_and_collect',
-      'montant_paiement_acompte_click_and_collect'
+      'montant_paiement_acompte_click_and_collect',
+      'montant_livraison_click_and_collect'
     ];
 
     // valeurs par défaut (important)
@@ -166,6 +169,7 @@ exports.recreerParametresRestaurant = async (req, res,next) => {
       montant_paiement_acompte_reservation: { valeur: 50, est_actif: true, est_important: false },
       etat_paiement_acompte_click_and_collect: { valeur: 1, est_actif: true, est_important: true },
       montant_paiement_acompte_click_and_collect: { valeur: 50, est_actif: true, est_important: false },
+      montant_livraison_click_and_collect: { valeur: 15, est_actif: true, est_important: true },
     };
 
     const parametres = types.map(type => {

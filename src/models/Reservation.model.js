@@ -118,10 +118,7 @@ module.exports = (sequelize, DataTypes) => {
       as: 'tags'
     });
 
-    Reservation.hasMany(models.MessageReservation, {
-      foreignKey: 'reservation_id',
-      as: 'messages'
-    });
+   
 
     //un utilisateur, une table, un service, un creneau, plusieurs paiements, plusieurs tags
   }

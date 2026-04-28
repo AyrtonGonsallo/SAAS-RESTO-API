@@ -76,9 +76,50 @@ const {
 } = require('../controllers/Panier.controller');
 
 const {
+  getMobileDatas,
+} = require('../controllers/MobileLogin.controller');
+
+const {
+  updateMobileReservation,
+} = require('../controllers/MobileReservation.controller');
+
+const {
+  updateMobileCommande,
+} = require('../controllers/MobileCommande.controller');
+
+const {
+  createMessage,
+  getMessages,
+  getUserMessages
+} = require('../controllers/MobileMessage.controller');
+
+const {
   getStatsHome,
 } = require('../controllers/StatistiquesHome.controller');
 
+const {
+  createLivraison,
+  getLivraisonById,
+  getLivraisons,
+  updateLivraison,
+  deleteLivraison
+} = require('../controllers/Livraison.controller');
+
+
+
+router.post('/ajouter_livraison', createLivraison);
+router.get('/get_all_livraisons', getLivraisons);
+router.get('/get_livraison_by_id/:id', getLivraisonById);
+router.put('/update_livraison/:id', updateLivraison);
+router.delete('/delete_livraison/:id', deleteLivraison);
+
+router.post('/ajouter_message', createMessage);
+router.get('/get_all_message', getMessages);
+router.get('/get_user_message', getUserMessages);
+router.put('/update_mobile_reservation/:id', updateMobileReservation);
+router.put('/update_mobile_commande/:id', updateMobileCommande);
+
+router.get('/get_mobile_datas', getMobileDatas);
 
 router.get('/get_all_statistiques', getStatsHome);
 

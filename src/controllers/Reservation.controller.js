@@ -272,8 +272,7 @@ exports.getReservations = async (req, res) => {
         { association: 'creneau' },
         { association: 'societe' },
         { association: 'paiements' },
-        { association: 'tags' },
-        { association: 'messages' }
+        { association: 'tags' }
       ],
       order: [['date_reservation', 'DESC']]
     });
@@ -342,7 +341,6 @@ exports.getMaxReservations = async (req, res) => {
         { association: 'societe' },
         { association: 'paiements' },
         { association: 'tags' },
-        { association: 'messages' }
       ],
       order: [['date_reservation', 'DESC']],
       limit: 4
@@ -371,7 +369,6 @@ exports.getReservationById = async (req, res) => {
         { association: 'societe' },
         { association: 'paiements' },
         { association: 'tags' },
-        { association: 'messages' }
       ],
     });
 

@@ -92,7 +92,6 @@ exports.getNotificationsByUserId = async (req, res) => {
     const user_id = req.params.userid
 
     
-
     const utilisateur = await Utilisateur.findByPk(user_id,{
       
     } );
@@ -100,6 +99,13 @@ exports.getNotificationsByUserId = async (req, res) => {
       where: {
         utilisateur_id: user_id
       },
+      include: [
+        {
+            model: Restaurant,
+            attributes: ['id', 'nom', 'coordonnees_google_maps', 'ville', 'adresse', 'heure_debut', 'heure_fin', 'telephone'],
+            required: false,
+        },
+      ],
     });
 
     const notificationsAdmin = await Notification.findAll({
@@ -107,7 +113,16 @@ exports.getNotificationsByUserId = async (req, res) => {
         utilisateur_id: 0,
         societe_id:utilisateur.societe_id
       },
+      include: [
+        {
+            model: Restaurant,
+            attributes: ['id', 'nom', 'coordonnees_google_maps', 'ville', 'adresse', 'heure_debut', 'heure_fin', 'telephone'],
+            required: false,
+        },
+      ],
     });
+
+    console.log("recherche notif de ",user_id, ' de la société ',utilisateur.societe_id)
 
     const allNotifications = [
       ...notifications,

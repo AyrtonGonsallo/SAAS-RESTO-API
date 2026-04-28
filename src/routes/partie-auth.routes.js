@@ -8,6 +8,11 @@ const { generateAccessToken, generateRefreshToken, verifyRefreshToken } = requir
 const { Societe, Utilisateur, Restaurant, Role, Parametre } = db;
 const emailService = require('../services/mailer.service'); 
 const MAILS_ENABLED = process.env.MAILS_ENABLED;
+const {
+  mobileLogin,
+} = require('../controllers/MobileLogin.controller');
+
+
 
 router.post('/login', async (req, res) => {
   const { email, password } = req.body;
@@ -191,5 +196,8 @@ router.post('/resset_password', async (req, res,next) => {
   }
 });
 
+
+
+router.post('/mobile_login',mobileLogin );
 
 module.exports = router;

@@ -1,14 +1,14 @@
 module.exports = (sequelize, DataTypes) => {
-  const MessageReservation = sequelize.define('MessageReservation', {
+  const Message = sequelize.define('Message', {
     id: {
       type: DataTypes.INTEGER,
       primaryKey: true,
       autoIncrement: true
     },
     type: {
-      type: DataTypes.ENUM('message de confirmation', 'alerte','rappel','invitation à laisser un avis',),
+      type: DataTypes.ENUM('sms', 'email',),
       allowNull: false,
-      defaultValue: 'message de confirmation'
+      defaultValue: 'email'
     },
     titre: {
       type: DataTypes.STRING(100),
@@ -30,6 +30,10 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.INTEGER,
       allowNull: true
     },
+    commande_id: {
+      type: DataTypes.INTEGER,
+      allowNull: true
+    },
     societe_id: {
       type: DataTypes.INTEGER,
       allowNull: true
@@ -38,29 +42,45 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.INTEGER,
       allowNull: true
     },
-    utilisateur_id: {
+    employe_id: {
+      type: DataTypes.INTEGER,
+      allowNull: true
+    }
+    ,
+    client_id: {
       type: DataTypes.INTEGER,
       allowNull: true
     }
   }, {
-    tableName: 'MessageReservation',
+    tableName: 'Message',
     timestamps: true,
     createdAt: 'created_at',
     updatedAt: 'updated_at'
   });
 
-  MessageReservation.associate = (models) => {
+  Message.associate = (models) => {
    
-    MessageReservation.belongsTo(models.Restaurant, {
+    Message.belongsTo(models.Restaurant, {
       foreignKey: 'restaurant_id',
     });
-    MessageReservation.belongsTo(models.Societe, {
+    Message.belongsTo(models.Societe, {
       foreignKey: 'societe_id',
     });
-    MessageReservation.belongsTo(models.Reservation, {
+    Message.belongsTo(models.Reservation, {
       foreignKey: 'reservation_id',
+    });
+     Message.belongsTo(models.Commande, {
+      foreignKey: 'commande_id',
+    });
+     Message.belongsTo(models.Utilisateur, {
+      foreignKey: 'employe_id',
+      as: 'employe'
+    });
+     Message.belongsTo(models.Utilisateur, {
+      foreignKey: 'client_id',
+      as: 'client'
     });
   }
 
-  return MessageReservation;
+  return Message;
 };

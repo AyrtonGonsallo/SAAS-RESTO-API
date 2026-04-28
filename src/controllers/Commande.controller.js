@@ -1,6 +1,6 @@
 const db = require('../models');
 const bcrypt = require('bcryptjs');
-const {  Commande,Utilisateur,Restaurant,Role,Societe,Menu,Panier,Parametre,Produit } = db;
+const {  Commande,Utilisateur,Restaurant,Livraison,Role,Societe,Menu,Panier,Parametre,Produit } = db;
 const DEFAULT_PASS = process.env.DEFAULT_PASS;
 const notificationService = require('../services/notifications.service');
 const { Op } = require('sequelize');
@@ -17,6 +17,7 @@ exports.createCommande = async (req, res) => {
       nom,
       prenom,
       email,
+      adresse_livraison,
       telephone,
       date_retrait,
       heure_retrait,
@@ -68,7 +69,7 @@ exports.createCommande = async (req, res) => {
       await client.addRestaurant(restaurant_id, { transaction: t });
     }
 
-    const [tva_resto, coefficient_resto] = await Promise.all([
+    const [tva_resto, coefficient_resto,montant_livraison] = await Promise.all([
         Parametre.findOne({
             where: {
             type: 'tva',
@@ -82,6 +83,13 @@ exports.createCommande = async (req, res) => {
             restaurant_id: restaurant_id,
             est_actif: true
             }
+        }),
+        Parametre.findOne({
+            where: {
+            type: 'montant_livraison_click_and_collect',
+            restaurant_id: restaurant_id,
+            est_actif: true
+            }
         })
     ]);
 
@@ -90,6 +98,7 @@ exports.createCommande = async (req, res) => {
     console.log('elements_panier',elements_panier)
 
     let total_ht = 0;
+    const montantLivraison = parseFloat(montant_livraison.valeur) || 0;
     const tvaRate = parseFloat(tva_resto.valeur) || 0;
      const coefficient_resto_value = parseFloat(coefficient_resto.valeur) || 0;
 
@@ -166,6 +175,20 @@ exports.createCommande = async (req, res) => {
       client_id: client.id,
       totalPrice:total_ttc
     }, { transaction: t });
+
+
+    const livraison = await Livraison.create({
+      date_livraison:dateObj,
+      adresse_livraison:adresse_livraison,
+      frais_livraison:montantLivraison,
+      commande_id:commande.id,
+      client_id:client.id,
+      societe_id:societe_id,
+      restaurant_id:restaurant_id
+
+    }, { transaction: t });
+
+    Livraison
 
 
     

@@ -2,6 +2,7 @@ module.exports = (req, res, next) => {
 const routes_prefix = process.env.PREFIX;
 const publicRoutes = [
   '/login',
+  '/mobile_login',
   '/refresh',
   '/get_change_password_code',
   '/resset_password',

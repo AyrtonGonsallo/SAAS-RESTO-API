@@ -24,14 +24,20 @@ app.use(loggerMiddleware);
 
 const allowedOrigins = [
   'http://localhost:4400',
-  'https://resto.orocom.io'
+  'https://resto.orocom.io',
+  'https://pwa.resto.orocom.io'
 ];
 
 app.use(cors({
   origin: function (origin, callback) {
     if (!origin) return callback(null, true);
-
-    if (allowedOrigins.includes(origin)) {
+    if (
+      /^http:\/\/localhost:\d+$/.test(origin) ||
+      origin === 'https://resto.orocom.io'
+    ) {
+      return callback(null, true);
+    }
+    else if (allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
       callback(new Error('CORS blocked'));

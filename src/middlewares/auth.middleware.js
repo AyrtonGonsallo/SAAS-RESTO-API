@@ -4,6 +4,7 @@ const {middlewareLogger} = require('../utils/logger');
 const routes_prefix = process.env.PREFIX;
 const publicRoutes = [
   '/login',
+  '/mobile_login',
   '/refresh',
   '/get_change_password_code',
   '/resset_password',
