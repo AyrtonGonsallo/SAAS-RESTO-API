@@ -196,11 +196,11 @@ exports.createCommande = async (req, res) => {
 
     }, { transaction: t });
 
-    Livraison
-
-
     
-    const dateRetrait = new Date(commande.date_retrait).toLocaleString('fr-FR');
+    
+    const dateRetrait = new Date(commande.date_retrait).toLocaleString('fr-FR', {
+      timeZone: 'UTC',
+    });
 
     await notificationService.createNotification({
          objet:commande,

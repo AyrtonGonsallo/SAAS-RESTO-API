@@ -148,10 +148,15 @@ exports.getStatsHome = async (req, res) => {
       todayEnd.setHours(23, 59, 59, 999);
 
       
-      if(priorite<8 && priorite>2){// 3 a 7
+      if(priorite<8 && priorite>=2){// 3 a 7
         userFilter = {societe_id: societe_id}
       }else if(priorite==9){
         userFilter = {societe_id: societe_id,livreur_id:userID}
+      }else if(priorite==8){
+        userFilter = {societe_id: societe_id,client_id:userID}
+      }
+      else if(priorite==1){
+        userFilter = {}
       }
 
       const daily_shippings = await Livraison.findAll({

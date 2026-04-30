@@ -8,6 +8,13 @@ const sequelize = new Sequelize(
         host: process.env.DB_HOST,
         dialect: 'mysql',
         logging: false,
+        timezone: '+00:00', //  force écriture en UTC
+
+        dialectOptions: {
+        useUTC: true, //  lecture en UTC
+        dateStrings: true, // optionnel (évite conversion auto)
+        typeCast: true
+        }
     }
 );
 

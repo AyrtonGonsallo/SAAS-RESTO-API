@@ -17,14 +17,16 @@ exports.updateReservationsStatuts = async (req, res) => {
     let tablesMisesAJour = 0;
     let notificationsEnvoyees = 0;
     let reservationsMisesAJour = 0;
+    let verifs = []
 
     const now = new Date();
-    reservations.forEach(async (reservation) => {
+    for (const reservation of reservations) {
 
-        const dateReservation = new Date(reservation.date_reservation);
-
+        const dateReservation = (reservation.date_reservation);
         const [startHour, startMin] = reservation.creneau.heure_debut.split(':');
         const [endHour, endMin] = reservation.creneau.heure_fin.split(':');
+
+        
 
         // début du créneau
         const start = new Date(dateReservation);
@@ -34,27 +36,33 @@ exports.updateReservationsStatuts = async (req, res) => {
         const end = new Date(dateReservation);
         end.setHours(endHour, endMin, 0);
 
+        
         let statut = 'libre';
 
         if (now >= start && now <= end) {
-            statut = 'occupée';
-            await notificationService.createNotification({
-                 objet:reservation,
-                type:'info',
-                titre: `Changement de statut d'une reservation`,
-                texte: `Nouveau statut de la réservation ${reservation.id} : En cours. Nouveau statut de la table ${reservation.table.numero} : ${statut}`,
-                utilisateur_id: 0
-            });
-            notificationsEnvoyees++;
-            await reservation.update({ statut:'En cours'});
-            reservationsMisesAJour++;
+          statut = 'occupée';
+          await notificationService.createNotification({
+                objet:reservation,
+              type:'info',
+              titre: `Changement de statut d'une reservation`,
+              texte: `Nouveau statut de la réservation ${reservation.id} : En cours. Nouveau statut de la table ${reservation.table.numero} : ${statut}`,
+              utilisateur_id: 0
+          });
+          notificationsEnvoyees++;
+          await reservation.update({ statut:'En cours'});
+          reservationsMisesAJour++;
+          verifs.push(`comparaison réussie reservation #${reservation.id} date (${reservation.date_reservation}): start : ${start} - end : ${end} - now : ${now}`);
+
+        }else{
+          verifs.push(`comparaison echouée reservation #${reservation.id} date (${reservation.date_reservation}): start : ${start} - end : ${end} - now : ${now}`);
+
         }
 
         await reservation.table.update({ statut });
          tablesMisesAJour++;
         
 
-    });
+    };
 
      return res.status(200).json({
       success: true,
@@ -64,6 +72,7 @@ exports.updateReservationsStatuts = async (req, res) => {
         tables_mises_a_jour: tablesMisesAJour,
         reservationsMisesAJour:reservationsMisesAJour,
         notifications_envoyées: notificationsEnvoyees,
+        verifs:verifs,
         statut: "OK"
       }
     });

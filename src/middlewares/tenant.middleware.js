@@ -35,7 +35,7 @@ const publicRoutes = [
 
   const user = req.user;
 
-  // 👑 SUPER ADMIN
+  //  SUPER ADMIN
   req.isSuperAdmin = user?.role_type === 'super-admin';
 
    req.role_priorite = user?.role_priorite;
