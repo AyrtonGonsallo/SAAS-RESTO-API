@@ -1,7 +1,6 @@
 
 const db = require('../models');
-const {  Reservation,TotalReservationsCreneauParJour,ReservationsTablesParCreneauJour,Restaurant,Parametre,Notification } = db;
-
+const {  Reservation,Parametre, } = db;
 const notificationService = require('../services/notifications.service');
 
 exports.updateReservationsStatuts = async (req, res) => {

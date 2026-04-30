@@ -1,6 +1,6 @@
 const db = require('../models');
 const bcrypt = require('bcryptjs');
-const {  Commande,Utilisateur,Restaurant,Livraison,Role,Societe,Menu,Panier,Parametre,Produit } = db;
+const {  Commande,Utilisateur,Restaurant,Livraison,Role,Societe,Menu,Panier,Parametre,Produit,VariationProduit } = db;
 const DEFAULT_PASS = process.env.DEFAULT_PASS;
 const notificationService = require('../services/notifications.service');
 const { Op } = require('sequelize');
@@ -140,6 +140,14 @@ exports.createCommande = async (req, res) => {
       // AJOUT VARIATIONS
       for (const v of variations) {
         prix_unitaire += parseFloat(v.prix_supplement || 0);
+        await VariationProduit.decrement(
+          'stock',
+          {
+            by: item.quantite,
+            where: { id: v.id },
+            transaction: t
+          }
+        );
       }
 
       // TOTAL LIGNE

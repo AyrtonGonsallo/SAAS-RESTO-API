@@ -1,5 +1,6 @@
 const db = require('../models');
 const {  Notification,Societe,Restaurant,Utilisateur } = db;
+const { Op } = require('sequelize');
 
 exports.createNotification = async (req, res) => {
   try {
@@ -88,50 +89,60 @@ exports.getNotificationById = async (req, res) => {
 
 exports.getNotificationsByUserId = async (req, res) => {
   try {
+    const user_id = req.params.userid;
+    const priorite = req.role_priorite;
+    const societe_id = req.societe_id;
 
-    const user_id = req.params.userid
+    console.log(user_id, priorite, societe_id);
 
-    
-    const utilisateur = await Utilisateur.findByPk(user_id,{
-      
-    } );
+    //  CASE livreur (priorité 9)
+    if (priorite == 9) {
+      const notifications = await Notification.findAll({
+        where: {
+          societe_id: societe_id,
+          utilisateur_id: user_id
+        },
+        include: [{
+          model: Restaurant,
+          attributes: ['id','nom', 'coordonnees_google_maps', 'ville', 'adresse', 'heure_debut', 'heure_fin', 'telephone'],
+          required: false,
+        }],
+        order: [['created_at', 'DESC']], //  tri direct SQL
+      });
+
+      return res.json(notifications); //  return important
+    }
+
+    //  récupérer utilisateur
+    const utilisateur = await Utilisateur.findByPk(user_id);
+
+    if (!utilisateur) {
+      return res.status(404).json({ message: "Utilisateur introuvable" });
+    }
+
+    console.log("recherche notif de", user_id, "societe", utilisateur.societe_id);
+
+    // 🚀 UNE SEULE REQUÊTE
     const notifications = await Notification.findAll({
       where: {
-        utilisateur_id: user_id
+        societe_id: utilisateur.societe_id,
+        [Op.or]: [
+          { utilisateur_id: user_id }, // perso
+          { utilisateur_id: 0 }        // admin/global
+        ]
       },
-      include: [
-        {
-            model: Restaurant,
-            attributes: ['id', 'nom', 'coordonnees_google_maps', 'ville', 'adresse', 'heure_debut', 'heure_fin', 'telephone'],
-            required: false,
-        },
-      ],
+      include: [{
+        model: Restaurant,
+        attributes: ['id','nom', 'coordonnees_google_maps', 'ville', 'adresse', 'heure_debut', 'heure_fin', 'telephone'],
+        required: false,
+      }],
+      order: [['created_at', 'DESC']], //  plus besoin de sort JS
     });
 
-    const notificationsAdmin = await Notification.findAll({
-      where: {
-        utilisateur_id: 0,
-        societe_id:utilisateur.societe_id
-      },
-      include: [
-        {
-            model: Restaurant,
-            attributes: ['id', 'nom', 'coordonnees_google_maps', 'ville', 'adresse', 'heure_debut', 'heure_fin', 'telephone'],
-            required: false,
-        },
-      ],
-    });
+    res.json(notifications);
 
-    console.log("recherche notif de ",user_id, ' de la société ',utilisateur.societe_id)
-
-    const allNotifications = [
-      ...notifications,
-      ...notificationsAdmin
-    ].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-
-    res.json(allNotifications);
   } catch (error) {
-    console.log(error)
+    console.log(error);
     res.status(500).json({ message: error.message });
   }
 };

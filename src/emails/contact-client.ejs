@@ -1,11 +1,9 @@
-
-
 <!DOCTYPE html>
 <html>
 <head>
     <meta charset="UTF-8">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <title>Code de réinitialisation</title>
+    <title><%= titre %></title>
     <style>
         .center{text-align: center;}
         .desc p{margin-top: 0px; margin-bottom: 0px;}
@@ -68,14 +66,14 @@
 
         <!-- Main Content -->
         <div class="content">
-
-            <h2>Code de réinitialisation</h2>
-            <p>Bonjour <%= user.nom %> <%= user.prenom %>,
+            <p>Bonjour <%= nom_client %> <%= prenom_client %>,
                 <br>
-                Votre code est : <strong><%= code %></strong>
+                Vous avez un message de <%= nom_expediteur %> <%= prenom_expediteur %> du restaurant <%= nom_restaurant %>.
+                <br><br>
+                <u>Message :</u><br>
+                 <%= texte %>
+                
             </p>
-            <p>Il est valable 15 minutes.</p>
-            
 
         </div>
         
@@ -84,11 +82,14 @@
   <div class="footer">
     <div style="border:1px solid #E6E6E6 ;"></div>
 <p class="center" style="font-size: 11px;">
-Ce message a été envoyé automatiquement à  <a href="mailto:<%= user.email %>"><%= user.email %></a> dans le cadre de votre récupération de mot de passre.
+Ce message a été envoyé automatiquement à  <a href="mailto:<%= email_client %>"><%= email_client %></a> dans le cadre de votre inscription au restaurant <%= nom_restaurant %>
 <br>
 
+<strong>Une question ?</strong>  
+<br>
 
-
+Contactez votre Conseiller Resto au <a href="tel:<%= telephone_restaurant %>"> <%= telephone_restaurant %></a>  
+Nos horaires sont <a href="#"  style="text-decoration: underline;">consultables ici</a>.
 </p>
 <div style="border:1px solid #E6E6E6 ;"></div>
 <p class="center" style="font-size: 10px;">

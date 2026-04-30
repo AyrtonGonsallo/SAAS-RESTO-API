@@ -1,6 +1,6 @@
 const db = require('../models');
 const {  CategorieVariation,Societe,Restaurant } = db;
-
+const { Op } = require('sequelize');
 exports.createCategorieVariation = async (req, res) => {
   try {
     const categorieVariation = await CategorieVariation.create(req.body);

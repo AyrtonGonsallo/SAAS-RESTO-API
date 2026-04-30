@@ -1,5 +1,6 @@
 const db = require('../models');
 const {  Livraison,Societe,Restaurant,Utilisateur,Commande } = db;
+const { Op } = require('sequelize');
 const notificationService = require('../services/notifications.service');
 exports.createLivraison = async (req, res) => {
   try {
@@ -35,20 +36,37 @@ exports.createLivraison = async (req, res) => {
     const dateLivraison = new Date(livraisonObjet.date_livraison).toLocaleString('fr-FR');
 
     
-        await notificationService.createNotification({
-            objet:livraisonObjet,
-            titre: `Nouvelle livraison`,
-            type:'info',
-            texte: `Vous avez une nouvelle livraison ${livraisonObjet.id} : Client "${livraisonObjet.client.prenom} ${livraisonObjet.client.nom}" livreur "${livraisonObjet.livreur.prenom} ${livraisonObjet.livreur.nom}" pour le "${dateLivraison}" dans le restaurant ${livraisonObjet.restaurant_id}`,
-        });
+    await notificationService.createNotification({
+      objet:livraisonObjet,
+      titre: `Nouvelle livraison`,
+      type:'info',
+      texte: `Vous avez une nouvelle livraison ${livraisonObjet.id} : Client "${livraisonObjet.client.prenom} ${livraisonObjet.client.nom}" livreur "${livraisonObjet.livreur.prenom} ${livraisonObjet.livreur.nom}" pour le "${dateLivraison}" dans le restaurant ${livraisonObjet.restaurant_id}`,
+    });
+
+    await notificationService.createNotification({
+      objet:livraisonObjet,
+      titre: `Nouvelle livraison`,
+      type:'rappel',
+      texte: `N'oubliez pas votre livraison ${livraisonObjet.id} pour ${dateLivraison}`,
+      utilisateur_id: livraisonObjet.client_id
+    });
+    if(livraisonObjet.livreur_id){
+      const d = new Date(livraisonObjet.date_livraison);
+
+      const formattedDate =
+        d.toLocaleDateString('fr-FR') + ' ' +
+        d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+
+      await notificationService.createNotification({
+        objet:livraisonObjet,
+        titre: `Nouvelle livraison`,
+        type:'rappel',
+        texte: `Vous avez une livraison ${livraisonObjet.id} prévue le ${formattedDate} pour le client "${livraisonObjet.client.prenom} ${livraisonObjet.client.nom}"`,
+        utilisateur_id: livraisonObjet.livreur_id
+      });
+    }
+
     
-        await notificationService.createNotification({
-             objet:livraisonObjet,
-            titre: `Nouvelle livraison`,
-            type:'rappel',
-            texte: `N'oubliez pas votre livraison ${livraisonObjet.id} pour ${dateLivraison}`,
-            utilisateur_id: livraisonObjet.client_id
-        });
     res.json(livraisonObjet);
   } catch (error) {
     console.log(error)
@@ -143,11 +161,11 @@ exports.getLivraisonsByUserId = async (req, res) => {
      const societe_id =req.societe_id
 
      console.log(userID,priorite,societe_id)
-      if(req.role_priorite<7 && req.role_priorite>3){
-          userFilter = {societe_id: societe_id}
-        }else if(req.role_priorite==8){
-          userFilter = {societe_id: societe_id,livreur_id:userID}
-        }
+      if(req.role_priorite<8 && req.role_priorite>2){// 3 a 7
+        userFilter = {societe_id: societe_id}
+      }else if(req.role_priorite==9){
+        userFilter = {societe_id: societe_id,livreur_id:userID}
+      }
     
     
 
@@ -232,9 +250,36 @@ exports.updateLivraison = async (req, res) => {
     await livraison.update(
       {
         date_livraison:dateObj,
+        
         ...rest
       }
     );
+
+    if(livraison.client_id){
+      const livraisonObjet = await Livraison.findByPk(livraison.id, {
+        include: [
+          { association: 'client' },
+          { association: 'livreur' },
+        ]
+      });
+
+      const d = new Date(livraisonObjet.date_livraison);
+
+      const formattedDate =
+        d.toLocaleDateString('fr-FR') + ' ' +
+        d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+
+      await notificationService.createNotification({
+        objet:livraisonObjet,
+        titre: `Nouvelle livraison`,
+        type:'rappel',
+        texte: `Vous avez une livraison ${livraisonObjet.id} prévue le ${formattedDate} pour le client "${livraisonObjet.client.prenom} ${livraisonObjet.client.nom}"`,
+        utilisateur_id: livraisonObjet.livreur_id
+      });
+
+    }
+
+    
 
     res.json(livraison);
   } catch (error) {
@@ -250,18 +295,33 @@ exports.updatestatutLivraison = async (req, res) => {
       statut
     } = req.body;
 
-    
+    const actifs = ['En attente','En cours'];
+    const inactifs = ['Annulée'];
+
     const livraison = await Livraison.findByPk(req.params.id);
+    const commande = await Commande.findByPk(livraison.commande_id);
+    const former_statut = livraison.statut;
 
     if (!livraison) {
       return res.status(404).json({ message: 'Livraison non trouvé' });
     }
+    if (!commande) {
+      return res.status(404).json({ message: 'Livraison non trouvé' });
+    }
 
-    await livraison.update(
-      {
-        statut:statut,
-      }
-    );
+    if (actifs.includes(former_statut) && (statut)=='Terminée') {
+      await livraison.update({ statut:statut,});
+      await commande.update({ statut:'Retirée',});
+    }else if (actifs.includes(former_statut) && (statut)=='Annulée') {
+      await livraison.update({ statut:statut,});
+      await commande.update({ statut:'Annulée',});
+    }
+    else if (inactifs.includes(former_statut) && actifs.includes(statut)) {
+      await livraison.update({ statut:statut,});
+      await commande.update({ statut:'Prête',});
+    }
+
+  
 
     res.json(livraison);
   } catch (error) {

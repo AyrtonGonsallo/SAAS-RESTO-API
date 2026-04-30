@@ -191,7 +191,8 @@ router.get('/get_low_stocks_produits', async (req, res) => {
         
         },
       ],
-      order: [['stock', 'DESC'],['restaurant_id', 'ASC'],['categorie_id', 'ASC'],['titre', 'ASC']]
+      order: [['stock', 'ASC'],['restaurant_id', 'ASC'],['categorie_id', 'ASC'],['titre', 'ASC']],
+      limit: 5
     });
 
     return res.status(200).json(produits);
@@ -467,7 +468,8 @@ router.get('/get_low_variations_produit', async (req, res) => {
           as: 'categorie'
         },
       ],
-      order: [['stock', 'DESC']]
+      order: [['stock', 'ASC']],
+      limit: 5
     });
 
     return res.status(200).json(variation_produits);

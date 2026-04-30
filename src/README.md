@@ -49,3 +49,9 @@ charge les middlewares
 les routes
 ajoute le cors
 verifie la connexion a la db
+
+les crons
+
+http://localhost:2026/api/v1/send_queued_messages envoi les messages de la partie mobile
+http://localhost:2026/api/v1/update_reservations_statuts  met a jour le statut des tables et les libere
+http://localhost:2026/api/v1/watch_reservations_delais surveille les delais et annulle les reservations

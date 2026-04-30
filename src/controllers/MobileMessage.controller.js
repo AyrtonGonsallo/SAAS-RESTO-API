@@ -1,6 +1,6 @@
 const db = require('../models');
 const {  Message,Societe,Restaurant,Utilisateur } = db;
-
+const { Op } = require('sequelize');
 exports.createMessage = async (req, res) => {
   try {
     const message = await Message.create(req.body);

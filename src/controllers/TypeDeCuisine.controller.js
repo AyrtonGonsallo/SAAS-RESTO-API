@@ -1,6 +1,6 @@
 const db = require('../models');
 const {  TypeDeCuisine,Societe,Restaurant } = db;
-
+const { Op } = require('sequelize');
 exports.createTypeDeCuisine = async (req, res) => {
   try {
     const { restaurant_id, ...data } = req.body;

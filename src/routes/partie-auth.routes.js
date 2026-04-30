@@ -134,7 +134,7 @@ console.log("code",code)
       to: email,
       subject: 'Code de réinitialisation de mot de passe',
       template: 'reset-password.ejs',
-      context: { code } // variable à injecter dans ejs
+      context: { user,code } // variable à injecter dans ejs
     });
   }else{
     console.log("pas de mails")

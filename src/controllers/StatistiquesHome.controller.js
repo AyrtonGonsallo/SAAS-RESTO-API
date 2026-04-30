@@ -1,9 +1,16 @@
 const db = require('../models');
-const {  Commande,Reservation,Restaurant,Utilisateur,Avis,Societe,Panier,Role,Paiement } = db;
+const {  Commande,Reservation,Restaurant,Utilisateur,Avis,Societe,Panier,Role,Paiement,Livraison } = db;
 const { Op } = require('sequelize');
 
 exports.getStatsHome = async (req, res) => {
   try {
+
+    const userID = req.user_id;
+    const priorite =req.role_priorite
+    const societe_id =req.societe_id
+
+    console.log(userID,priorite,societe_id)
+
     let societe = null
     let societes = null
     if(req.role_priorite==1){
@@ -134,16 +141,67 @@ exports.getStatsHome = async (req, res) => {
         return acc;
       }, {});
 
+       const todayStart = new Date();
+      todayStart.setHours(0, 0, 0, 0);
+
+      const todayEnd = new Date();
+      todayEnd.setHours(23, 59, 59, 999);
+
+      
+      if(priorite<8 && priorite>2){// 3 a 7
+        userFilter = {societe_id: societe_id}
+      }else if(priorite==9){
+        userFilter = {societe_id: societe_id,livreur_id:userID}
+      }
+
+      const daily_shippings = await Livraison.findAll({
+        where:{
+        ...userFilter,
+        date_livraison: {
+            [Op.between]: [todayStart, todayEnd]
+        }},//today
+        include: [
+          {
+              model: Restaurant,
+              attributes: ['id', 'nom',],
+              required: false,
+          },
+          {
+            model: Utilisateur,
+            as: 'client',
+            required: false
+          },
+          {
+            model: Utilisateur,
+            as: 'livreur',
+            required: false
+          },
+          {
+            model: Commande,
+            as: 'commande',
+            required: false
+          },
+        ],
+        order: [['date_livraison', 'DESC']]
+      });
+
+      const livraisons_total = await Livraison.findAll({
+        where:{...societeFilter}
+      });
+
+      const livraisons_finies = await Livraison.findAll({
+        where:{...societeFilter,statut:'Terminée'}
+      });
+
       
 
-      //je veux un objet societe total (champ montant groupes par societes )
+    //je veux un objet societe total (champ montant groupes par societes )
       
-
-
-    
 
     res.json({
       totalClients: clients.length,
+      totalLivraisons: livraisons_total.length,
+      totalLivraisonsFinies: livraisons_finies.length,
       totalCommandes: commandes_total.length,
       totalCommandesFinies: commandes_finies.length,
       totalRestaurants: restaurants.length,
@@ -156,7 +214,8 @@ exports.getStatsHome = async (req, res) => {
       totalSocietes:societes?societes.length:null,
       lastusers:lastusers?lastusers:null,
       ca_par_societes:ca_par_societes,
-      ca_par_restaurants:ca_par_restaurants
+      ca_par_restaurants:ca_par_restaurants,
+      daily_shippings:daily_shippings
     });
   } catch (error) {
     res.status(500).json({ message: error.message });

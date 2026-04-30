@@ -1,6 +1,6 @@
 const db = require('../models');
 const {  Creneau,Societe,Restaurant } = db;
-
+const { Op } = require('sequelize');
 exports.createCreneau = async (req, res) => {
   try {
     const creneau = await Creneau.create(req.body);

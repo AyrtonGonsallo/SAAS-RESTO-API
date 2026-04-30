@@ -1,6 +1,6 @@
 const db = require('../models');
 const {  ZoneTable,Societe,Restaurant } = db;
-
+const { Op } = require('sequelize');
 exports.createZoneTable = async (req, res) => {
   try {
     const zone = await ZoneTable.create(req.body);

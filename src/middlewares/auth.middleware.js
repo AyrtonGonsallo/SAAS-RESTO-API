@@ -22,7 +22,8 @@ const publicRoutes = [
   '/presentation',
   '/stripe_reservation_payment_webhook',
   '/update_reservations_statuts',
-  '/watch_reservations_delais'
+  '/watch_reservations_delais',
+  '/send_queued_messages'
 ];
 
 
