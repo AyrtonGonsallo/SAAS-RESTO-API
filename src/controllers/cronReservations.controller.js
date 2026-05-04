@@ -1,45 +1,68 @@
 
 const db = require('../models');
-const {  Reservation,Parametre, } = db;
+const {  Reservation,Parametre,Restaurant } = db;
 const notificationService = require('../services/notifications.service');
+const { Op } = require('sequelize');
 
 exports.updateReservationsStatuts = async (req, res) => {
   try {
 
     const reservations = await Reservation.findAll({
-        include: [
-            { association: 'table' },
-            { association: 'creneau' },
-        ],
-        order: [['date_reservation', 'DESC']]//important ecrasements
+      where: {
+        statut: {
+          [Op.notIn]: ['Annulée','Terminée','No-show']
+        }
+      },
+      include: [
+          { association: 'table' },
+          { association: 'creneau' },
+          { association: 'client' },
+          {
+            model: Restaurant,
+            attributes: ['id', 'nom',  'telephone'],
+            required: false,
+        },
+      ],
+      order: [['date_reservation', 'DESC']]//important ecrasements
     });
 
     let tablesMisesAJour = 0;
     let notificationsEnvoyees = 0;
+    let mailsEnvoyees = 0;
     let reservationsMisesAJour = 0;
     let verifs = []
 
-    const now = new Date();
+    const now = Date.now();
+    const now2 = new Date(now);
+    const hours = now2.getHours();
+    const minutes = now2.getMinutes();
+
+    let nowstring = `${hours}:${minutes}`;//ca correspon bien a now version humanreadable ?
+
     for (const reservation of reservations) {
 
-        const dateReservation = (reservation.date_reservation);
-        const [startHour, startMin] = reservation.creneau.heure_debut.split(':');
-        const [endHour, endMin] = reservation.creneau.heure_fin.split(':');
+      const dateReservation = new Date(reservation.date_reservation);
 
-        
+      const [startHour, startMin] = reservation.creneau.heure_debut.split(':');
+      const [endHour, endMin] = reservation.creneau.heure_fin.split(':');
 
-        // début du créneau
-        const start = new Date(dateReservation);
-        start.setHours(startHour, startMin, 0);
+      // base date en UTC (important)
+      const base = new Date(Date.UTC(
+        dateReservation.getUTCFullYear(),
+        dateReservation.getUTCMonth(),
+        dateReservation.getUTCDate()
+      ));
 
-        // fin du créneau
-        const end = new Date(dateReservation);
-        end.setHours(endHour, endMin, 0);
+      const start = new Date(base);
+      start.setUTCHours(startHour, startMin, 0, 0);
+
+      const end = new Date(base);
+      end.setUTCHours(endHour, endMin, 0, 0);
 
         
         let statut = 'libre';
 
-        if (now >= start && now <= end) {
+        if (now >= start.getTime() && now <= end.getTime()) {
           statut = 'occupée';
           await notificationService.createNotification({
                 objet:reservation,
@@ -51,10 +74,46 @@ exports.updateReservationsStatuts = async (req, res) => {
           notificationsEnvoyees++;
           await reservation.update({ statut:'En cours'});
           reservationsMisesAJour++;
-          verifs.push(`comparaison réussie reservation #${reservation.id} date (${reservation.date_reservation}): start : ${start} - end : ${end} - now : ${now}`);
+          verifs.push(`comparaison date en cours réussie reservation #${reservation.id} date reservation (${reservation.date_reservation}): date debut : ${start} - date fin : ${end} - heure actuelle : ${nowstring}`);
 
+        }else if (now > end.getTime()) {
+          statut = 'libre';
+          await notificationService.createNotification({
+                objet:reservation,
+              type:'info',
+              titre: `Reservation terminée`,
+              texte: `Nouveau statut de la réservation ${reservation.id} : Terminée. Nouveau statut de la table ${reservation.table.numero} : ${statut}`,
+              utilisateur_id: 0
+          });
+          await notificationService.createNotification({
+                objet:reservation,
+              type:'info',
+              titre: `Reservation terminée`,
+              texte: `Votre réservation ${reservation.id} pour la table ${reservation.table.numero} est terminée`,
+              utilisateur_id: reservation.client_id
+          });
+          notificationsEnvoyees++;
+          await reservation.update({ statut:'Terminée'});
+          reservationsMisesAJour++;
+          verifs.push(`comparaison date passée réussie reservation #${reservation.id} date reservation (${reservation.date_reservation}): date debut : ${start} - date fin : ${end} - heure actuelle : ${nowstring}`);
+
+          let titre = 'Demande d\'avis'
+          let lien = `https://resto.orocom.io/ajouter-avis/1/${reservation.id}`
+          
+          nom_client = reservation.client.nom
+          prenom_client = reservation.client.prenom
+          email_client = reservation.client.email
+          nom_restaurant = reservation.Restaurant.nom
+          telephone_restaurant = reservation.Restaurant.telephone
+          await emailService.sendMail({
+            to: 'ayrtongonsallo444@gmail.com',
+            subject: titre,
+            template: 'reservation-info.ejs',
+            context: { titre,lien,nom_client,prenom_client,email_client,nom_restaurant,telephone_restaurant } // variable à injecter dans ejs
+          });
+          mailsEnvoyees ++;
         }else{
-          verifs.push(`comparaison echouée reservation #${reservation.id} date (${reservation.date_reservation}): start : ${start} - end : ${end} - now : ${now}`);
+          verifs.push(`comparaison echouée (reservation a venir) reservation #${reservation.id} date reservation (${reservation.date_reservation}): date debut : ${start} - date fin : ${end} - heure actuelle : ${nowstring}`);
 
         }
 
@@ -66,12 +125,13 @@ exports.updateReservationsStatuts = async (req, res) => {
 
      return res.status(200).json({
       success: true,
-      message: "🔄 Traitement de status des reservations et tables",
+      message: "🔄 Traitement de statut des reservations et tables",
       data: {
         total_reservations_traitées: reservations.length,
         tables_mises_a_jour: tablesMisesAJour,
         reservationsMisesAJour:reservationsMisesAJour,
         notifications_envoyées: notificationsEnvoyees,
+        mailsEnvoyees:mailsEnvoyees,
         verifs:verifs,
         statut: "OK"
       }

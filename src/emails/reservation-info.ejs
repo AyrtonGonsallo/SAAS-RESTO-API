@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <title><%= titre %></title>
+    <style>
+        .center{text-align: center;}
+        .desc p{margin-top: 0px; margin-bottom: 0px;}
+        body {
+            font-family: "Montserrat";
+            background-color: #F4F4F4;
+            margin: 0;
+            padding: 0;
+        }
+        .content{font-size: 15px;}
+        .body-cnt{
+            padding-top: 20px;
+            padding-bottom: 20px;
+            background: #F4F4F4;
+            width: 100%;
+        }
+        .container {
+            width: 60%;
+            margin: 0 auto;
+            background-color: #ffffff;
+            border-radius: 0px;
+            padding: 15px;
+            overflow: hidden;
+        }
+        .header {
+            position: relative;
+            width:auto;
+            height:100%;
+            font-family: 'Sarpanch-Regular' !important;
+            align-items: center !important;
+            padding: 20px;
+            text-align: center !important;
+            max-width: 100%;
+            margin: auto;
+        }
+        .footer a {
+            color: #43B9B2;
+            text-decoration: underline;
+        }
+        .footer a:hover {
+            color: #555555;
+        }
+        
+    </style>
+</head>
+<body>
+<div class="body-cnt">
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <div>
+                
+                <div class="center">
+                <img src="http://resto.orocom.io/images/logo_app_500.png" alt="Logo du site">  
+  
+                </div>
+        </div>       
+        </div>
+     
+
+        <!-- Main Content -->
+        <div class="content">
+            <p>Bonjour <%= nom_client %> <%= prenom_client %>,
+                
+                Qu'avez vous pensé de votre réservation chez <%= texte %> <%= texte %> ?
+                <a href="<%= lien %>">Formulaire</a> 
+                
+            </p>
+
+        </div>
+        
+
+        <!-- Footer -->
+  <div class="footer">
+    <div style="border:1px solid #E6E6E6 ;"></div>
+<p class="center" style="font-size: 11px;">
+Ce message a été envoyé automatiquement à  <a href="mailto:<%= email_client %>"><%= email_client %></a> dans le cadre de votre inscription au restaurant <%= nom_restaurant %>
+<br>
+
+<strong>Une question ?</strong>  
+<br>
+
+Contactez votre Conseiller Resto au <a href="tel:<%= telephone_restaurant %>"> <%= telephone_restaurant %></a>  
+Nos horaires sont <a href="#"  style="text-decoration: underline;">consultables ici</a>.
+</p>
+<div style="border:1px solid #E6E6E6 ;"></div>
+<p class="center" style="font-size: 10px;">
+<br>
+Conformément aux dispositions de la loi « Informatique et Libertés » et du règlement général sur la protection des données du 27 avril 2016, vous disposez d'un droit d'accès, de rectification et de suppression de vos données personnelles. Consulter nos <a href="#">informations légales.</a>
+</p>
+</div>
+</div>
+</div>
+</body>
+</html>

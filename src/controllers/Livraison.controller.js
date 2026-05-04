@@ -83,24 +83,36 @@ exports.getLivraisons = async (req, res) => {
 
     if (!ishigh) {
         if (selectedRestaurantId) {
-        // 🔥 filtre sur UN restaurant
-        restaurantFilter = {
-            restaurant_id: selectedRestaurantId,
-            societe_id: req.societe_id
-        };
-        } else {
-        // 🔥 filtre sur plusieurs restaurants autorisés
-        restaurantFilter = {
-            restaurant_id: {
-            [Op.in]: req.restos
-            },
-            societe_id: req.societe_id
-        };
+          //  filtre sur UN restaurant
+          restaurantFilter = {
+              restaurant_id: selectedRestaurantId,
+              societe_id: req.societe_id
+          };
+        }
+        else if (req.role_priorite==8) {//client
+          restaurantFilter = {societe_id: req.societe_id,client_id:req.user_id}
+          console.log(req.user_id)
+          console.log(req.role_priorite)
+          console.log(req.societe_id)
+        }
+        else if (req.role_priorite==9) {//livreur
+          restaurantFilter = {societe_id: req.societe_id,livreur_id:req.user_id}
+        }
+        else {
+          //  filtre sur plusieurs restaurants autorisés
+          restaurantFilter = {
+              restaurant_id: {
+              [Op.in]: req.restos
+              },
+              societe_id: req.societe_id
+          };
         }
     }else{
         if (req.isSuperAdmin) {
         restaurantFilter = {}
-        }else{
+        }
+        
+        else{
         restaurantFilter = {societe_id: req.societe_id}
         }
     }

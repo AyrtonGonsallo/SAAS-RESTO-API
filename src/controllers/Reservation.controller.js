@@ -407,29 +407,72 @@ exports.updateReservation = async (req, res) => {
       total_reservations_creneau_par_jour_id,
       creneau_id,
       table_id,
+      societe_id,
+      restaurant_id,
       tags,
       ...rest
     } = req.body;
+    
 
     //  Convert date
-    const dateObj = new Date(
+    const dateObj = new Date(Date.UTC(
       date_reservation.year,
       date_reservation.month - 1,
       date_reservation.day,
       heure_reservation.hour,
       heure_reservation.minute,
       heure_reservation.second || 0
-    );
+    ));
+
+    const dateOnly = `${date_reservation.year}-${String(date_reservation.month).padStart(2,'0')}-${String(date_reservation.day).padStart(2,'0')}`;
+
 
     //  Récupérer créneau
     const creneau = await Creneau.findByPk(creneau_id, { transaction: t });
     if (!creneau) throw new Error('Créneau introuvable');
 
-    //  Charger créneau du jour avec lock
-    const totalReservationsCreneauParJour = await TotalReservationsCreneauParJour.findByPk(total_reservations_creneau_par_jour_id, {
+    //  Charger créneau du jour avec lock ne change jamais
+     totalReservationsCreneauParJour = await TotalReservationsCreneauParJour.findByPk(total_reservations_creneau_par_jour_id, {
       transaction: t,
       lock: t.LOCK.UPDATE
     });
+
+    //cet objet compte le nombre de reservations pour un creneau, donc verifier que le creneau n'a pa change si il change decrementer ceci et creer un autre a lier
+    if (totalReservationsCreneauParJour.creneau_id !== creneau_id) {
+
+      // 1. décrémenter ancien créneau (sécurisé)
+      if (totalReservationsCreneauParJour.nb_reservations_actuel > 0) {
+        await totalReservationsCreneauParJour.increment('nb_reservations_actuel', {
+          by: -1,
+          transaction: t
+        });
+      }
+
+      // 2. créer ou récupérer le nouveau créneau
+      const [newCreneau, created] = await TotalReservationsCreneauParJour.findOrCreate({
+        where: {
+          creneau_id,
+          date: dateOnly,
+        },
+        defaults: {
+          creneau_id,
+          date: dateOnly,
+          nb_reservations_actuel: 0,
+          societe_id:reservation.societe_id,
+          restaurant_id:reservation.restaurant_id
+        },
+        transaction: t
+      });
+
+      // 3. incrémenter le nouveau
+      await newCreneau.increment('nb_reservations_actuel', {
+        by: 1,
+        transaction: t
+      });
+
+      totalReservationsCreneauParJour = newCreneau;
+    }
+
 
     if (!totalReservationsCreneauParJour) {
       throw new Error('Créneau du jour introuvable');
@@ -448,7 +491,7 @@ exports.updateReservation = async (req, res) => {
       });
     }
 
-    // 🔥 LOGIQUE UNIQUE
+    //   decrementer le nombre de reservations pour table, creneau, date correspondant
     if (actifs.includes(former_statut) && inactifs.includes(statut)) {
       delta = -1;
 
@@ -465,30 +508,66 @@ exports.updateReservation = async (req, res) => {
       }
 
     } else if (inactifs.includes(former_statut) && actifs.includes(statut)) {
+      // incrementer le nombre de reservations pour table, creneau, date correspondant
       delta = +1;
 
-      //verifier si existe une reservation pour la table a cette date et annuler avec 400 si oui si non creer
-      const existingReservationTablesParCreneauJour = await ReservationsTablesParCreneauJour.findOne({
-        where: {
-          reservation_id: reservation.id,
-        },
+      //cet objet compte les reservations pour une table a une date et un creneau il permet de ne pas reservaer la meme table 2 fois a des creneaux differents donc verifier si il existe une objet pour cette reservation  si oui checker que c'est la meme table le meme creneau et la meme date si non creer un nouvel objet et supprimer le précédent
+      const existing = await ReservationsTablesParCreneauJour.findOne({
+        where: { reservation_id: reservation.id },
         transaction: t
       });
 
-      // si existe → bon
-      if (!existingReservationTablesParCreneauJour) {
-         // sinon créer
-        const newReservationTablesParCreneauJour = await ReservationsTablesParCreneauJour.create({
-          creneau_id:reservation.creneau_id,
+      const isSame =
+        existing &&
+        existing.table_id === reservation.table_id &&
+        existing.creneau_id === reservation.creneau_id &&
+        existing.date === date_reservation;
+      if (!existing || !isSame) {
+
+        if (existing) {//si existe et different il le supprime
+          await existing.destroy({ transaction: t });
+        }
+
+        await ReservationsTablesParCreneauJour.create({
+          creneau_id: creneau_id,
           date: date_reservation,
-          table_id:reservation.table_id ,
-          societe_id:reservation.societe_id ,
-          reservation_id:reservation.id,
-          restaurant_id:reservation.restaurant_id ,
-          utilisateur_id:reservation.client_id ,
+          table_id: table_id,
+          societe_id: societe_id,
+          reservation_id: reservation.id,
+          restaurant_id: reservation.restaurant_id,
+          utilisateur_id: reservation.client_id,
         }, { transaction: t });
-        
       }
+    }else{//si statut ne change pas
+
+      //cet objet compte les reservations pour une table a une date et un creneau il permet de ne pas reservaer la meme table 2 fois a des creneaux differents donc verifier si il existe une objet pour cette reservation  si oui checker que c'est la meme table le meme creneau et la meme date si non creer un nouvel objet et supprimer le précédent
+      const existing = await ReservationsTablesParCreneauJour.findOne({
+        where: { reservation_id: reservation.id },
+        transaction: t
+      });
+
+      const isSame =
+        existing &&
+        existing.table_id === reservation.table_id &&
+        existing.creneau_id === reservation.creneau_id &&
+        existing.date === date_reservation;
+      if (!existing || !isSame) {
+
+        if (existing) {//si existe et different il le supprime
+          await existing.destroy({ transaction: t });
+        }
+
+        await ReservationsTablesParCreneauJour.create({
+          creneau_id: creneau_id,
+          date: date_reservation,
+          table_id: table_id,
+          societe_id: reservation.societe_id,
+          reservation_id: reservation.id,
+          restaurant_id: reservation.restaurant_id,
+          utilisateur_id: reservation.client_id,
+        }, { transaction: t });
+      }
+
     }
 
     //  Appliquer delta
