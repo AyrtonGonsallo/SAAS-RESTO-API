@@ -29,11 +29,11 @@ exports.updateMobileReservation = async (req, res) => {
 
    
     //  Récupérer créneau
-    const creneau = await Creneau.findByPk(creneau_id, { transaction: t });
+    const creneau = await Creneau.findByPk(reservation.creneau_id, { transaction: t });
     if (!creneau) throw new Error('Créneau introuvable');
 
     //  Charger créneau du jour avec lock
-    const totalReservationsCreneauParJour = await TotalReservationsCreneauParJour.findByPk(total_reservations_creneau_par_jour_id, {
+    const totalReservationsCreneauParJour = await TotalReservationsCreneauParJour.findByPk(reservation.total_reservations_creneau_par_jour_id, {
       transaction: t,
       lock: t.LOCK.UPDATE
     });
@@ -48,7 +48,7 @@ exports.updateMobileReservation = async (req, res) => {
 
     let delta = 0;
 
-    const table = await RestaurantTable.findByPk(table_id);
+    const table = await RestaurantTable.findByPk(reservation.table_id);
     if (!table) {
       return res.status(404).json({
         message: 'Table non trouvée'

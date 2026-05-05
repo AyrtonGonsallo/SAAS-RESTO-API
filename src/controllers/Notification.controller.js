@@ -21,19 +21,31 @@ exports.getNotifications = async (req, res) => {
 
     if (!ishigh) {
         if (selectedRestaurantId) {
-        // 🔥 filtre sur UN restaurant
-        restaurantFilter = {
-            restaurant_id: selectedRestaurantId,
-            societe_id: req.societe_id
-        };
-        } else {
-        // 🔥 filtre sur plusieurs restaurants autorisés
-        restaurantFilter = {
-            restaurant_id: {
-            [Op.in]: req.restos
-            },
-            societe_id: req.societe_id
-        };
+          //  filtre sur UN restaurant
+          restaurantFilter = {
+              restaurant_id: selectedRestaurantId,
+              societe_id: req.societe_id
+          };
+        }else if(req.role_priorite==8){//client
+            restaurantFilter = {
+             utilisateur_id:req.user_id,
+              societe_id: req.societe_id
+          };
+        }
+        else if(req.role_priorite==9){//livreur
+          restaurantFilter = {
+            utilisateur_id:req.user_id,
+              societe_id: req.societe_id
+          };
+        }
+         else {
+          //  filtre sur plusieurs restaurants autorisés
+          restaurantFilter = {
+              restaurant_id: {
+              [Op.in]: req.restos
+              },
+              societe_id: req.societe_id
+          };
         }
     }else{
         if (req.isSuperAdmin) {
@@ -96,7 +108,7 @@ exports.getNotificationsByUserId = async (req, res) => {
     console.log(user_id, priorite, societe_id);
 
     //  CASE livreur (priorité 9)
-    if (priorite == 9) {
+    if (priorite == 9 || priorite ==8) {
       const notifications = await Notification.findAll({
         where: {
           societe_id: societe_id,
@@ -163,20 +175,25 @@ exports.getUnreadNotificationsByUserId = async (req, res) => {
       });
 
     }else{
-      const utilisateur = await Utilisateur.findByPk(user_id,{} );
+      
       const notifications = await Notification.findAll({
         where: {
           utilisateur_id: user_id,
           statut_lecture:'non lue'
         },
       });
-      const notificationsAdmin = await Notification.findAll({
-        where: {
-          utilisateur_id: 0,
-          statut_lecture:'non lue',
-          societe_id:utilisateur.societe_id
-        },
-      });
+      let notificationsAdmin = []
+      if(req.role_priorite<8){
+        const utilisateur = await Utilisateur.findByPk(user_id,{} );
+         notificationsAdmin = await Notification.findAll({
+          where: {
+            utilisateur_id: 0,
+            statut_lecture:'non lue',
+            societe_id:utilisateur.societe_id
+          },
+        });
+      }
+      
       allNotifications = [
         ...notifications,
         ...notificationsAdmin

@@ -147,7 +147,6 @@ exports.getAvisReservationById  = async (req, res) => {
       { association: 'societe' },
       { association: 'paiements' },
       { association: 'tags' },
-      { association: 'messages' }
     ],
 });
 

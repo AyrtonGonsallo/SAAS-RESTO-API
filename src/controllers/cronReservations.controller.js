@@ -1,7 +1,8 @@
 
 const db = require('../models');
-const {  Reservation,Parametre,Restaurant } = db;
+const {  Reservation,Parametre,Restaurant,Commande } = db;
 const notificationService = require('../services/notifications.service');
+const emailService = require('../services/mailer.service');
 const { Op } = require('sequelize');
 
 exports.updateReservationsStatuts = async (req, res) => {
@@ -9,9 +10,16 @@ exports.updateReservationsStatuts = async (req, res) => {
 
     const reservations = await Reservation.findAll({
       where: {
-        statut: {
-          [Op.notIn]: ['Annulée','Terminée','No-show']
-        }
+        [Op.or]: [
+          {
+            statut: {
+              [Op.notIn]: ['Annulée','Terminée','No-show']
+            }
+          },
+          {
+            avis_envoye: false
+          }
+        ]
       },
       include: [
           { association: 'table' },
@@ -26,10 +34,35 @@ exports.updateReservationsStatuts = async (req, res) => {
       order: [['date_reservation', 'DESC']]//important ecrasements
     });
 
+     const commandes = await Commande.findAll({
+      where: {
+        [Op.or]: [
+          {
+            statut: {
+              [Op.notIn]: ['Retirée', 'Annulée']
+            }
+          },
+          {
+            avis_envoye: false
+          }
+        ]
+      },
+      include: [
+          { association: 'client' },
+          {
+            model: Restaurant,
+            attributes: ['id', 'nom',  'telephone'],
+            required: false,
+        },
+      ],
+      order: [['date_retrait', 'DESC']]//important ecrasements
+    });
+
     let tablesMisesAJour = 0;
     let notificationsEnvoyees = 0;
     let mailsEnvoyees = 0;
     let reservationsMisesAJour = 0;
+    let commandesMisesAJour = 0;
     let verifs = []
 
     const now = Date.now();
@@ -76,6 +109,8 @@ exports.updateReservationsStatuts = async (req, res) => {
           reservationsMisesAJour++;
           verifs.push(`comparaison date en cours réussie reservation #${reservation.id} date reservation (${reservation.date_reservation}): date debut : ${start} - date fin : ${end} - heure actuelle : ${nowstring}`);
 
+          
+
         }else if (now > end.getTime()) {
           statut = 'libre';
           await notificationService.createNotification({
@@ -112,6 +147,7 @@ exports.updateReservationsStatuts = async (req, res) => {
             context: { titre,lien,nom_client,prenom_client,email_client,nom_restaurant,telephone_restaurant } // variable à injecter dans ejs
           });
           mailsEnvoyees ++;
+          
         }else{
           verifs.push(`comparaison echouée (reservation a venir) reservation #${reservation.id} date reservation (${reservation.date_reservation}): date debut : ${start} - date fin : ${end} - heure actuelle : ${nowstring}`);
 
@@ -123,15 +159,66 @@ exports.updateReservationsStatuts = async (req, res) => {
 
     };
 
+
+   
+    for (const commande of commandes) {
+
+      const dateRetrait = new Date(commande.date_retrait);
+      const retraitTime = dateRetrait.getTime();
+
+      if (now > retraitTime) {
+        
+        await notificationService.createNotification({
+              objet:commande,
+            type:'info',
+            titre: `Commande terminée`,
+            texte: `Nouveau statut de la Commande ${commande.id} : Terminée. `,
+            utilisateur_id: 0
+        });
+        await notificationService.createNotification({
+              objet:commande,
+            type:'info',
+            titre: `Commande terminée`,
+            texte: `Votre Commande ${commande.id} est terminée`,
+            utilisateur_id: commande.client_id
+        });
+        notificationsEnvoyees++;
+        await commande.update({ statut:'Retirée'});
+        commandesMisesAJour++;
+        verifs.push(`comparaison date passée réussie commande #${commande.id} date retrait (${retraitTime}) - heure actuelle : ${now}`);
+
+        let titre = 'Demande d\'avis'
+        let lien = `https://resto.orocom.io/ajouter-avis/2/${commande.id}`
+        
+        nom_client = commande.client.nom
+        prenom_client = commande.client.prenom
+        email_client = commande.client.email
+        nom_restaurant = commande.Restaurant.nom
+        telephone_restaurant = commande.Restaurant.telephone
+        await emailService.sendMail({
+          to: 'ayrtongonsallo444@gmail.com',
+          subject: titre,
+          template: 'commande-info.ejs',
+          context: { titre,lien,nom_client,prenom_client,email_client,nom_restaurant,telephone_restaurant } // variable à injecter dans ejs
+        });
+        mailsEnvoyees ++;
+        
+      }
+
+
+    };
+
      return res.status(200).json({
       success: true,
-      message: "🔄 Traitement de statut des reservations et tables",
+      message: "🔄 Traitement de statut des commandes, reservations et tables",
       data: {
+        total_commandes_traitées: commandes.length,
         total_reservations_traitées: reservations.length,
         tables_mises_a_jour: tablesMisesAJour,
         reservationsMisesAJour:reservationsMisesAJour,
         notifications_envoyées: notificationsEnvoyees,
         mailsEnvoyees:mailsEnvoyees,
+        commandesMisesAJour:commandesMisesAJour,
         verifs:verifs,
         statut: "OK"
       }
