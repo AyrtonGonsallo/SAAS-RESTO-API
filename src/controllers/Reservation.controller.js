@@ -1,6 +1,7 @@
 const db = require('../models');
 const bcrypt = require('bcryptjs');
-const {  Reservation,TotalReservationsCreneauParJour,ReservationsTablesParCreneauJour,Restaurant,Utilisateur,Role,Creneau,Tag,Service,RestaurantTable,Societe,ZoneTable,Notification } = db;
+const emailService = require('../services/mailer.service');
+const {  Reservation,TotalReservationsCreneauParJour,Parametre,ReservationsTablesParCreneauJour,Restaurant,Utilisateur,Role,Creneau,Tag,Service,RestaurantTable,Societe,ZoneTable,Notification } = db;
 const DEFAULT_PASS = process.env.DEFAULT_PASS;
 const notificationService = require('../services/notifications.service');
 const { Op } = require('sequelize');
@@ -208,9 +209,38 @@ exports.createReservation = async (req, res) => {
         { association: 'service' },
         { association: 'creneau' },
         { association: 'societe' },
-        { association: 'tags' }
+        { association: 'tags' },
       ]
     });
+
+    /*
+
+    //chercher le parametre 
+    const params = await Parametre.findOne({
+      where: {
+        restaurant_id: restaurantId,
+        type:'envoi_de_mail_recap_reservation',
+        est_actif: true
+      }
+    });
+
+    //si le param existe chercher le restaurant
+    const restaurant = await Restaurant.findByPk(restaurant_id);
+
+
+    //faire l'envoi de mail
+    titre = 'Récap de réservation'
+    texte = ''
+    await emailService.sendMail({
+          //to: 'ayrtongonsallo444@gmail.com',
+          to:email
+          subject: titre,
+          template: 'recap-resvation.ejs', //situé dans D:\telechargement\Saas resto api\src\emails
+          context: { titre,texte,nom,prenom,email,nom_restaurant,telephone_restaurant } // variable à injecter dans ejs
+        });
+
+
+    */
 
     res.json(reservationObjet);
 

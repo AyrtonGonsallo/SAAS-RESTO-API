@@ -1,5 +1,6 @@
 const db = require('../models');
 const bcrypt = require('bcryptjs');
+const emailService = require('../services/mailer.service');
 const {  Commande,Utilisateur,Restaurant,Livraison,Role,Societe,Menu,Panier,Parametre,Produit,VariationProduit } = db;
 const DEFAULT_PASS = process.env.DEFAULT_PASS;
 const notificationService = require('../services/notifications.service');
@@ -257,6 +258,34 @@ exports.createCommande = async (req, res) => {
     if (typeof commandeObjet.items === 'string') {
       commandeObjet.items = JSON.parse(commandeObjet.items);
     }
+
+    /*
+
+    //chercher le parametre 
+    const params = await Parametre.findOne({
+      where: {
+        restaurant_id: restaurantId,
+        type:'envoi_de_mail_recap_click_and_collect',
+        est_actif: true
+      }
+    });
+
+    //si le param existe chercher le restaurant
+    const restaurant = await Restaurant.findByPk(restaurant_id);
+
+    //faire l'envoi de mail
+    titre = 'Récap de commande'
+    texte = ''
+    await emailService.sendMail({
+          //to: 'ayrtongonsallo444@gmail.com',
+          to:email
+          subject: titre,
+          template: 'recap-commande.ejs', //situé dans D:\telechargement\Saas resto api\src\emails
+          context: { titre,texte,nom,prenom,email,nom_restaurant,telephone_restaurant } // variable à injecter dans ejs
+        });
+
+
+    */
 
     res.json(commandeObjet);
 
