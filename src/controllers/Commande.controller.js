@@ -103,31 +103,56 @@ exports.createCommande = async (req, res) => {
      const coefficient_resto_value = parseFloat(coefficient_resto.valeur) || 0;
 
     for (const item of elements_panier) {
+      let type = item.type;
+      let id = 0;
+      let produitActuel = null
+      
 
-      const produitActuel = await Produit.findByPk(item.productId, { transaction: t });
+      if(type=="produit"||type=="variation-produit"){
+        id = item.productId;
+        produitActuel = await Produit.findByPk(item.productId, { transaction: t });
+      }else if(type=="menu"){
+        id = item.menuId;
+        produitActuel = await Menu.findByPk(item.menuId, { transaction: t });
+      }
 
+      
       if (!produitActuel) {
-        throw new Error(`Produit ${item.productId} introuvable`);
+        throw new Error(`Produit ${id} introuvable`);
       }
 
       // VERIFICATION STOCK
       if (item.quantite > produitActuel.stock) {
         await t.rollback();
-        return res.status(400).json({ message: `Stock insuffisant pour le produit #${item.productId} "${item.titre}" (stock: ${produitActuel.stock}, demandé: ${item.quantite})` });
+        return res.status(400).json({ message: `Stock insuffisant pour le produit #${id} "${item.titre}" (stock: ${produitActuel.stock}, demandé: ${item.quantite})` });
       }
 
     }
 
     for (const item of elements_panier) {
 
-      await Produit.decrement(
-        'stock',
-        {
-          by: item.quantite,
-          where: { id: item.productId },
-          transaction: t
-        }
-      );
+      const type = item.type;
+
+      if(type=="produit"||type=="variation-produit"){
+        await Produit.decrement(
+          'stock',
+          {
+            by: item.quantite,
+            where: { id: item.productId },
+            transaction: t
+          }
+        );
+      }else if(type=="menu"){
+        await Menu.decrement(
+          'stock',
+          {
+            by: item.quantite,
+            where: { id: item.menuId },
+            transaction: t
+          }
+        );
+      }
+      
 
       // PRIX BASE
       let prix_unitaire = parseFloat(item.prix_ht);
@@ -287,6 +312,31 @@ exports.getCommandesDatasBySocieteID = async (req, res) => {
       order: [['type', 'ASC'],['titre', 'ASC']]
     },
   );
+
+
+  const produits = await Produit.findAll({
+      where: {
+      ...restaurantFilter,
+        actif: true
+      },
+      include: [
+        {
+          association: 'categorie' // correspond à ton alias ou est_actif=true
+        },
+        {
+          association: 'variations',
+          include: [
+            {
+              association: 'categorie' // ← ICI tu ajoutes la catégorie de variation
+            }
+          ]
+        }
+      ] ,
+      order: [['categorie_id', 'ASC'],['titre', 'ASC']]
+    },
+  );
+
+
     const restaurants = await Restaurant.findAll({
       where: restaurantFilter,
       include: [
@@ -308,6 +358,7 @@ exports.getCommandesDatasBySocieteID = async (req, res) => {
     res.json({
       societe:societe,
       menus:menus,
+      produits:produits,
       restaurants:restaurants,
 
     });
@@ -536,28 +587,56 @@ exports.updateCommande = async (req, res) => {
     // ACTIF → ANNULÉ = remettre le stock
     if (actifs.includes(former_statut) && inactifs.includes(statut)) {
       for (const item of elements_panier) {
-        await Produit.increment(
-          'stock',
-          {
-            by: item.quantite,
-            where: { id: item.productId },
-            transaction: t
-          }
-        );
+        let type = item.type;
+      
+        if(type=="produit"||type=="variation-produit"){
+          await Produit.increment(
+            'stock',
+            {
+              by: item.quantite,
+              where: { id: item.productId },
+              transaction: t
+            }
+          );
+        }else if(type=="menu"){
+          await Menu.increment(
+            'stock',
+            {
+              by: item.quantite,
+              where: { id: item.menuId },
+              transaction: t
+            }
+          );
+        }
+        
       }
     }
 
     // ANNULÉ → ACTIF = reprendre le stock
     else if (inactifs.includes(former_statut) && actifs.includes(statut)) {
       for (const item of elements_panier) {
-        await Produit.decrement(
-          'stock',
-          {
-            by: item.quantite,
-            where: { id: item.productId },
-            transaction: t
-          }
-        );
+        let type = item.type;
+      
+        if(type=="produit"||type=="variation-produit"){
+          await Produit.decrement(
+            'stock',
+            {
+              by: item.quantite,
+              where: { id: item.productId },
+              transaction: t
+            }
+          );
+        }else if(type=="menu"){
+          await Menu.decrement(
+            'stock',
+            {
+              by: item.quantite,
+              where: { id: item.menuId },
+              transaction: t
+            }
+          );
+        }
+       
       }
     }
 

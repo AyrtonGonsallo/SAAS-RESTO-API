@@ -108,6 +108,145 @@ exports.getMobileDatas = async (req, res) => {
     order: [['date_reservation', 'DESC']]
   });
 
+  const daily_bookings_now = await Reservation.findAll({
+    where:{
+      ...restaurantFilter,
+      statut: {
+        [Op.in]: ['En cours']
+      },
+      date_reservation: {
+          [Op.between]: [todayStart, todayEnd]
+      }},//today
+    include: [
+      {
+          model: Restaurant,
+          attributes: ['id', 'nom', 'coordonnees_google_maps', 'ville', 'adresse', 'heure_debut', 'heure_fin', 'telephone'],
+          required: false,
+      },
+      { association: 'client' },
+      { association: 'table',
+        include: [
+          {
+            model: ZoneTable,
+            attributes: ['id', 'titre',  ],
+            required: false,
+          }
+        ]
+        },
+      { association: 'service' },
+      { association: 'creneau' },
+      { association: 'societe' },
+      { association: 'paiements' },
+      { association: 'tags' },
+    ],
+    order: [['date_reservation', 'DESC']]
+  });
+
+
+  const daily_bookings_to_come = await Reservation.findAll({
+    where:{
+      ...restaurantFilter,
+      statut: {
+        [Op.in]: ['En attente', 'Confirmée']
+      },
+      date_reservation: {
+          [Op.between]: [todayStart, todayEnd]
+      }},//today
+    include: [
+      {
+          model: Restaurant,
+          attributes: ['id', 'nom', 'coordonnees_google_maps', 'ville', 'adresse', 'heure_debut', 'heure_fin', 'telephone'],
+          required: false,
+      },
+      { association: 'client' },
+      { association: 'table',
+        include: [
+          {
+            model: ZoneTable,
+            attributes: ['id', 'titre',  ],
+            required: false,
+          }
+        ]
+        },
+      { association: 'service' },
+      { association: 'creneau' },
+      { association: 'societe' },
+      { association: 'paiements' },
+      { association: 'tags' },
+    ],
+    order: [['date_reservation', 'DESC']]
+  });
+
+
+  const daily_bookings_end = await Reservation.findAll({
+    where:{
+      ...restaurantFilter,
+      statut: {
+        [Op.in]: ['Annulée','Terminée']
+      },
+      date_reservation: {
+          [Op.between]: [todayStart, todayEnd]
+      }},//today
+    include: [
+      {
+          model: Restaurant,
+          attributes: ['id', 'nom', 'coordonnees_google_maps', 'ville', 'adresse', 'heure_debut', 'heure_fin', 'telephone'],
+          required: false,
+      },
+      { association: 'client' },
+      { association: 'table',
+        include: [
+          {
+            model: ZoneTable,
+            attributes: ['id', 'titre',  ],
+            required: false,
+          }
+        ]
+        },
+      { association: 'service' },
+      { association: 'creneau' },
+      { association: 'societe' },
+      { association: 'paiements' },
+      { association: 'tags' },
+    ],
+    order: [['date_reservation', 'DESC']]
+  });
+
+
+  const daily_bookings_no_show = await Reservation.findAll({
+    where:{
+      ...restaurantFilter,
+      statut: {
+        [Op.in]: ['No-show']
+      },
+      date_reservation: {
+          [Op.between]: [todayStart, todayEnd]
+      }},//today
+    include: [
+      {
+          model: Restaurant,
+          attributes: ['id', 'nom', 'coordonnees_google_maps', 'ville', 'adresse', 'heure_debut', 'heure_fin', 'telephone'],
+          required: false,
+      },
+      { association: 'client' },
+      { association: 'table',
+        include: [
+          {
+            model: ZoneTable,
+            attributes: ['id', 'titre',  ],
+            required: false,
+          }
+        ]
+        },
+      { association: 'service' },
+      { association: 'creneau' },
+      { association: 'societe' },
+      { association: 'paiements' },
+      { association: 'tags' },
+    ],
+    order: [['date_reservation', 'DESC']]
+  });
+
   const all_bookings = await Reservation.findAll({
     where:restaurantFilter,
     include: [
@@ -159,6 +298,114 @@ exports.getMobileDatas = async (req, res) => {
     }
   });
 
+  const daily_orders_coming = await Commande.findAll({
+    where:{
+      ...restaurantFilter,
+       statut: {
+        [Op.in]: ['Nouvelle', 'En préparation']
+      },
+      date_retrait: {
+          [Op.between]: [todayStart, todayEnd]
+      }},//today,
+    include: [
+      {
+          model: Restaurant,
+          attributes: ['id', 'nom', 'coordonnees_google_maps', 'ville', 'adresse', 'heure_debut', 'heure_fin', 'telephone', 'image'],
+          required: false,
+      },
+      { association: 'client' },
+      { association: 'societe' },
+    ],
+    order: [['date_retrait', 'DESC']]
+  });
+
+  daily_orders_coming.forEach(cmd => {
+    if (typeof cmd.items === 'string') {
+      cmd.items = JSON.parse(cmd.items);
+    }
+  });
+
+  const daily_orders_ready = await Commande.findAll({
+    where:{
+      ...restaurantFilter,
+       statut: {
+        [Op.in]: ['Prête']
+      },
+      date_retrait: {
+          [Op.between]: [todayStart, todayEnd]
+      }},//today,
+    include: [
+      {
+          model: Restaurant,
+          attributes: ['id', 'nom', 'coordonnees_google_maps', 'ville', 'adresse', 'heure_debut', 'heure_fin', 'telephone', 'image'],
+          required: false,
+      },
+      { association: 'client' },
+      { association: 'societe' },
+    ],
+    order: [['date_retrait', 'DESC']]
+  });
+
+  daily_orders_ready.forEach(cmd => {
+    if (typeof cmd.items === 'string') {
+      cmd.items = JSON.parse(cmd.items);
+    }
+  });
+
+  const daily_orders_took = await Commande.findAll({
+    where:{
+      ...restaurantFilter,
+       statut: {
+        [Op.in]: ['Retirée']
+      },
+      date_retrait: {
+          [Op.between]: [todayStart, todayEnd]
+      }},//today,
+    include: [
+      {
+          model: Restaurant,
+          attributes: ['id', 'nom', 'coordonnees_google_maps', 'ville', 'adresse', 'heure_debut', 'heure_fin', 'telephone', 'image'],
+          required: false,
+      },
+      { association: 'client' },
+      { association: 'societe' },
+    ],
+    order: [['date_retrait', 'DESC']]
+  });
+
+  daily_orders_took.forEach(cmd => {
+    if (typeof cmd.items === 'string') {
+      cmd.items = JSON.parse(cmd.items);
+    }
+  });
+
+  const daily_orders_cancelled = await Commande.findAll({
+    where:{
+      ...restaurantFilter,
+      statut: {
+        [Op.in]: ['Annulée']
+      },
+      date_retrait: {
+          [Op.between]: [todayStart, todayEnd]
+      }},//today,
+    include: [
+      {
+          model: Restaurant,
+          attributes: ['id', 'nom', 'coordonnees_google_maps', 'ville', 'adresse', 'heure_debut', 'heure_fin', 'telephone', 'image'],
+          required: false,
+      },
+      { association: 'client' },
+      { association: 'societe' },
+    ],
+    order: [['date_retrait', 'DESC']]
+  });
+
+  daily_orders_cancelled.forEach(cmd => {
+    if (typeof cmd.items === 'string') {
+      cmd.items = JSON.parse(cmd.items);
+    }
+  });
+
 
   const all_orders = await Commande.findAll({
     where:restaurantFilter,
@@ -185,8 +432,16 @@ exports.getMobileDatas = async (req, res) => {
   res.json({
     societe:societeID,
     daily_bookings:daily_bookings,
+    daily_bookings_no_show:daily_bookings_no_show,
+    daily_bookings_end:daily_bookings_end,
+    daily_bookings_to_come:daily_bookings_to_come,
+    daily_bookings_now:daily_bookings_now,
     all_bookings:all_bookings,
     daily_orders:daily_orders,
+    daily_orders_coming:daily_orders_coming,
+    daily_orders_ready:daily_orders_ready,
+    daily_orders_took:daily_orders_took,
+    daily_orders_cancelled:daily_orders_cancelled,
     all_orders:all_orders,
 
   });

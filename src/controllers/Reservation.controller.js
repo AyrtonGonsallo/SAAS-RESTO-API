@@ -200,7 +200,11 @@ exports.createReservation = async (req, res) => {
     const reservationObjet = await Reservation.findByPk(reservation.id, {
       include: [
         { association: 'client' },
-        { association: 'table' },
+        { association: 'table',
+          include: [
+            { model: ZoneTable }
+          ]
+        },
         { association: 'service' },
         { association: 'creneau' },
         { association: 'societe' },

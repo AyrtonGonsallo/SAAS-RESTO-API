@@ -2,6 +2,8 @@
 const db = require('../models');
 const {  Message,Parametre,Utilisateur,Restaurant } = db;
 const emailService = require('../services/mailer.service');
+const vonageSmsService = require('../services/vonageSms.service');
+
 
 exports.sendQueuedMessages = async (req, res) => {
   try {
@@ -31,17 +33,43 @@ exports.sendQueuedMessages = async (req, res) => {
       const nom_restaurant = restaurant.nom
       const telephone_restaurant = restaurant.telephone
       const telephone = destinataire.telephone
+
+      let texte = message.texte
+      let titre = message.titre
+      let nom_client = destinataire.nom
+      let prenom_client = destinataire.prenom
+      let nom_expediteur= expediteur.nom
+      let prenom_expediteur= expediteur.prenom
       if(type=='sms' && telephone){
         //plus tard on a pas de plateforme
+
+        const texteSms = 
+        `Bonjour ${nom_client} ${prenom_client},\n\n` +
+        `Vous avez reçu ce message de ${nom_expediteur} ${prenom_expediteur}.\n\n` +
+        `Objet : ${titre}\n\n` +
+        `Message :\n${texte}`;
+
+        /*
+        await smsService.sendSMS(
+            telephone,
+            texteSms
+        );
+        */
+       /*
+       await whatsappService.sendWhatsapp(
+            telephone,
+            texteSms
+        );
+        */
+       await vonageSmsService.sendVonageSms(
+            telephone,
+            texteSms
+        );
+
         messagesSmsEnvoyees++
       }else if(type=='email' && email_client){
         messagesEmailEnvoyees++
-        let texte = message.texte
-        let titre = message.titre
-        let nom_client = destinataire.nom
-        let prenom_client = destinataire.prenom
-        let nom_expediteur= expediteur.nom
-        let prenom_expediteur= expediteur.prenom
+        
         await emailService.sendMail({
           to: 'ayrtongonsallo444@gmail.com',
           subject: titre,

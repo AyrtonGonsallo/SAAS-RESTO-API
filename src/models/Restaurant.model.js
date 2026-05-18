@@ -38,6 +38,10 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.STRING(10),
       allowNull: true
     },
+    jours_de_fermeture: {
+      type: DataTypes.TEXT,
+      allowNull: true
+    },
     heure_cc_fin: {
       type: DataTypes.STRING(10),
       allowNull: true

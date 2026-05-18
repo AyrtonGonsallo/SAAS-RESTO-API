@@ -46,7 +46,8 @@ const {
   getMenuById, 
   getMenus,
   updateMenu,
-  deleteMenu
+  deleteMenu,
+  get_low_stocks_menus
 } = require('../controllers/Menu.controller');
 
 const {
@@ -136,6 +137,7 @@ router.post('/ajouter_avis', createAvis);
 // READ ALL
 router.get('/get_all_avis', getAvis);
 
+router.get('/get_low_stocks_menus', get_low_stocks_menus);
 // READ BY ID
 router.get('/get_avis_by_id/:id', getAvisById);
 

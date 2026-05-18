@@ -21,6 +21,26 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.TEXT,
       allowNull: true
     },
+    prix_ht: {
+      type: DataTypes.DECIMAL(10, 2),
+      allowNull: true
+    },
+    prix_promo_ht: {
+      type: DataTypes.DECIMAL(10, 2),
+      allowNull: true
+    },
+    tva: {
+      type: DataTypes.DECIMAL(5, 2),
+      allowNull: true
+    },
+    stock: {
+      type: DataTypes.INTEGER,
+      defaultValue: 0
+    },
+    offre_promo: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: true
+    },
     actif: {
       type: DataTypes.BOOLEAN,
       defaultValue: true

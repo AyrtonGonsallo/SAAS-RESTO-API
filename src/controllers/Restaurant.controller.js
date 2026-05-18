@@ -48,7 +48,10 @@ exports.ajouterRestaurant = async (req, res,next) => {
       'montant_paiement_acompte_reservation',
       'etat_paiement_acompte_click_and_collect',
       'montant_paiement_acompte_click_and_collect',
-      'montant_livraison_click_and_collect'
+      'montant_livraison_click_and_collect',
+      'envoi_de_mail_recap_reservation',
+      'envoi_de_mail_recap_click_and_collect',
+      'livraison_click_and_collect'
     ];
 
     // valeurs par défaut (important)
@@ -70,6 +73,9 @@ exports.ajouterRestaurant = async (req, res,next) => {
       etat_paiement_acompte_click_and_collect: { valeur: 1, est_actif: true, est_important: true },
       montant_paiement_acompte_click_and_collect: { valeur: 50, est_actif: true, est_important: false },
       montant_livraison_click_and_collect: { valeur: 15, est_actif: true, est_important: true },
+      envoi_de_mail_recap_reservation: { valeur: 1, est_actif: false, est_important: true },
+      envoi_de_mail_recap_click_and_collect: { valeur: 1, est_actif: false, est_important: true },
+      livraison_click_and_collect: { valeur: 1, est_actif: false, est_important: true },
     };
 
     const parametres = types.map(type => {
@@ -148,7 +154,10 @@ exports.recreerParametresRestaurant = async (req, res,next) => {
       'montant_paiement_acompte_reservation',
       'etat_paiement_acompte_click_and_collect',
       'montant_paiement_acompte_click_and_collect',
-      'montant_livraison_click_and_collect'
+      'montant_livraison_click_and_collect',
+      'envoi_de_mail_recap_reservation',
+      'envoi_de_mail_recap_click_and_collect',
+      'livraison_click_and_collect'
     ];
 
     // valeurs par défaut (important)
@@ -170,6 +179,9 @@ exports.recreerParametresRestaurant = async (req, res,next) => {
       etat_paiement_acompte_click_and_collect: { valeur: 1, est_actif: true, est_important: true },
       montant_paiement_acompte_click_and_collect: { valeur: 50, est_actif: true, est_important: false },
       montant_livraison_click_and_collect: { valeur: 15, est_actif: true, est_important: true },
+      envoi_de_mail_recap_reservation: { valeur: 1, est_actif: false, est_important: true },
+      envoi_de_mail_recap_click_and_collect: { valeur: 1, est_actif: false, est_important: true },
+      livraison_click_and_collect: { valeur: 1, est_actif: false, est_important: true },
     };
 
     const parametres = types.map(type => {
@@ -375,6 +387,7 @@ exports.updateRestaurant = async (req, res, next) => {
       heure_fin,
       heure_cc_debut,
       heure_cc_fin,
+      jours_de_fermeture,
       telephone,
       societe_id,
       utilisateur_id
@@ -388,6 +401,10 @@ exports.updateRestaurant = async (req, res, next) => {
       });
     }
 
+    let jours_de_fermeture_splited = jours_de_fermeture.split(',');
+    console.log('jours_de_fermeture',jours_de_fermeture_splited)
+    console.log('jours_de_fermeture string',JSON.stringify(jours_de_fermeture_splited))
+
     await restaurant.update({
       nom,
       coordonnees_google_maps,
@@ -397,6 +414,7 @@ exports.updateRestaurant = async (req, res, next) => {
       heure_fin,
       heure_cc_debut,
       heure_cc_fin,
+      jours_de_fermeture:JSON.stringify(jours_de_fermeture_splited),
       telephone,
       societe_id,
       utilisateur_id

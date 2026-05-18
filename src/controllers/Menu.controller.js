@@ -135,8 +135,22 @@ exports.updateMenu = async (req, res, next) => {
       liste_produits,
       ...menuData
     } = req.body;
-    const produits = liste_produits ? JSON.parse(liste_produits) : [];
+
+    
+    const idsProduits = liste_produits ? JSON.parse(liste_produits) : [];
+    console.log('idsProduits',idsProduits)
+
+    const produits = await Produit.findAll({
+      where: {
+        id: idsProduits
+      }
+    });
     console.log('produits',produits)
+
+    //iterrer et faire las somme de prix_ht
+    const prix_total_ht = produits.reduce((total, p) => {
+      return total + Number(p.prix_ht || 0);
+    }, 0);
 
     const image = req.file ? req.file.filename : null;
 
@@ -153,6 +167,10 @@ exports.updateMenu = async (req, res, next) => {
     // 2. update champs simples
     await menu.update(menuData);
 
+    await menu.update({
+      prix_ht:prix_total_ht,
+    });
+
     if(image){
       await menu.update({
         image,
@@ -160,8 +178,8 @@ exports.updateMenu = async (req, res, next) => {
     }
 
     // 3. update relations produits si fournis
-    if (Array.isArray(produits)) {
-      await menu.setProduits(produits);
+    if (Array.isArray(idsProduits)) {
+      await menu.setProduits(idsProduits);
     }
 
     // 4. reload complet
@@ -211,3 +229,62 @@ exports.deleteMenu = async (req, res, next) => {
 };
 
 
+
+exports.get_low_stocks_menus =  async (req, res) => {
+  try {
+
+    const selectedRestaurantId = req.query.restaurant_id;
+    let restaurantFilter = {};
+
+    let ishigh = req.role_priorite<4
+
+    if (!ishigh) {
+      if (selectedRestaurantId) {
+        // 🔥 filtre sur UN restaurant
+        restaurantFilter = {
+          restaurant_id: selectedRestaurantId,
+          societe_id: req.societe_id
+        };
+      } else {
+        // 🔥 filtre sur plusieurs restaurants autorisés
+        restaurantFilter = {
+          restaurant_id: {
+            [Op.in]: req.restos
+          },
+          societe_id: req.societe_id
+        };
+      }
+    }else{
+       if (req.isSuperAdmin) {
+        restaurantFilter = {}
+      }else{
+        restaurantFilter = {societe_id: req.societe_id}
+      }
+    }
+    const menus = await Menu.findAll({
+      where: {...restaurantFilter,stock: {
+        [Op.lt]: 5
+      }},
+       include: [
+       {
+          model: Restaurant,
+          attributes: ['id', 'nom', 'coordonnees_google_maps', 'ville', 'adresse', 'heure_debut', 'heure_fin', 'telephone'],
+          required: false,
+        
+        },
+        { association: 'produits' }
+      
+      ],
+      order: [['societe_id', 'ASC'],['restaurant_id', 'ASC'],['updated_at', 'DESC']],
+      limit: 5
+    });
+
+    return res.status(200).json(menus);
+
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({
+      message: 'Erreur serveur'
+    });
+  }
+}
