@@ -765,20 +765,20 @@ exports.getReservationDatasBySocieteID = async (req, res) => {
     const services = await Service.findAll({where: restaurantFilter,});
     const creneaux = await Creneau.findAll({where: restaurantFilter,});
     const tables = await RestaurantTable.findAll({
-      where: {
-      ...restaurantFilter,
-        statut: 'libre'
+        where: {
+        ...restaurantFilter,
+          statut: 'libre'
+        },
+        include: [
+          {
+            model: ZoneTable,
+            attributes: ['id', 'titre',  ],
+            required: false,
+          }
+        ],
+        order: [['zone_id', 'ASC']]
       },
-      include: [
-        {
-          model: ZoneTable,
-          attributes: ['id', 'titre',  ],
-          required: false,
-        }
-      ],
-      order: [['zone_id', 'ASC']]
-    },
-  );
+    );
     const restaurants = await Restaurant.findAll({
       where: restaurantFilter,
       include: [
@@ -789,6 +789,12 @@ exports.getReservationDatasBySocieteID = async (req, res) => {
         },
         {
           association: 'horaires',
+          include: [
+            {
+                model: Service,
+                required: false,
+            }
+          ],
         },
       ],
       order: [['created_at', 'DESC']]
