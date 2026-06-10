@@ -1,13 +1,16 @@
 const db = require('../models');
 const { Op } = require('sequelize');
-const { Parametre,Restaurant  } = db;
+const { Parametre,Restaurant,Societe  } = db;
 
 exports.ajouterParametre = async (req, res,next) => {
   try {
     const {
       titre,
       type,
+      type_de_valeur,
+      unite_de_temps,
       valeur,
+      valeurs_options,
       description,
       est_actif,
       est_important,
@@ -16,14 +19,17 @@ exports.ajouterParametre = async (req, res,next) => {
       utilisateur_id,
 
     } = req.body;
-    //console.log("file",req.file)
 
-    const image = req.file ? req.file.filename : null;
+
+  
 
     const parametre = await Parametre.create({
       titre,
       type,
-      valeur: type === 'logo' ? image : valeur,
+      type_de_valeur,
+      unite_de_temps,
+      valeur,
+      valeurs_options,
       description,
       est_actif,
       est_important,
@@ -85,6 +91,11 @@ exports.getParametres =  async (req, res) => {
           required: false,
         
         },
+        {
+                model: Societe,
+                attributes: ['id', 'titre', ],
+                required: false,
+            },
       ],
       order: [['societe_id', 'ASC'],['restaurant_id', 'ASC'],['est_important', 'DESC'],['updated_at', 'DESC']]
     });
@@ -150,7 +161,10 @@ exports.updateParametre = async (req, res, next) => {
     const { 
       titre,
       type,
+      type_de_valeur,
+      unite_de_temps,
       valeur,
+      valeurs_options,
       description,
       est_actif,
       est_important,
@@ -167,12 +181,15 @@ exports.updateParametre = async (req, res, next) => {
       });
     }
 
-    const image = req.file ? req.file.filename : null;
+    
 
     await parametre.update({
       titre,
       type,
-      valeur: type === 'logo' ? image : valeur,
+      type_de_valeur,
+      unite_de_temps,
+      valeur,
+      valeurs_options,
       description,
       est_actif,
       est_important,

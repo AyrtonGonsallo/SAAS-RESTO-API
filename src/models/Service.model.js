@@ -13,6 +13,10 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.TEXT,
       allowNull: true
     },
+    max_couverts_par_service: {
+      type: DataTypes.INTEGER,
+      allowNull: true
+    },
     est_actif: {
       type: DataTypes.BOOLEAN,
       defaultValue: true

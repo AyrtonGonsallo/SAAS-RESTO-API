@@ -309,6 +309,11 @@ router.get('/get_all_categories_produit', async (req, res) => {
           required: false,
         
         },
+        {
+          model: Societe,
+          attributes: ['id', 'titre', ],
+          required: false,
+        },
       ],
       order: [['restaurant_id', 'DESC'],['ordre', 'ASC'],['created_at', 'DESC']]
     });

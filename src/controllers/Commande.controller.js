@@ -213,7 +213,7 @@ exports.createCommande = async (req, res) => {
 
     const livraison = await Livraison.create({
       date_livraison:dateObj,
-      adresse_livraison:adresse_livraison,
+      adresse_livraison:adresse_livraison??'',
       frais_livraison:montantLivraison,
       commande_id:commande.id,
       client_id:client.id,
@@ -259,33 +259,75 @@ exports.createCommande = async (req, res) => {
       commandeObjet.items = JSON.parse(commandeObjet.items);
     }
 
-    /*
+  const params = await Parametre.findOne({
+  where: {
+    restaurant_id,
+    type: 'envoi_de_mail_recap_click_and_collect',
+    est_actif: true
+  }
+});
 
-    //chercher le parametre 
-    const params = await Parametre.findOne({
-      where: {
-        restaurant_id: restaurantId,
-        type:'envoi_de_mail_recap_click_and_collect',
-        est_actif: true
+if (params) {
+  try {
+
+    const restaurant = await Restaurant.findByPk(restaurant_id);
+    const client = commandeObjet?.client;
+
+    const titre = 'Récapitulatif de votre commande';
+
+    const dateCommande = new Date(commande.date_retrait).toLocaleString('fr-FR', {
+      weekday: 'long',
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+
+    const dateCreation = new Date(commande.created_at).toLocaleString('fr-FR', {
+      weekday: 'long',
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+
+    const items = typeof commande.items === 'string'
+      ? JSON.parse(commande.items)
+      : commande.items || [];
+
+    const produits = items.map(item => ({
+      titre: item.titre,
+      quantite: item.quantite,
+      prix_ht: item.prix_ht,
+      variations: item.variations?.length
+        ? item.variations.map(v => v.titre).join(', ')
+        : 'Aucune'
+    }));
+
+    await emailService.sendMail({
+      to: client?.email,
+      subject: titre,
+      template: 'recap-commande.ejs',
+      context: {
+        titre,
+        nom: client?.nom,
+        prenom: client?.prenom,
+        email: client?.email,
+        nom_restaurant: restaurant?.nom,
+        telephone_restaurant: restaurant?.telephone,
+        date_commande: dateCommande,
+        date_creation: dateCreation,
+        prix_total: commande.totalPrice,
+        produits
       }
     });
 
-    //si le param existe chercher le restaurant
-    const restaurant = await Restaurant.findByPk(restaurant_id);
-
-    //faire l'envoi de mail
-    titre = 'Récap de commande'
-    texte = ''
-    await emailService.sendMail({
-          //to: 'ayrtongonsallo444@gmail.com',
-          to:email
-          subject: titre,
-          template: 'recap-commande.ejs', //situé dans D:\telechargement\Saas resto api\src\emails
-          context: { titre,texte,nom,prenom,email,nom_restaurant,telephone_restaurant } // variable à injecter dans ejs
-        });
-
-
-    */
+  } catch (err) {
+    console.error("Erreur email commande (non bloquante):", err);
+  }
+}
 
     res.json(commandeObjet);
 
@@ -369,6 +411,9 @@ exports.getCommandesDatasBySocieteID = async (req, res) => {
     const restaurants = await Restaurant.findAll({
       where: restaurantFilter,
       include: [
+        {
+          association: 'horaires',
+        },
         {
           association: 'parametres',
           where: { est_important: true },

@@ -14,6 +14,10 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.STRING(150),
       allowNull: true
     },
+    adresse_email: {
+      type: DataTypes.STRING(150),
+      allowNull: true
+    },
     ville: {
       type: DataTypes.STRING(50),
       allowNull: true
@@ -91,6 +95,10 @@ module.exports = (sequelize, DataTypes) => {
       foreignKey: 'restaurant_id',
       otherKey: 'type_de_cuisine_id',
       as: 'types_de_cuisine'
+    });
+    Restaurant.hasMany(models.RestaurantHoraire, {
+      foreignKey: 'restaurant_id',
+      as: 'horaires'
     });
 
   };

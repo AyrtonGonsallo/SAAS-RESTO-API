@@ -73,6 +73,37 @@ exports.getServices = async (req, res) => {
   }
 };
 
+
+exports.getServicesByRestoId = async (req, res) => {
+  try {
+    
+    const services = await Service.findAll({
+         where:{
+          restaurant_id:req.params.resto_id
+         },
+          include: [
+            {
+                model: Restaurant,
+                attributes: ['id', 'nom', 'coordonnees_google_maps', 'ville', 'adresse', 'heure_debut', 'heure_fin', 'telephone'],
+                required: false,
+            },
+            {
+                model: Societe,
+                attributes: ['id', 'titre', ],
+                required: false,
+            },
+        ],
+
+    }
+);
+
+    res.json(services);
+  } catch (error) {
+    console.log(error)
+    res.status(500).json({ message: error.message });
+  }
+};
+
 exports.getServiceById = async (req, res) => {
   try {
     const service = await Service.findByPk(req.params.id);

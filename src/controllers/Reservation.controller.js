@@ -191,6 +191,7 @@ exports.createReservation = async (req, res) => {
         utilisateur_id: reservation.client_id
     });
 
+  
     
     
          
@@ -213,35 +214,72 @@ exports.createReservation = async (req, res) => {
       ]
     });
 
-    /*
 
-    //chercher le parametre 
-    const params = await Parametre.findOne({
-      where: {
-        restaurant_id: restaurantId,
-        type:'envoi_de_mail_recap_reservation',
-        est_actif: true
+      // chercher le paramètre d'envoi mail
+const params = await Parametre.findOne({
+  where: {
+    restaurant_id: restaurant_id,
+    type: 'envoi_de_mail_recap_reservation',
+    est_actif: true
+  }
+});
+ 
+console.log("EMAIL PARAM CHECK =", params);
+
+// si activation email OK
+if (params) {
+  try {
+    const restaurant = await Restaurant.findByPk(restaurant_id);
+
+    const nom_restaurant = restaurant?.nom || '';
+    const telephone_restaurant = restaurant?.telephone || '';
+
+    const titre = 'Récapitulatif de votre réservation';
+
+    const dateReservation = new Date(reservation.date_reservation).toLocaleString('fr-FR', {
+      weekday: 'long',
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+
+    const dateCreation = new Date(reservation.created_at).toLocaleString('fr-FR', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  });
+
+    await emailService.sendMail({
+      to: email,
+      subject: titre,
+      template: 'recap-reservation.ejs',
+      context: {
+        titre,
+        nom,
+        prenom,
+        email,
+        nom_restaurant,
+        telephone_restaurant,
+        date_reservation: dateReservation,
+        date_creation: dateCreation,
+        nombre_personnes: reservation.nombre_de_personnes,
+        nombre_couverts: reservation.nb_couverts,
+        table: table?.titre || table?.nom || `Table ${table_id}`,
+        creneau: creneau ? `${creneau.heure_debut} - ${creneau.heure_fin}` : '',
+        demandes_speciales: reservationObjet.tags ?.map(tag => tag.titre).join(', ') || '',
+        commentaire: reservation.notes
       }
     });
 
-    //si le param existe chercher le restaurant
-    const restaurant = await Restaurant.findByPk(restaurant_id);
+  } catch (err) {
+    console.error("Erreur email (non bloquante):", err);
+  }
+}
 
-
-    //faire l'envoi de mail
-    titre = 'Récap de réservation'
-    texte = ''
-    await emailService.sendMail({
-          //to: 'ayrtongonsallo444@gmail.com',
-          to:email
-          subject: titre,
-          template: 'recap-resvation.ejs', //situé dans D:\telechargement\Saas resto api\src\emails
-          context: { titre,texte,nom,prenom,email,nom_restaurant,telephone_restaurant } // variable à injecter dans ejs
-        });
-
-
-    */
-
+   
     res.json(reservationObjet);
 
   } catch (error) {
@@ -748,7 +786,10 @@ exports.getReservationDatasBySocieteID = async (req, res) => {
           association: 'parametres',
           where: { est_important: true },
           required: false
-        }
+        },
+        {
+          association: 'horaires',
+        },
       ],
       order: [['created_at', 'DESC']]
     });

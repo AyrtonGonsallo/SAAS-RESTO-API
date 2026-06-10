@@ -79,14 +79,35 @@
 
         <!-- Main Content -->
         <div class="content">
-            <p>Bonjour <%= nom %> <%= prenom %>,<br><br>
-                
-                Votre réservation chez <%= nom_restaurant %> est en cours de préparation
-                <br>
-                <%= texte %>
-                
-                
-            </p>
+            Bonjour <%= prenom %> <%= nom %>,<br><br>
+
+            Nous avons bien enregistré votre réservation au restaurant <%= nom_restaurant %> le <%= date_creation %>.<br><br>
+
+            ------------------------------------------------------------<br><br>
+
+           📅 Récapitulatif de votre réservation :<br><br>
+
+           - Date de réservation : <%= date_reservation %><br>
+           - Créneau : <%= creneau %><br><br>
+
+           - Nombre de personnes : <%= nombre_personnes %><br>
+           - Nombre de couverts : <%= nombre_couverts %><br>
+           - Table : <%= table %><br><br>
+
+           <% if (demandes_speciales) { %>
+            - Demandes spéciales : <%= demandes_speciales %><br>
+           <% } %>
+
+           <% if (commentaire) { %>
+           - Commentaire : <%= commentaire %><br>
+           <% } %>
+            <br>
+           ------------------------------------------------------------<br><br>
+
+           Nous vous remercions pour votre confiance et restons à votre disposition.<br><br>
+
+           Cordialement,<br>
+           L’équipe <%= nom_restaurant %>
 
         </div>
         

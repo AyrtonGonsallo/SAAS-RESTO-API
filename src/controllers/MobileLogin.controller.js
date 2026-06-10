@@ -57,7 +57,29 @@ exports.getMobileDatas = async (req, res) => {
 
   console.log(userID,priorite,societeID)
 
-  if(priorite==9){
+
+  const utilisateur = await Utilisateur.findByPk(userID,{
+    include: [
+        {
+        model: Role,
+        required: false,
+        
+      },
+      {
+        model: Restaurant,
+        attributes: ['id', 'nom', 'coordonnees_google_maps', 'ville', 'adresse', 'heure_debut', 'heure_fin', 'telephone'],
+        through: { attributes: [] }, // supprime les infos de la table pivot
+        required: false,
+      },
+    ]
+  } );
+
+  console.log(utilisateur)
+
+  let restaurantID = utilisateur.Restaurants[0].id
+
+
+  if(priorite==9){//livreur
     res.json({
       societe:societeID,
       daily_bookings:[],
@@ -74,8 +96,13 @@ exports.getMobileDatas = async (req, res) => {
   const todayEnd = new Date();
   todayEnd.setHours(23, 59, 59, 999);
 
+  if(priorite==7){//employé
+    restaurantFilter = {societe_id: societeID,restaurant_id: restaurantID};
+  }else{
+    restaurantFilter = {societe_id: societeID};
+  }
   
-  restaurantFilter = {societe_id: societeID};
+  
 
   const daily_bookings = await Reservation.findAll({
     where:{
@@ -427,7 +454,7 @@ exports.getMobileDatas = async (req, res) => {
     }
   });
   
-  
+  console.log("envoyés")
 
   res.json({
     societe:societeID,

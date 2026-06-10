@@ -83,6 +83,10 @@ module.exports = (sequelize, DataTypes) => {
       foreignKey: 'restaurant_id',
     });
 
+    Produit.belongsTo(models.Societe, {
+      foreignKey: 'societe_id'
+    });
+
   }
 
   return Produit;

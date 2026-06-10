@@ -1,5 +1,5 @@
 const db = require('../models');
-const {  Menu,Produit, Restaurant } = db;
+const {  Menu,Produit, Restaurant,Societe } = db;
 const { Op } = require('sequelize');
 
 
@@ -86,7 +86,13 @@ exports.getMenus =  async (req, res) => {
           required: false,
         
         },
-        { association: 'produits' }
+        { association: 'produits' },
+        {
+          model: Societe,
+          attributes: ['id', 'titre', 'status', ],
+          required: false,
+          
+        },
       
       ],
       order: [['societe_id', 'ASC'],['restaurant_id', 'ASC'],['updated_at', 'DESC']]

@@ -14,6 +14,7 @@ const {
   createService,
   getServices, 
   getServiceById,
+  getServicesByRestoId,
   updateService,
   deleteService
 } = require('../controllers/Service.controller');
@@ -220,6 +221,10 @@ router.get('/get_all_services', getServices);
 
 // READ BY ID
 router.get('/get_service_by_id/:id', getServiceById);
+
+
+router.get('/get_services_by_resto_id/:resto_id', getServicesByRestoId);
+
 
 // UPDATE
 router.put('/update_service/:id', updateService);

@@ -1,5 +1,5 @@
 const db = require('../models');
-const {  Commande,Produit,Livraison } = db;
+const {  Commande,Produit,Livraison,Menu,VariationProduit } = db;
 
 
 
@@ -43,7 +43,9 @@ exports.updateMobileCommande = async (req, res) => {
       statut
     } = req.body;
 
-   
+   const elements_panier = typeof commande.items === 'string'
+      ? JSON.parse(commande.items)
+      : commande.items;
 
     // ACTIF → ANNULÉ = remettre le stock
     if (actifs.includes(former_statut) && inactifs.includes(statut)) {
@@ -62,7 +64,6 @@ exports.updateMobileCommande = async (req, res) => {
 
         // AJOUT VARIATIONS
         for (const v of variations) {
-          prix_unitaire += parseFloat(v.prix_supplement || 0);
           await VariationProduit.increment(
             'stock',
             {
@@ -79,32 +80,45 @@ exports.updateMobileCommande = async (req, res) => {
     // ANNULÉ → ACTIF = reprendre le stock
     else if (inactifs.includes(former_statut) && actifs.includes(statut)) {
       for (const item of elements_panier) {
-        await Produit.decrement(
-          'stock',
-          {
-            by: item.quantite,
-            where: { id: item.productId },
-            transaction: t
-          }
-        );
-        const variations = (item.variations || []).filter(v =>
-          v.id && v.prix_supplement != null
-        );
-
-        // AJOUT VARIATIONS
-        for (const v of variations) {
-          prix_unitaire += parseFloat(v.prix_supplement || 0);
-          await VariationProduit.decrement(
+        let type = item.type;
+         if(type=="produit"||type=="variation-produit"){
+          await Produit.decrement(
             'stock',
             {
               by: item.quantite,
-              where: { id: v.id },
+              where: { id: item.productId },
+              transaction: t
+            }
+          );
+          const variations = (item.variations || []).filter(v =>
+            v.id && v.prix_supplement != null
+          );
+
+          // AJOUT VARIATIONS
+          for (const v of variations) {
+            await VariationProduit.decrement(
+              'stock',
+              {
+                by: item.quantite,
+                where: { id: v.id },
+                transaction: t
+              }
+            );
+          }
+        }else if(type=="menu"){
+           await Menu.decrement(
+            'stock',
+            {
+              by: item.quantite,
+              where: { id: item.menuId },
               transaction: t
             }
           );
         }
+       
+        
       }
-      await livraison.update({ statut:'En attente',});
+      await livraison.update({ statut:'En attente'},{ transaction: t });
     }
 
 
