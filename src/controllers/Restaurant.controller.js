@@ -51,11 +51,13 @@ exports.ajouterRestaurant = async (req, res,next) => {
       'montant_paiement_acompte_reservation',
       'etat_paiement_acompte_click_and_collect',
       'montant_paiement_acompte_click_and_collect',
+      'etat_paiement_complet_click_and_collect',
       'montant_livraison_click_and_collect',
       'envoi_de_mail_recap_reservation',
       'envoi_de_mail_recap_click_and_collect',
       'livraison_click_and_collect',
       'ecart_entre_heure_actuelle_et_heure_reservation',
+      'fusionner_les_tables_pour_reservation',
       'commande_a_l_avance',
       'delai_avant_fermetture_commandes',
       'delai_avant_fermetture_reservations',
@@ -87,6 +89,8 @@ exports.ajouterRestaurant = async (req, res,next) => {
       montant_paiement_acompte_reservation: { description: 'pour faire payer tout mettez 100% sinon moins', unite_de_temps: '', type_de_valeur: 'numerique', valeur: 50, est_actif: true, est_important: false },
       etat_paiement_acompte_click_and_collect: { description: 'si actif il faut payer un acompte pour commander', unite_de_temps: '', type_de_valeur: 'statut', valeur: '', est_actif: true, est_important: true },
       montant_paiement_acompte_click_and_collect: { description: 'pour faire payer tout mettez 100% sinon moins', unite_de_temps: '', type_de_valeur: 'numerique', valeur: 50, est_actif: true, est_important: false },
+      etat_paiement_complet_click_and_collect: { description: 'si actif le client doit payer la totalité de la commande avant validation', unite_de_temps: '', type_de_valeur: 'statut', valeur: '', est_actif: true, est_important: true},
+
       montant_livraison_click_and_collect: { description: 'le montant fixe de la livraison du restaurant', unite_de_temps: '', type_de_valeur: 'numerique', valeur: 15, est_actif: true, est_important: true },
       envoi_de_mail_recap_reservation: { description: 'si actif le client a la fin du formulaire de reservation recoit un mail', unite_de_temps: '', type_de_valeur: 'statut', valeur: '', est_actif: false, est_important: true },
       envoi_de_mail_recap_click_and_collect: { description: 'si actif le client a la fin du formulaire de commande recoit un mail', unite_de_temps: '', type_de_valeur: 'statut', valeur: '', est_actif: false, est_important: true },
@@ -94,6 +98,9 @@ exports.ajouterRestaurant = async (req, res,next) => {
 
 
       ecart_entre_heure_actuelle_et_heure_reservation: { description: 'si la reservation est pour aujourd\'hui et cette valeur est de 2h, s\'il est 15h au moment ou le client reserve il devra choisir au moins 17h', unite_de_temps: 'heures', type_de_valeur: 'unite_temporelle', valeur: 2, est_actif: true, est_important: true },
+      fusionner_les_tables_pour_reservation: { description: 'si le parametre est actif le client peux choisir plusieurs tables', unite_de_temps: '', type_de_valeur: 'statut', valeur: '', est_actif: true, est_important: true },
+      
+      
       commande_a_l_avance: { description: 'si cette valeur est de 2j le 15 mai le client peux commander jusqu\'au 17 mai', unite_de_temps: 'jours', type_de_valeur: 'unite_temporelle', valeur: 2, est_actif: true, est_important: true },
       delai_avant_fermetture_commandes: { description: 'si les horaires de commande pour le service du soir le lundi sont de 15h a 19h et cette valeur est de 40min le client ne peux plus commander a partir de 18h20 ', unite_de_temps: 'minutes', type_de_valeur: 'unite_temporelle', valeur: 2, est_actif: true, est_important: true },
       delai_avant_fermetture_reservations: { description: 'si les horaires de reservation pour le service du soir le lundi sont de 15h a 19h et cette valeur est de 40min le client ne peux plus reserver a partir de 18h20 ', unite_de_temps: 'minutes', type_de_valeur: 'unite_temporelle', valeur: 2, est_actif: true, est_important: true },
@@ -190,11 +197,13 @@ exports.recreerParametresRestaurant = async (req, res,next) => {
       'montant_paiement_acompte_reservation',
       'etat_paiement_acompte_click_and_collect',
       'montant_paiement_acompte_click_and_collect',
+      'etat_paiement_complet_click_and_collect',
       'montant_livraison_click_and_collect',
       'envoi_de_mail_recap_reservation',
       'envoi_de_mail_recap_click_and_collect',
       'livraison_click_and_collect',
       'ecart_entre_heure_actuelle_et_heure_reservation',
+      'fusionner_les_tables_pour_reservation',
       'commande_a_l_avance',
       'delai_avant_fermetture_commandes',
       'delai_avant_fermetture_reservations',
@@ -226,6 +235,8 @@ exports.recreerParametresRestaurant = async (req, res,next) => {
       montant_paiement_acompte_reservation: { description: 'pour faire payer tout mettez 100% sinon moins', unite_de_temps: '', type_de_valeur: 'numerique', valeur: 50, est_actif: true, est_important: false },
       etat_paiement_acompte_click_and_collect: { description: 'si actif il faut payer un acompte pour commander', unite_de_temps: '', type_de_valeur: 'statut', valeur: '', est_actif: true, est_important: true },
       montant_paiement_acompte_click_and_collect: { description: 'pour faire payer tout mettez 100% sinon moins', unite_de_temps: '', type_de_valeur: 'numerique', valeur: 50, est_actif: true, est_important: false },
+      etat_paiement_complet_click_and_collect: { description: 'si actif le client doit payer la totalité de la commande avant validation', unite_de_temps: '', type_de_valeur: 'statut', valeur: '', est_actif: true, est_important: true},
+
       montant_livraison_click_and_collect: { description: 'le montant fixe de la livraison du restaurant', unite_de_temps: '', type_de_valeur: 'numerique', valeur: 15, est_actif: true, est_important: true },
       envoi_de_mail_recap_reservation: { description: 'si actif le client a la fin du formulaire de reservation recoit un mail', unite_de_temps: '', type_de_valeur: 'statut', valeur: '', est_actif: false, est_important: true },
       envoi_de_mail_recap_click_and_collect: { description: 'si actif le client a la fin du formulaire de commande recoit un mail', unite_de_temps: '', type_de_valeur: 'statut', valeur: '', est_actif: false, est_important: true },
@@ -233,6 +244,9 @@ exports.recreerParametresRestaurant = async (req, res,next) => {
 
 
       ecart_entre_heure_actuelle_et_heure_reservation: { description: 'si la reservation est pour aujourd\'hui et cette valeur est de 2h, s\'il est 15h au moment ou le client reserve il devra choisir au moins 17h', unite_de_temps: 'heures', type_de_valeur: 'unite_temporelle', valeur: 2, est_actif: true, est_important: true },
+      fusionner_les_tables_pour_reservation: { description: 'si le parametre est actif le client peux choisir plusieurs tables', unite_de_temps: '', type_de_valeur: 'statut', valeur: '', est_actif: true, est_important: true },
+
+     
       commande_a_l_avance: { description: 'si cette valeur est de 2j le 15 mai le client peux commander jusqu\'au 17 mai', unite_de_temps: 'jours', type_de_valeur: 'unite_temporelle', valeur: 2, est_actif: true, est_important: true },
       delai_avant_fermetture_commandes: { description: 'si les horaires de commande pour le service du soir le lundi sont de 15h a 19h et cette valeur est de 40min le client ne peux plus commander a partir de 18h20 ', unite_de_temps: 'minutes', type_de_valeur: 'unite_temporelle', valeur: 2, est_actif: true, est_important: true },
       delai_avant_fermetture_reservations: { description: 'si les horaires de reservation pour le service du soir le lundi sont de 15h a 19h et cette valeur est de 40min le client ne peux plus reserver a partir de 18h20 ', unite_de_temps: 'minutes', type_de_valeur: 'unite_temporelle', valeur: 2, est_actif: true, est_important: true },
@@ -275,7 +289,7 @@ exports.recreerParametresRestaurant = async (req, res,next) => {
   
 
     await Parametre.bulkCreate(parametres, {
-      updateOnDuplicate: [ 'description', 'est_important']
+      updateOnDuplicate: [ 'description', 'est_important',]//il ne va mettre a jour que ces champs
     });
 
      

@@ -1,5 +1,5 @@
 const db = require('../models');
-const {  Reservation,TotalReservationsCreneauParJour,ReservationsTablesParCreneauJour,Creneau,RestaurantTable, } = db;
+const {  Reservation,TotalReservationsCouvertsParJour,ReservationsTablesParCreneauJour,Creneau,RestaurantTable, } = db;
 
 
 
@@ -33,12 +33,12 @@ exports.updateMobileReservation = async (req, res) => {
     if (!creneau) throw new Error('Créneau introuvable');
 
     //  Charger créneau du jour avec lock
-    const totalReservationsCreneauParJour = await TotalReservationsCreneauParJour.findByPk(reservation.total_reservations_creneau_par_jour_id, {
+    const TotalReservationsCouvertsParJour = await TotalReservationsCouvertsParJour.findByPk(reservation.total_reservations_creneau_par_jour_id, {
       transaction: t,
       lock: t.LOCK.UPDATE
     });
 
-    if (!totalReservationsCreneauParJour) {
+    if (!TotalReservationsCouvertsParJour) {
       throw new Error('Créneau du jour introuvable');
     }
 
@@ -100,17 +100,17 @@ exports.updateMobileReservation = async (req, res) => {
 
     //  Appliquer delta
     if (delta !== 0) {
-      if (delta === 1 && totalReservationsCreneauParJour.nb_reservations_actuel >= creneau.nb_reservations_max) {
+      if (delta === 1 && TotalReservationsCouvertsParJour.nb_reservations_actuel >= creneau.nb_reservations_max) {
         await t.rollback();
         return res.status(400).json({ message: 'Créneau complet' });
       }
 
-      if (delta === -1 && totalReservationsCreneauParJour.nb_reservations_actuel <= 0) {
+      if (delta === -1 && TotalReservationsCouvertsParJour.nb_reservations_actuel <= 0) {
         await t.rollback();
         return res.status(400).json({ message: 'Compteur invalide' });
       }
 
-      await totalReservationsCreneauParJour.increment('nb_reservations_actuel', {
+      await TotalReservationsCouvertsParJour.increment('nb_reservations_actuel', {
         by: delta,
         transaction: t
       });

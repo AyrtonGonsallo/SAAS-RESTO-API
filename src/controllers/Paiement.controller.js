@@ -297,6 +297,12 @@ exports.createStripePaymentForCommande = async (req, res) => {
       est_actif: true
     }
   });
+  const param_paiement_total = await Parametre.findOne({
+    where: {
+      restaurant_id: restaurantId,
+      type: 'etat_paiement_complet_click_and_collect'
+    }
+  });
 
   //  transformation propre key/value
   const config = Object.fromEntries(
@@ -305,7 +311,7 @@ exports.createStripePaymentForCommande = async (req, res) => {
 
   const stripe = Stripe(config.cle_privee_stripe);
 
-  const montant = parseFloat(config.montant_paiement_acompte_click_and_collect || 0);
+  const montant = (param_paiement_total.est_actif)?parseFloat(Math.round(final_commande.totalPrice * 100 )):parseFloat(config.montant_paiement_acompte_click_and_collect*100 || 0);
 
   const session = await stripe.checkout.sessions.create({
     payment_method_types: ['card'],
@@ -317,7 +323,7 @@ exports.createStripePaymentForCommande = async (req, res) => {
           product_data: {
             name: `Paiement de la commande de ${final_commande.client.nom} ${final_commande.client.prenom} au restaurant "${restaurant.nom}"`,
           },
-          unit_amount: Math.round(final_commande.totalPrice * 100), // 
+          unit_amount: montant, // 
         },
         quantity: 1,
       }

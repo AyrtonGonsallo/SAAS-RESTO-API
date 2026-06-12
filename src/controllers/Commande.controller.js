@@ -1,7 +1,7 @@
 const db = require('../models');
 const bcrypt = require('bcryptjs');
 const emailService = require('../services/mailer.service');
-const {  Commande,Utilisateur,Restaurant,Livraison,Role,Societe,Menu,Panier,Parametre,Produit,VariationProduit } = db;
+const {  Commande,Utilisateur,Restaurant,Livraison,Role,Societe,Menu,Panier,Parametre,Produit,VariationProduit,Service,MaxCommandesParJoursEtMinutes } = db;
 const DEFAULT_PASS = process.env.DEFAULT_PASS;
 const notificationService = require('../services/notifications.service');
 const { Op } = require('sequelize');
@@ -27,16 +27,116 @@ exports.createCommande = async (req, res) => {
       ...rest
     } = commandeDatas;
 
-   
+    const [hD, mD] = heure_retrait.split(':').map(Number);
 
     const dateObj = new Date(Date.UTC(
       date_retrait.year,
       date_retrait.month - 1,
       date_retrait.day,
-      heure_retrait.hour,
-      heure_retrait.minute,
-      heure_retrait.second || 0
+      hD,
+      mD,
+      0
     ));
+
+    
+    //1) prendre la date actuelle et la minute actuelle
+    //2) prendre les MaxCommandesParJoursEtMinutes pour ce jour (champs nombre_de_commandes number, minute number, date_jour date)
+    //3) chercher la minute actuelle et verifier qu'on peux le faire (nombre_de_commandes<valeur_max_commandes_par_minute)
+    //4) faire la somme des nombre_de_commandes par jour et verifier qu'on peux le faire (nombre_de_commandes<valeur_max_commandes_par_minute)
+
+   
+
+
+    let param_max_commandes_par_jour = Parametre.findOne({
+      where: {
+        type: 'max_commandes_par_jour',
+        restaurant_id: restaurant_id,
+        est_actif: true
+      }
+    });
+    let param_max_commandes_par_minute = Parametre.findOne({
+      where: {
+        type: 'max_commandes_par_minute',
+        restaurant_id: restaurant_id,
+        est_actif: true
+      }
+    });
+
+    const valeur_max_commandes_par_jour = Number(param_max_commandes_par_jour.valeur);
+    const valeur_max_commandes_par_minute = Number(param_max_commandes_par_minute.valeur);
+    const now = new Date();
+    const dateActuelle = now.toISOString().slice(0, 10); // YYYY-MM-DD
+    const minuteActuelle =
+      now.getHours() * 60 +
+      now.getMinutes();
+
+      // Commandes de la minute actuelle
+    const maxCommandesParJoursEtMinuteActuelle =
+    await MaxCommandesParJoursEtMinutes.findOne({
+      where: {
+        date_jour: dateActuelle,
+        minute: minuteActuelle
+      },
+      transaction: t
+    });
+
+    // Vérification limite par minute
+    if (
+      maxCommandesParJoursEtMinuteActuelle &&
+      maxCommandesParJoursEtMinuteActuelle.nombre_de_commandes >= valeur_max_commandes_par_minute
+    ) {
+      await t.rollback();
+      return res.status(400).json({
+        message: `Nombre maximal de commandes atteint pour cette minute (${valeur_max_commandes_par_minute}).`
+      });
+    }
+
+    const totalJour =
+      await MaxCommandesParJoursEtMinutes.sum(
+        'nombre_de_commandes',
+        {
+          where: {
+            date_jour: dateActuelle
+          },
+          transaction: t
+        }
+      );
+
+    const nombreCommandesJour = Number(totalJour || 0);
+
+    // Vérification limite par jour
+    if (
+      nombreCommandesJour >= valeur_max_commandes_par_jour
+    ) {
+      await t.rollback();
+      return res.status(400).json({
+        message: `Nombre maximal de commandes atteint pour aujourd'hui (${valeur_max_commandes_par_jour}).`
+      });
+    }
+
+
+    const [statMinute] =
+      await MaxCommandesParJoursEtMinutes.findOrCreate({
+        where: {
+          date_jour: dateActuelle,
+          minute: minuteActuelle
+        },
+        defaults: {
+          date_jour: dateActuelle,
+          minute: minuteActuelle,
+          nombre_de_commandes: 0,
+          societe_id:societe_id,
+          restaurant_id:restaurant_id,
+        },
+        transaction: t
+      });
+
+    await statMinute.increment(
+      { nombre_de_commandes: 1 },
+      { transaction: t }
+    );
+
+
 
     
 
@@ -182,7 +282,7 @@ exports.createCommande = async (req, res) => {
     }
 
      const total_coef_ht = total_ht * (coefficient_resto_value);
-     const total_tva = total_coef_ht * (tvaRate / 100);
+     const total_tva = Number((total_coef_ht * (tvaRate / 100)).toFixed(2));
     const total_ttc = total_coef_ht + total_tva;
     
     nouveau_panier = await Panier.create({
@@ -300,9 +400,22 @@ if (params) {
     const produits = items.map(item => ({
       titre: item.titre,
       quantite: item.quantite,
-      prix_ht: item.prix_ht,
+      prix_ht:
+        Number(item.prix_ht) +
+        (item.variations?.reduce(
+          (sum, v) =>
+            sum + Number(v.prix_supplement || 0),
+          0
+        ) || 0),
+      prix_ttc:
+        Number(item.prix_ht) +
+        (item.variations?.reduce(
+          (sum, v) =>
+            sum + Number(v.prix_supplement || 0),
+          0
+        ) || 0),
       variations: item.variations?.length
-        ? item.variations.map(v => v.titre).join(', ')
+        ? item.variations.map((v) => v.titre).join(', ')
         : 'Aucune'
     }));
 
@@ -319,6 +432,9 @@ if (params) {
         telephone_restaurant: restaurant?.telephone,
         date_commande: dateCommande,
         date_creation: dateCreation,
+        tvaRate:tvaRate,
+        total_tva:total_tva,
+        total_coef_ht:total_coef_ht,
         prix_total: commande.totalPrice,
         produits
       }
@@ -413,6 +529,12 @@ exports.getCommandesDatasBySocieteID = async (req, res) => {
       include: [
         {
           association: 'horaires',
+          include: [
+            {
+                model: Service,
+                required: false,
+            }
+          ],
         },
         {
           association: 'parametres',

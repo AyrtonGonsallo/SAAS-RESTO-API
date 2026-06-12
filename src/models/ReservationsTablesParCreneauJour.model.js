@@ -5,8 +5,8 @@ module.exports = (sequelize, DataTypes) => {
       primaryKey: true,
       autoIncrement: true
     },
-    creneau_id: {
-      type: DataTypes.INTEGER,
+    plage_horaire: {
+      type:  DataTypes.STRING(45),
       allowNull: false
     },
     table_id: {
@@ -52,3 +52,7 @@ module.exports = (sequelize, DataTypes) => {
 
   return ReservationsTablesParCreneauJour;
 };
+
+//controle le statu des tables on verifie si la table n'est pas dea reservee pour ce jour et cette plage horaire
+//si c'est la meme table son heure ne doit pas cheveauche les heures ou elle est reservee
+//pour chaque table si activee verifier si on peux et creer si désactivé suprimer

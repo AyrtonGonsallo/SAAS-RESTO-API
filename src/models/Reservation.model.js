@@ -14,6 +14,10 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.DATE,
       allowNull: false
     },
+    plage_horaire: {
+      type:  DataTypes.STRING(45),
+      allowNull: true
+    },
     nombre_de_personnes: {
       type: DataTypes.INTEGER,
       allowNull: false
@@ -30,17 +34,13 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.TEXT,
       allowNull: true
     },
-    creneau_id: {
-      type: DataTypes.INTEGER,
-      allowNull: true
-    },
-    total_reservations_creneau_par_jour_id: {
+    total_reservations_couverts_par_jour_id: {
       type: DataTypes.INTEGER,
       allowNull: true
     },
     service_id: {
       type: DataTypes.INTEGER,
-      allowNull: true
+      allowNull: false
     },
     statut: {
       type: DataTypes.ENUM('En attente', 'Confirmée','En cours','Annulée','Terminée','No-show'),
@@ -50,10 +50,6 @@ module.exports = (sequelize, DataTypes) => {
     avis_envoye: {
       type: DataTypes.BOOLEAN,
       defaultValue: false
-    },
-    table_id: {
-      type: DataTypes.INTEGER,
-      allowNull: true
     },
     societe_id: {
       type: DataTypes.INTEGER,
@@ -79,9 +75,13 @@ module.exports = (sequelize, DataTypes) => {
     Reservation.belongsTo(models.Restaurant, {
       foreignKey: 'restaurant_id',
     });
-    Reservation.belongsTo(models.RestaurantTable, {
-      foreignKey: 'table_id',
-      as: 'table'
+    
+
+    Reservation.belongsToMany(models.RestaurantTable, {
+      through: 'ReservationTable',
+      foreignKey: 'reservation_id',
+      otherKey: 'table_id',
+      as: 'tables'
     });
 
     Reservation.belongsTo(models.Service, {
@@ -89,10 +89,6 @@ module.exports = (sequelize, DataTypes) => {
       as: 'service'
     });
 
-    Reservation.belongsTo(models.Creneau, {
-      foreignKey: 'creneau_id',
-      as: 'creneau'
-    });
 
     Reservation.belongsTo(models.Utilisateur, {
       foreignKey: 'client_id',

@@ -25,7 +25,7 @@
             margin: 0 auto;
             background-color: #ffffff;
             border-radius: 0px;
-            padding: 15px;
+            padding: 15px 36px;
             overflow: hidden;
         }
         .header {
@@ -130,9 +130,29 @@
     <% }) %>
 
     <!-- TOTAL -->
-    <tr>
+    <tr style="background: #f2f2f23d;border-bottom: 1px solid #ddd;">
       <td colspan="4" style="padding:12px; font-weight:bold; text-align:right;">
-        Total TTC
+        Montant HT
+      </td>
+
+      <td style="padding:10px; font-weight:bold;">
+        <%= total_coef_ht %> €
+      </td>
+     </tr>
+     <!-- TOTAL -->
+    <tr style="background: #f2f2f23d;border-bottom: 1px solid #ddd;">
+      <td colspan="4" style="padding:12px; font-weight:bold; text-align:right;">
+        TVA (<%= tvaRate %>%)
+      </td>
+
+      <td style="padding:10px; font-weight:bold;">
+        <%= total_tva %> €
+      </td>
+     </tr>
+    <!-- TOTAL -->
+    <tr style="background: #f2f2f23d;border-bottom: 1px solid #ddd;">
+      <td colspan="4" style="padding:12px; font-weight:bold; text-align:right;">
+        Montant TTC
       </td>
 
       <td style="padding:10px; font-weight:bold;">
@@ -146,7 +166,7 @@
          Merci pour votre confiance.<br><br>
 
          Cordialement,<br>
-         L’équipe <%= nom_restaurant %>
+         L’équipe <%= nom_restaurant %><br><br>
 
         </div>
         

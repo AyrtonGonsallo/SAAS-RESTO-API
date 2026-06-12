@@ -64,6 +64,13 @@ module.exports = (sequelize, DataTypes) => {
     RestaurantTable.belongsTo(models.ZoneTable, {
       foreignKey: 'zone_id'
     });
+
+     RestaurantTable.belongsToMany(models.Reservation, {
+      through: 'ReservationTable',
+      foreignKey: 'table_id',
+      otherKey: 'reservation_id',
+      as: 'reservations'
+    });
   };
 
   return RestaurantTable;

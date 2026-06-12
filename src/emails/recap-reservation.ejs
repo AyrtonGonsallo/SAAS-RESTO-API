@@ -25,7 +25,7 @@
             margin: 0 auto;
             background-color: #ffffff;
             border-radius: 0px;
-            padding: 15px;
+            padding: 15px 36px;
             overflow: hidden;
         }
         .header {
@@ -88,11 +88,11 @@
            📅 Récapitulatif de votre réservation :<br><br>
 
            - Date de réservation : <%= date_reservation %><br>
-           - Créneau : <%= creneau %><br><br>
+
 
            - Nombre de personnes : <%= nombre_personnes %><br>
            - Nombre de couverts : <%= nombre_couverts %><br>
-           - Table : <%= table %><br><br>
+           - nombre de tables : <%= nb_tables %> <br><br>
 
            <% if (demandes_speciales) { %>
             - Demandes spéciales : <%= demandes_speciales %><br>

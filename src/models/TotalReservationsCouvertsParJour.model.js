@@ -1,12 +1,12 @@
 module.exports = (sequelize, DataTypes) => {
-  const TotalReservationsCreneauParJour = sequelize.define('TotalReservationsCreneauParJour', {
+  const TotalReservationsCouvertsParJour = sequelize.define('TotalReservationsCouvertsParJour', {
     id: {
       type: DataTypes.INTEGER,
       primaryKey: true,
       autoIncrement: true
     },
-    creneau_id: {
-      type: DataTypes.INTEGER,
+    service_id: {
+      type:  DataTypes.INTEGER,
       allowNull: false
     },
     date: {
@@ -14,6 +14,10 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: false
     },
     nb_reservations_actuel: {
+      type: DataTypes.INTEGER,
+      allowNull: false
+    },
+    nb_couverts_actuel: {
       type: DataTypes.INTEGER,
       allowNull: false
     },
@@ -30,21 +34,25 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: true
     }
   }, {
-    tableName: 'TotalReservationsCreneauParJour',
+    tableName: 'TotalReservationsCouvertsParJour',
     timestamps: true,
     createdAt: 'created_at',
     updatedAt: 'updated_at'
   });
 
-  TotalReservationsCreneauParJour.associate = (models) => {
+  TotalReservationsCouvertsParJour.associate = (models) => {
    
-    TotalReservationsCreneauParJour.belongsTo(models.Restaurant, {
+    TotalReservationsCouvertsParJour.belongsTo(models.Restaurant, {
       foreignKey: 'restaurant_id',
     });
-    TotalReservationsCreneauParJour.belongsTo(models.Societe, {
+    TotalReservationsCouvertsParJour.belongsTo(models.Societe, {
       foreignKey: 'societe_id',
     });
   }
 
-  return TotalReservationsCreneauParJour;
+  return TotalReservationsCouvertsParJour;
 };
+
+//permet de verifier qu'un utilisateur ne depasse pas le nombre de couverts pour un service
+//pour max couverts par jour c'est pris en compte deja
+//juste décrémenter incrémenter
