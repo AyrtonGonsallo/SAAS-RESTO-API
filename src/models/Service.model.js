@@ -6,7 +6,7 @@ module.exports = (sequelize, DataTypes) => {
       autoIncrement: true
     },
     type: {
-      type: DataTypes.ENUM('Midi', 'Soir','Évenement','Service continu'),
+      type: DataTypes.ENUM('Midi', 'Soir','Évenement','Service continu','Pas de service'),
       allowNull: false
     },
     description: {

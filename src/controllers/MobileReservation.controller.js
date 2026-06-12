@@ -1,5 +1,5 @@
 const db = require('../models');
-const {  Reservation,TotalReservationsCouvertsParJour,ReservationsTablesParCreneauJour,Creneau,RestaurantTable, } = db;
+const {  Reservation,Service,TotalReservationsCouvertsParJour,ReservationsTablesParCreneauJour,Creneau,RestaurantTable,ZoneTable } = db;
 
 
 
@@ -28,98 +28,124 @@ exports.updateMobileReservation = async (req, res) => {
     } = req.body;
 
    
-    //  Récupérer créneau
-    const creneau = await Creneau.findByPk(reservation.creneau_id, { transaction: t });
-    if (!creneau) throw new Error('Créneau introuvable');
+    const service = await Service.findByPk(service_id);
 
-    //  Charger créneau du jour avec lock
-    const TotalReservationsCouvertsParJour = await TotalReservationsCouvertsParJour.findByPk(reservation.total_reservations_creneau_par_jour_id, {
+    if (!service) {
+      await t.rollback();
+      return res.status(404).json({ message: 'Service non trouvé' });
+    }
+
+
+    //  Charger créneau du jour avec lock ne change jamais
+     totalReservationsCouvertsParJour = await TotalReservationsCouvertsParJour.findByPk(total_reservations_couverts_par_jour_id, {
       transaction: t,
       lock: t.LOCK.UPDATE
     });
 
-    if (!TotalReservationsCouvertsParJour) {
-      throw new Error('Créneau du jour introuvable');
+    //cet objet permet de verifier qu'un utilisateur ne depasse pas le nombre de couverts pour un service, donc verifier que le service n'a pa change si il change decrementer ceci et creer un autre a lier
+    if (totalReservationsCouvertsParJour.service_id !== service_id) {
+
+      // 1. nb_reservations_actuel
+      if (totalReservationsCouvertsParJour.nb_reservations_actuel > 0) {
+        await totalReservationsCouvertsParJour.increment('nb_reservations_actuel', {
+          by: -1,
+          transaction: t
+        });
+      }
+
+      // 1. décrémenter nb_couverts
+      if (totalReservationsCouvertsParJour.nb_reservations_actuel > 0) {
+        await totalReservationsCouvertsParJour.increment('nb_couverts_actuel', {
+          by: -nb_couverts,
+          transaction: t
+        });
+      }
+
+      // 2. créer ou récupérer le nouveau service
+      const [newTotalReservationsCouvertsParJour, created] = await TotalReservationsCouvertsParJour.findOrCreate({
+        where: {
+          service_id,
+          date: dateOnly,
+        },
+        defaults: {
+          service_id,
+          date: dateOnly,
+          nb_reservations_actuel: 0,
+          societe_id:reservation.societe_id,
+          restaurant_id:reservation.restaurant_id
+        },
+        transaction: t
+      });
+
+      // 3. incrémenter le nouveau
+      await newTotalReservationsCouvertsParJour.increment('nb_couverts_actuel', {
+        by: nb_couverts,
+        transaction: t
+      });
+
+      await newTotalReservationsCouvertsParJour.increment('nb_reservations_actuel', {
+        by: 1,
+        transaction: t
+      });
+
+      totalReservationsCouvertsParJour = newTotalReservationsCouvertsParJour;
+    }
+
+
+    if (!totalReservationsCouvertsParJour) {
+      throw new Error('totalReservationsCouvertsParJour du jour introuvable');
     }
 
     //  Définir groupes de statuts
     const actifs = ['En attente', 'Confirmée','En cours'];
     const inactifs = ['Annulée','Terminée','No-show'];
 
-    let delta = 0;
+    let delta_reservations = 0;
+    let delta_couverts = 0;
 
-    const table = await RestaurantTable.findByPk(reservation.table_id);
-    if (!table) {
-      return res.status(404).json({
-        message: 'Table non trouvée'
-      });
-    }
 
-    //  LOGIQUE UNIQUE
+
+
+    //  contr decrementer le nombre de reservations pour table, plage_horaire, date correspondant
     if (actifs.includes(former_statut) && inactifs.includes(statut)) {
-      delta = -1;
+      delta_reservations = -1;
+      delta_couverts = -nb_couverts;
 
       //  supprimer
-      const reservationsTablesParCreneauJour = await ReservationsTablesParCreneauJour.findOne({
+      await ReservationsTablesParCreneauJour.destroy({
         where: {
-          reservation_id: reservation.id,
-        }}, 
-        { transaction: t }
-      );
-
-      if (reservationsTablesParCreneauJour) {
-        await reservationsTablesParCreneauJour.destroy({ transaction: t });
-      }
-
-    } else if (inactifs.includes(former_statut) && actifs.includes(statut)) {
-      delta = +1;
-
-      //verifier si existe une reservation pour la table a cette date et annuler avec 400 si oui si non creer
-      const existingReservationTablesParCreneauJour = await ReservationsTablesParCreneauJour.findOne({
-        where: {
-          reservation_id: reservation.id,
+          reservation_id: reservation.id
         },
         transaction: t
       });
 
-      // si existe → bon
-      if (!existingReservationTablesParCreneauJour) {
-         // sinon créer
-        const newReservationTablesParCreneauJour = await ReservationsTablesParCreneauJour.create({
-          creneau_id:reservation.creneau_id,
-          date: reservation.date_reservation,
-          table_id:reservation.table_id ,
-          societe_id:reservation.societe_id ,
-          reservation_id:reservation.id,
-          restaurant_id:reservation.restaurant_id ,
-          utilisateur_id:reservation.client_id ,
-        }, { transaction: t });
-        
+    } else if (inactifs.includes(former_statut) && actifs.includes(statut)) {
+      delta_reservations = 1;
+      delta_couverts = nb_couverts;
+
+      for (const table_id of tables_array) {
+
+        await ReservationsTablesParCreneauJour.findOrCreate({
+          where: {
+            date: dateOnly,
+            table_id,
+            plage_horaire: reservation.plage_horaire
+          },
+          defaults: {
+            date: dateOnly,
+            table_id,
+            plage_horaire: reservation.plage_horaire,
+            societe_id,
+            reservation_id: reservation.id,
+            restaurant_id,
+            utilisateur_id: reservation.client_id
+          },
+          transaction: t
+        });
+
       }
+      
     }
-
-    //  Appliquer delta
-    if (delta !== 0) {
-      if (delta === 1 && TotalReservationsCouvertsParJour.nb_reservations_actuel >= creneau.nb_reservations_max) {
-        await t.rollback();
-        return res.status(400).json({ message: 'Créneau complet' });
-      }
-
-      if (delta === -1 && TotalReservationsCouvertsParJour.nb_reservations_actuel <= 0) {
-        await t.rollback();
-        return res.status(400).json({ message: 'Compteur invalide' });
-      }
-
-      await TotalReservationsCouvertsParJour.increment('nb_reservations_actuel', {
-        by: delta,
-        transaction: t
-      });
-    }
-
-    //  UPDATE UNIQUE
-    await reservation.update({
-      statut,
-    }, { transaction: t });
 
    
 
@@ -129,9 +155,12 @@ exports.updateMobileReservation = async (req, res) => {
     const reservationUpdated = await Reservation.findByPk(reservation.id, {
       include: [
         { association: 'client' },
-        { association: 'table' },
+        { association: 'tables',
+          include: [
+            { model: ZoneTable }
+          ]
+        },
         { association: 'service' },
-        { association: 'creneau' },
         { association: 'societe' },
         { association: 'tags' }
       ]

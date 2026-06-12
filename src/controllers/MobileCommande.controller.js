@@ -1,6 +1,6 @@
 const db = require('../models');
-const {  Commande,Produit,Livraison,Menu,VariationProduit } = db;
-
+const {  Commande,Produit,Livraison,Menu,VariationProduit,Restaurant } = db;
+const emailService = require('../services/mailer.service');
 
 
 
@@ -14,6 +14,15 @@ exports.updateMobileCommande = async (req, res) => {
    
 
     const commande = await Commande.findByPk(req.params.id, {
+      include: [
+        { association: 'client' },
+        { association: 'societe' },
+        {
+            model: Restaurant,
+            attributes: ['id', 'nom', 'coordonnees_google_maps', 'ville', 'adresse',  'telephone',],
+            required: false,
+        },
+      ],
       transaction: t,
       lock: t.LOCK.UPDATE //  important
     });
@@ -119,6 +128,76 @@ exports.updateMobileCommande = async (req, res) => {
         
       }
       await livraison.update({ statut:'En attente'},{ transaction: t });
+    }
+
+    if(statut=="Prête"){
+
+      const client = commande?.client;
+
+      const titre = 'Votre commande est prête';
+
+      const dateCommande = new Date(commande.date_retrait).toLocaleString('fr-FR', {
+        weekday: 'long',
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+
+      const dateCreation = new Date(commande.created_at).toLocaleString('fr-FR', {
+        weekday: 'long',
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+
+      const items = typeof commande.items === 'string'
+        ? JSON.parse(commande.items)
+        : commande.items || [];
+
+      const produits = items.map(item => ({
+        titre: item.titre,
+        quantite: item.quantite,
+        prix_ht:
+          Number(item.prix_ht) +
+          (item.variations?.reduce(
+            (sum, v) =>
+              sum + Number(v.prix_supplement || 0),
+            0
+          ) || 0),
+        prix_ttc:
+          Number(item.prix_ht) +
+          (item.variations?.reduce(
+            (sum, v) =>
+              sum + Number(v.prix_supplement || 0),
+            0
+          ) || 0),
+        variations: item.variations?.length
+          ? item.variations.map((v) => v.titre).join(', ')
+          : 'Aucune'
+      }));
+
+      
+      await emailService.sendMail({
+        to: client?.email,
+        subject: titre,
+        template: 'recap-commande-prete.ejs',
+        context: {
+          titre,
+          nom: client?.nom,
+          prenom: client?.prenom,
+          email: client?.email,
+          nom_restaurant: commande.Restaurant?.nom,
+          telephone_restaurant: commande.Restaurant?.telephone,
+          date_commande: dateCommande,
+          date_creation: dateCreation,
+          prix_total: commande.totalPrice,
+          produits
+        }
+      });
     }
 
 

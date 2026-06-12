@@ -22,8 +22,7 @@ exports.updateReservationsStatuts = async (req, res) => {
         ]
       },
       include: [
-          { association: 'table' },
-          { association: 'creneau' },
+          { association: 'tables' },
           { association: 'client' },
           {
             model: Restaurant,

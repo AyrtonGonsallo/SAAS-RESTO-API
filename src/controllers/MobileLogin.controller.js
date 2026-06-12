@@ -74,11 +74,11 @@ exports.getMobileDatas = async (req, res) => {
     ]
   } );
 
-  console.log(utilisateur)
+  //console.log(utilisateur)
 
   let restaurantID = utilisateur.Restaurants[0].id
 
-
+console.log('priorite',priorite)
   if(priorite==9){//livreur
     res.json({
       societe:societeID,
@@ -117,7 +117,7 @@ exports.getMobileDatas = async (req, res) => {
           required: false,
       },
       { association: 'client' },
-      { association: 'table',
+      { association: 'tables',
         include: [
           {
             model: ZoneTable,
@@ -127,7 +127,7 @@ exports.getMobileDatas = async (req, res) => {
         ]
         },
       { association: 'service' },
-      { association: 'creneau' },
+      
       { association: 'societe' },
       { association: 'paiements' },
       { association: 'tags' },
@@ -151,7 +151,7 @@ exports.getMobileDatas = async (req, res) => {
           required: false,
       },
       { association: 'client' },
-      { association: 'table',
+      { association: 'tables',
         include: [
           {
             model: ZoneTable,
@@ -161,7 +161,7 @@ exports.getMobileDatas = async (req, res) => {
         ]
         },
       { association: 'service' },
-      { association: 'creneau' },
+      
       { association: 'societe' },
       { association: 'paiements' },
       { association: 'tags' },
@@ -186,7 +186,7 @@ exports.getMobileDatas = async (req, res) => {
           required: false,
       },
       { association: 'client' },
-      { association: 'table',
+      { association: 'tables',
         include: [
           {
             model: ZoneTable,
@@ -196,7 +196,7 @@ exports.getMobileDatas = async (req, res) => {
         ]
         },
       { association: 'service' },
-      { association: 'creneau' },
+      
       { association: 'societe' },
       { association: 'paiements' },
       { association: 'tags' },
@@ -221,7 +221,7 @@ exports.getMobileDatas = async (req, res) => {
           required: false,
       },
       { association: 'client' },
-      { association: 'table',
+      { association: 'tables',
         include: [
           {
             model: ZoneTable,
@@ -231,7 +231,7 @@ exports.getMobileDatas = async (req, res) => {
         ]
         },
       { association: 'service' },
-      { association: 'creneau' },
+      
       { association: 'societe' },
       { association: 'paiements' },
       { association: 'tags' },
@@ -256,7 +256,7 @@ exports.getMobileDatas = async (req, res) => {
           required: false,
       },
       { association: 'client' },
-      { association: 'table',
+      { association: 'tables',
         include: [
           {
             model: ZoneTable,
@@ -266,7 +266,7 @@ exports.getMobileDatas = async (req, res) => {
         ]
         },
       { association: 'service' },
-      { association: 'creneau' },
+      
       { association: 'societe' },
       { association: 'paiements' },
       { association: 'tags' },
@@ -283,7 +283,7 @@ exports.getMobileDatas = async (req, res) => {
           required: false,
       },
       { association: 'client' },
-      { association: 'table',
+      { association: 'tables',
         include: [
         {
           model: ZoneTable,
@@ -293,7 +293,7 @@ exports.getMobileDatas = async (req, res) => {
       ],
         },
       { association: 'service' },
-      { association: 'creneau' },
+      
       { association: 'societe' },
       { association: 'paiements' },
       { association: 'tags' },
@@ -454,7 +454,7 @@ exports.getMobileDatas = async (req, res) => {
     }
   });
   
-  console.log("envoyés")
+  console.log("envoyés",daily_bookings.length)
 
   res.json({
     societe:societeID,

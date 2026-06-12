@@ -199,9 +199,9 @@ exports.createCommande = async (req, res) => {
     console.log('elements_panier',elements_panier)
 
     let total_ht = 0;
-    const montantLivraison = parseFloat(montant_livraison.valeur) || 0;
-    const tvaRate = parseFloat(tva_resto.valeur) || 0;
-     const coefficient_resto_value = parseFloat(coefficient_resto.valeur) || 0;
+    const montantLivraison = parseFloat(montant_livraison?.valeur) || 0;
+    const tvaRate = parseFloat(tva_resto?.valeur) || 0;
+     const coefficient_resto_value = parseFloat(coefficient_resto?.valeur) || 0;
 
     for (const item of elements_panier) {
       let type = item.type;

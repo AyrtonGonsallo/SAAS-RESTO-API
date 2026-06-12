@@ -44,6 +44,7 @@ exports.ajouterParametre = async (req, res,next) => {
     });
 
   } catch (error) {
+    console.log('rr',error)
     return res.status(500).json({
       success: false,
       message: error.message
