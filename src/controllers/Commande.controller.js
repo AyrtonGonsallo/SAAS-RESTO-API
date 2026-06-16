@@ -4,7 +4,7 @@ const emailService = require('../services/mailer.service');
 const {  Commande,Utilisateur,Restaurant,Livraison,Role,Societe,Menu,Panier,Parametre,Produit,VariationProduit,Service,MaxCommandesParJoursEtMinutes } = db;
 const DEFAULT_PASS = process.env.DEFAULT_PASS;
 const notificationService = require('../services/notifications.service');
-const { Op } = require('sequelize');
+const { Op,Sequelize  } = require('sequelize');
 
 exports.createCommande = async (req, res) => {
   const t = await db.sequelize.transaction();
@@ -85,7 +85,6 @@ exports.createCommande = async (req, res) => {
       maxCommandesParJoursEtMinuteActuelle &&
       maxCommandesParJoursEtMinuteActuelle.nombre_de_commandes >= valeur_max_commandes_par_minute
     ) {
-      await t.rollback();
       return res.status(400).json({
         message: `Nombre maximal de commandes atteint pour cette minute (${valeur_max_commandes_par_minute}).`
       });
@@ -108,14 +107,13 @@ exports.createCommande = async (req, res) => {
     if (
       nombreCommandesJour >= valeur_max_commandes_par_jour
     ) {
-      await t.rollback();
       return res.status(400).json({
         message: `Nombre maximal de commandes atteint pour aujourd'hui (${valeur_max_commandes_par_jour}).`
       });
     }
 
 
-    const [statMinute] =
+    const [max_commandes_par_jour_et_minute] =
       await MaxCommandesParJoursEtMinutes.findOrCreate({
         where: {
           date_jour: dateActuelle,
@@ -131,7 +129,7 @@ exports.createCommande = async (req, res) => {
         transaction: t
       });
 
-    await statMinute.increment(
+    await max_commandes_par_jour_et_minute.increment(
       { nombre_de_commandes: 1 },
       { transaction: t }
     );
@@ -224,56 +222,92 @@ exports.createCommande = async (req, res) => {
 
       // VERIFICATION STOCK
       if (item.quantite > produitActuel.stock) {
-        await t.rollback();
         return res.status(400).json({ message: `Stock insuffisant pour le produit #${id} "${item.titre}" (stock: ${produitActuel.stock}, demandé: ${item.quantite})` });
       }
 
     }
 
+  
+
     for (const item of elements_panier) {
 
       const type = item.type;
 
-      if(type=="produit"||type=="variation-produit"){
-        await Produit.decrement(
-          'stock',
+      if (type === "produit" || type === "variation-produit") {
+
+        const [updatedRows] = await Produit.update(
           {
-            by: item.quantite,
-            where: { id: item.productId },
+            stock: Sequelize.literal(`stock - ${item.quantite}`)
+          },
+          {
+            where: {
+              id: item.productId,
+              stock: {
+                [Op.gte]: item.quantite
+              }
+            },
             transaction: t
           }
         );
-      }else if(type=="menu"){
-        await Menu.decrement(
-          'stock',
+
+        if (updatedRows === 0) {
+          throw new Error(`Stock insuffisant pour le produit ${item.titre}`);
+        }
+
+      } else if (type === "menu") {
+
+        const [updatedRows] = await Menu.update(
           {
-            by: item.quantite,
-            where: { id: item.menuId },
+            stock: Sequelize.literal(`stock - ${item.quantite}`)
+          },
+          {
+            where: {
+              id: item.menuId,
+              stock: {
+                [Op.gte]: item.quantite
+              }
+            },
             transaction: t
           }
         );
+
+        if (updatedRows === 0) {
+          throw new Error(`Stock insuffisant pour le menu ${item.titre}`);
+        }
       }
-      
 
       // PRIX BASE
       let prix_unitaire = parseFloat(item.prix_ht);
 
       // CLEAN VARIATIONS
-      const variations = (item.variations || []).filter(v =>
-        v.id && v.prix_supplement != null
+      const variations = (item.variations || []).filter(
+        (v) => v.id && v.prix_supplement != null
       );
 
       // AJOUT VARIATIONS
       for (const v of variations) {
+
         prix_unitaire += parseFloat(v.prix_supplement || 0);
-        await VariationProduit.decrement(
-          'stock',
+
+        const [updatedRows] = await VariationProduit.update(
           {
-            by: item.quantite,
-            where: { id: v.id },
+            stock: Sequelize.literal(`stock - ${item.quantite}`)
+          },
+          {
+            where: {
+              id: v.id,
+              stock: {
+                [Op.gte]: item.quantite
+              }
+            },
             transaction: t
           }
         );
+        console.log('item.quantite',item.quantite)
+
+        if (updatedRows === 0) {
+          throw new Error(`Stock insuffisant pour la variation ${v.titre} du produit ${item.titre}`);
+        }
       }
 
       // TOTAL LIGNE
@@ -281,8 +315,8 @@ exports.createCommande = async (req, res) => {
       total_ht += ligne_ht;
     }
 
-     const total_coef_ht = total_ht * (coefficient_resto_value);
-     const total_tva = Number((total_coef_ht * (tvaRate / 100)).toFixed(2));
+    const total_coef_ht = total_ht * (coefficient_resto_value);
+    const total_tva = Number((total_coef_ht * (tvaRate / 100)).toFixed(2));
     const total_ttc = total_coef_ht + total_tva;
     
     nouveau_panier = await Panier.create({
@@ -303,11 +337,16 @@ exports.createCommande = async (req, res) => {
       ...rest,
       societe_id,
       restaurant_id,
+      max_commandes_par_jour_et_minute_id:max_commandes_par_jour_et_minute.id,
       panier_id:nouveau_panier.id,
       items:JSON.parse(JSON.stringify(elements_panier)),
       date_retrait: dateObj,
       client_id: client.id,
-      totalPrice:total_ttc
+      total_tva:total_tva,
+      tva:tvaRate,
+      total_coef:total_coef_ht,
+      coef:coefficient_resto_value,
+       totalPrice:total_ttc,
     }, { transaction: t });
 
 
@@ -448,7 +487,9 @@ if (params) {
     res.json(commandeObjet);
 
   } catch (error) {
-    await t.rollback();
+    if (!t.finished) {
+      await t.rollback();
+    }
     console.log(error);
     res.status(500).json({ message: error.message });
   }
@@ -748,7 +789,6 @@ exports.updateCommande = async (req, res) => {
     });
 
     if (!commande) {
-      await t.rollback();
       return res.status(404).json({ message: 'Commande non trouvée' });
     }
 
@@ -858,7 +898,6 @@ exports.updateCommande = async (req, res) => {
     res.json(commandeUpdated);
 
   } catch (error) {
-    await t.rollback();
     console.log(error);
     res.status(500).json({ message: error.message });
   }
@@ -875,7 +914,6 @@ exports.updateFormuleCommande = async (req, res) => {
     });
 
     if (!commande) {
-      await t.rollback();
       return res.status(404).json({ message: 'Commande non trouvée' });
     }
 
@@ -980,7 +1018,9 @@ exports.updateFormuleCommande = async (req, res) => {
     res.json(commandeUpdated);
 
   } catch (error) {
-    await t.rollback();
+    if (!t.finished) {
+      await t.rollback();
+    }
     console.log(error);
     res.status(500).json({ message: error.message });
   }
@@ -993,7 +1033,6 @@ exports.deleteCommande = async (req, res) => {
     const commande = await Commande.findByPk(req.params.id, { transaction: t });
 
     if (!commande) {
-      await t.rollback();
       return res.status(404).json({ message: 'Commande non trouvée' });
     }
 
@@ -1004,7 +1043,9 @@ exports.deleteCommande = async (req, res) => {
     return res.json({ message: 'Commande supprimée' });
 
   } catch (error) {
-    await t.rollback();
+    if (!t.finished) {
+      await t.rollback();
+    }
     return res.status(500).json({ message: error.message });
   }
 };

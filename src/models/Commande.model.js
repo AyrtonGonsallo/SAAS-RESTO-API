@@ -32,6 +32,10 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.INTEGER,
       allowNull: true
     },
+    max_commandes_par_jour_et_minute_id: {
+      type: DataTypes.INTEGER,
+      allowNull: true
+    },
     societe_id: {
       type: DataTypes.INTEGER,
       allowNull: true
@@ -49,7 +53,26 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: false,
       defaultValue: [],
     },
-
+    total_tva: {
+      type: DataTypes.FLOAT,
+      allowNull: false,
+      defaultValue: 0,
+    },
+    tva: {
+      type: DataTypes.FLOAT,
+      allowNull: false,
+      defaultValue: 0,
+    },
+    total_coef: {
+      type: DataTypes.FLOAT,
+      allowNull: false,
+      defaultValue: 0,
+    },
+    coef: {
+      type: DataTypes.FLOAT,
+      allowNull: false,
+      defaultValue: 0,
+    },
     totalPrice: {
       type: DataTypes.FLOAT,
       allowNull: false,

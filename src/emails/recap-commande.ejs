@@ -70,7 +70,10 @@
             <div>
                 
                 <div class="center">
-                <img src="http://resto.orocom.io/images/logo_app_500.png" alt="Logo du site">  
+                  <!--
+                  <img src="http://resto.orocom.io/images/logo_app_500.png" alt="Logo du site">  
+                  -->
+                
   
                 </div>
         </div>       
@@ -98,8 +101,8 @@
       <th align="left" style="padding:10px;">Produit</th>
       <th align="left" style="padding:10px;">Variations</th>
       <th align="left" style="padding:10px;">Quantité</th>
-      <th align="left" style="padding:10px;">Prix unitaire HT</th>
-      <th align="left" style="padding:10px;">Prix HT</th>
+      <th align="left" style="padding:10px;">Prix unitaire TTC</th>
+      <th align="left" style="padding:10px;">Prix TTC</th>
     </tr>
   </thead>
 
@@ -129,34 +132,17 @@
       </tr>
     <% }) %>
 
+ 
+    
     <!-- TOTAL -->
     <tr style="background: #f2f2f23d;border-bottom: 1px solid #ddd;">
-      <td colspan="4" style="padding:12px; font-weight:bold; text-align:right;">
-        Montant HT
+      <td colspan="3" style="padding:12px; font-weight:bold; text-align:right;">
+
       </td>
 
-      <td style="padding:10px; font-weight:bold;">
-        <%= total_coef_ht %> €
-      </td>
-     </tr>
-     <!-- TOTAL -->
-    <tr style="background: #f2f2f23d;border-bottom: 1px solid #ddd;">
-      <td colspan="4" style="padding:12px; font-weight:bold; text-align:right;">
-        TVA (<%= tvaRate %>%)
-      </td>
+      <td colspan="2" style="padding:10px; font-weight:bold;">
 
-      <td style="padding:10px; font-weight:bold;">
-        <%= total_tva %> €
-      </td>
-     </tr>
-    <!-- TOTAL -->
-    <tr style="background: #f2f2f23d;border-bottom: 1px solid #ddd;">
-      <td colspan="4" style="padding:12px; font-weight:bold; text-align:right;">
-        Montant TTC
-      </td>
-
-      <td style="padding:10px; font-weight:bold;">
-        <%= prix_total %> €
+        Total <%= prix_total %> € TTC<br> Dont TVA (<%= tvaRate %> %) = <%= total_tva %> €
       </td>
      </tr>
    </tbody>

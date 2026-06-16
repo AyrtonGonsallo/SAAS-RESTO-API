@@ -112,13 +112,16 @@ const {
   ajouterRestaurantHoraire,
   getRestaurantHoraireById,
   getRestaurantHoraires,
+  getRestaurantHorairesClickAndCollect,
+  getRestaurantHorairesReservation,
   updateRestaurantHoraire,
   deleteRestaurantHoraire,
 } = require('../controllers/RestaurantHoraire.controller');
 
 
 router.post('/ajouter_horaire', ajouterRestaurantHoraire);
-router.get('/get_all_horaires', getRestaurantHoraires);
+router.get('/get_all_horaires_reservation', getRestaurantHorairesReservation);
+router.get('/get_all_horaires_click_and_collect', getRestaurantHorairesClickAndCollect);
 router.get('/get_horaire_by_id/:id', getRestaurantHoraireById);
 router.put('/update_horaire/:id', updateRestaurantHoraire);
 router.delete('/delete_horaire/:id', deleteRestaurantHoraire);

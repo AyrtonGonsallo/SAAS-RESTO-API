@@ -115,6 +115,141 @@ exports.getRestaurantHoraires = async (req, res) => {
 };
 
 
+
+exports.getRestaurantHorairesReservation = async (req, res) => {
+  try {
+
+    let ishigh = req.role_priorite<4
+    const selectedRestaurantId = req.query.restaurant_id;
+    // construire le filtre restaurant
+    let restaurantFilter = {};
+
+    if (!ishigh) {
+      if (selectedRestaurantId) {
+        // 🔥 filtre sur UN restaurant
+        restaurantFilter = {
+          restaurant_id: selectedRestaurantId,
+          societe_id: req.societe_id,
+          type:'Réservation',
+        };
+      } else {
+        // 🔥 filtre sur plusieurs restaurants autorisés
+        restaurantFilter = {
+          restaurant_id: {
+            [Op.in]: req.restos
+          },
+          societe_id: req.societe_id,
+          type:'Réservation',
+        };
+      }
+    }else{
+       if (req.isSuperAdmin) {
+          restaurantFilter = {type:'Réservation',};
+       }else{
+          restaurantFilter = {societe_id: req.societe_id,type:'Réservation',};
+       }
+      
+    }
+    const horaires = await RestaurantHoraire.findAll({
+      where: restaurantFilter,
+      include: [
+        {
+          model: Restaurant,
+          required: false
+        },
+        {
+          model: Service,
+          required: false
+        },
+        {
+          model: Societe,
+          attributes: ['id', 'titre', 'status', ],
+          required: false,
+          
+        }
+      ],
+      order: [['created_at', 'DESC']]
+    });
+
+    return res.status(200).json(horaires);
+
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({
+      message: 'Erreur serveur'
+    });
+  }
+};
+
+
+
+
+exports.getRestaurantHorairesClickAndCollect = async (req, res) => {
+  try {
+
+    let ishigh = req.role_priorite<4
+    const selectedRestaurantId = req.query.restaurant_id;
+    // construire le filtre restaurant
+    let restaurantFilter = {};
+
+    if (!ishigh) {
+      if (selectedRestaurantId) {
+        // 🔥 filtre sur UN restaurant
+        restaurantFilter = {
+          restaurant_id: selectedRestaurantId,
+          societe_id: req.societe_id,
+          type:'Click and collect'
+        };
+      } else {
+        // 🔥 filtre sur plusieurs restaurants autorisés
+        restaurantFilter = {
+          restaurant_id: {
+            [Op.in]: req.restos
+          },
+          societe_id: req.societe_id,
+          type:'Click and collect'
+        };
+      }
+    }else{
+       if (req.isSuperAdmin) {
+          restaurantFilter = {type:'Click and collect'};
+       }else{
+          restaurantFilter = {societe_id: req.societe_id,type:'Click and collect'};
+       }
+      
+    }
+    const horaires = await RestaurantHoraire.findAll({
+      where: restaurantFilter,
+      include: [
+        {
+          model: Restaurant,
+          required: false
+        },
+        {
+          model: Service,
+          required: false
+        },
+        {
+          model: Societe,
+          attributes: ['id', 'titre', 'status', ],
+          required: false,
+          
+        }
+      ],
+      order: [['created_at', 'DESC']]
+    });
+
+    return res.status(200).json(horaires);
+
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({
+      message: 'Erreur serveur'
+    });
+  }
+};
+
+
 exports.getRestaurantHoraireById = async (req, res, next) => {
   try {
     const id = req.params.id;
