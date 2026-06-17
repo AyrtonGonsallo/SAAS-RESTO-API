@@ -28,6 +28,10 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.BOOLEAN,
       defaultValue: false
     },
+    notif_prete_envoyee: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false
+    },
     panier_id: {
       type: DataTypes.INTEGER,
       allowNull: true

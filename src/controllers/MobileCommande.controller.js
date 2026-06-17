@@ -132,6 +132,8 @@ exports.updateMobileCommande = async (req, res) => {
 
     if(statut=="Prête"){
 
+      
+
       const client = commande?.client;
 
       const titre = 'Votre commande est prête';
@@ -198,6 +200,8 @@ exports.updateMobileCommande = async (req, res) => {
           produits
         }
       });
+
+      await commande.update({ notif_prete_envoyee:true},{ transaction: t });
     }
 
 

@@ -100,8 +100,8 @@
       <th align="left" style="padding:10px;">Produit</th>
       <th align="left" style="padding:10px;">Variations</th>
       <th align="left" style="padding:10px;">Quantité</th>
-      <th align="left" style="padding:10px;">Prix unitaire HT</th>
-      <th align="left" style="padding:10px;">Prix HT</th>
+      <th align="left" style="padding:10px;">Prix unitaire TTC</th>
+      <th align="left" style="padding:10px;">Prix TTC</th>
     </tr>
   </thead>
 
@@ -134,12 +134,13 @@
     
     <!-- TOTAL -->
     <tr style="background: #f2f2f23d;border-bottom: 1px solid #ddd;">
-      <td colspan="4" style="padding:12px; font-weight:bold; text-align:right;">
-        Montant TTC
+      <td colspan="3" style="padding:12px; font-weight:bold; text-align:right;">
+
       </td>
 
-      <td style="padding:10px; font-weight:bold;">
-        <%= prix_total %> €
+      <td colspan="2" style="padding:10px; font-weight:bold;">
+
+        Total <%= prix_total %> € TTC<br> Dont TVA (<%= tvaRate %> %) = <%= total_tva %> €
       </td>
      </tr>
    </tbody>

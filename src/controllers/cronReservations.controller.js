@@ -74,9 +74,9 @@ exports.updateReservationsStatuts = async (req, res) => {
     for (const reservation of reservations) {
 
       const dateReservation = new Date(reservation.date_reservation);
+      const [heure_de_debut_string, duree_en_minutes_string] = reservation.plage_horaire.split(' ');
 
-      const [startHour, startMin] = reservation.creneau.heure_debut.split(':');
-      const [endHour, endMin] = reservation.creneau.heure_fin.split(':');
+      const [startHour, startMin] = heure_de_debut_string.split(':');
 
       // base date en UTC (important)
       const base = new Date(Date.UTC(
@@ -85,11 +85,17 @@ exports.updateReservationsStatuts = async (req, res) => {
         dateReservation.getUTCDate()
       ));
 
+      const dureeEnMinutes = parseInt(duree_en_minutes_string, 10);
+
       const start = new Date(base);
       start.setUTCHours(startHour, startMin, 0, 0);
 
-      const end = new Date(base);
-      end.setUTCHours(endHour, endMin, 0, 0);
+      // Fin = début + durée
+      const end = new Date(start);
+      end.setUTCMinutes(end.getUTCMinutes() + dureeEnMinutes);
+
+      console.log('start', start);
+      console.log('end', end);
 
         
         let statut = 'libre';
@@ -100,7 +106,7 @@ exports.updateReservationsStatuts = async (req, res) => {
                 objet:reservation,
               type:'info',
               titre: `Changement de statut d'une reservation`,
-              texte: `Nouveau statut de la réservation ${reservation.id} : En cours. Nouveau statut de la table ${reservation.table.numero} : ${statut}`,
+              texte: `Nouveau statut de la réservation ${reservation.id} : En cours. Nouveau statut de la table ${reservation.tables[0].numero} : ${statut}`,
               utilisateur_id: 0
           });
           notificationsEnvoyees++;
@@ -116,14 +122,14 @@ exports.updateReservationsStatuts = async (req, res) => {
                 objet:reservation,
               type:'info',
               titre: `Reservation terminée`,
-              texte: `Nouveau statut de la réservation ${reservation.id} : Terminée. Nouveau statut de la table ${reservation.table.numero} : ${statut}`,
+              texte: `Nouveau statut de la réservation ${reservation.id} : Terminée. Nouveau statut de la table ${reservation.tables[0].numero} : ${statut}`,
               utilisateur_id: 0
           });
           await notificationService.createNotification({
                 objet:reservation,
               type:'info',
               titre: `Reservation terminée`,
-              texte: `Votre réservation ${reservation.id} pour la table ${reservation.table.numero} est terminée`,
+              texte: `Votre réservation ${reservation.id} pour la table ${reservation.tables[0].numero} est terminée`,
               utilisateur_id: reservation.client_id
           });
           notificationsEnvoyees++;
@@ -152,8 +158,11 @@ exports.updateReservationsStatuts = async (req, res) => {
 
         }
 
-        await reservation.table.update({ statut });
-         tablesMisesAJour++;
+        for (const table of reservation.tables) {
+          await table.update({ statut });
+          tablesMisesAJour++;
+        }
+        
         
 
     };
@@ -162,8 +171,137 @@ exports.updateReservationsStatuts = async (req, res) => {
    
     for (const commande of commandes) {
 
+      const param_delai = await Parametre.findOne({
+        where: {
+            type: 'delai_msg_commande_prete',
+            restaurant_id: commande.restaurant_id,
+            est_actif: true
+        }
+      });
+
       const dateRetrait = new Date(commande.date_retrait);
       const retraitTime = dateRetrait.getTime();
+
+      //param_delai.valeur //string
+      //param_delai.unite_de_temps //'secondes','minutes','heures','jours'
+
+      //calculer le le moment avant la date de retrait et entre la valeur du parametre 
+      //et comparer a now
+      if(!commande.notif_prete_envoyee){
+
+        if (!param_delai) {
+          continue;
+        }
+
+        let dateEnvoiForce = new Date(dateRetrait);
+
+        const valeur = parseInt(param_delai.valeur, 10);
+
+        switch (param_delai.unite_de_temps) {
+            case 'secondes':
+                dateEnvoiForce.setSeconds(dateEnvoiForce.getSeconds() - valeur);
+                break;
+
+            case 'minutes':
+                dateEnvoiForce.setMinutes(dateEnvoiForce.getMinutes() - valeur);
+                break;
+
+            case 'heures':
+                dateEnvoiForce.setHours(dateEnvoiForce.getHours() - valeur);
+                break;
+
+            case 'jours':
+                dateEnvoiForce.setDate(dateEnvoiForce.getDate() - valeur);
+                break;
+        }
+
+
+        if (now >= dateEnvoiForce) {
+            console.log('Il faut envoyer le message');
+            verifs.push(`envoi de la notification commande prete pour la commande #${commande.id} delai restaurant ${commande.restaurant_id} : ${param_delai.valeur} ${param_delai.unite_de_temps}`);
+
+
+            const client = commande?.client;
+            
+            const titre = 'Votre commande est prête';
+      
+            const dateCommande = new Date(commande.date_retrait).toLocaleString('fr-FR', {
+              weekday: 'long',
+              day: 'numeric',
+              month: 'long',
+              year: 'numeric',
+              hour: '2-digit',
+              minute: '2-digit'
+            });
+      
+            const dateCreation = new Date(commande.created_at).toLocaleString('fr-FR', {
+              weekday: 'long',
+              day: 'numeric',
+              month: 'long',
+              year: 'numeric',
+              hour: '2-digit',
+              minute: '2-digit'
+            });
+      
+            const items = typeof commande.items === 'string'
+              ? JSON.parse(commande.items)
+              : commande.items || [];
+      
+            const produits = items.map(item => ({
+              titre: item.titre,
+              quantite: item.quantite,
+              prix_ht:
+                Number(item.prix_ht) +
+                (item.variations?.reduce(
+                  (sum, v) =>
+                    sum + Number(v.prix_supplement || 0),
+                  0
+                ) || 0),
+              prix_ttc:
+                Number(item.prix_ht) +
+                (item.variations?.reduce(
+                  (sum, v) =>
+                    sum + Number(v.prix_supplement || 0),
+                  0
+                ) || 0),
+              variations: item.variations?.length
+                ? item.variations.map((v) => v.titre).join(', ')
+                : 'Aucune'
+            }));
+      
+            
+            await emailService.sendMail({
+              //to: client?.email,
+              to:'userusernash@gmail.com',
+              subject: titre,
+              template: 'recap-commande-prete.ejs',
+              context: {
+                titre,
+                nom: client?.nom,
+                prenom: client?.prenom,
+                email: client?.email,
+                nom_restaurant: commande.Restaurant?.nom,
+                telephone_restaurant: commande.Restaurant?.telephone,
+                date_commande: dateCommande,
+                date_creation: dateCreation,
+                prix_total: commande.totalPrice,
+                tvaRate:commande.tva,
+                total_tva:commande.total_tva,
+                produits
+              }
+            });
+
+            await commande.update({ notif_prete_envoyee:true});
+        } else {
+            console.log('Pas encore le moment');
+            verifs.push(`Pas encore le moment de l'envoi de notification commande prete pour la commande #${commande.id} delai restaurant ${commande.restaurant_id} : ${param_delai.valeur} ${param_delai.unite_de_temps}`);
+        }
+
+      }
+
+      
+
+      
 
       if (now > retraitTime) {
         
@@ -184,7 +322,7 @@ exports.updateReservationsStatuts = async (req, res) => {
         notificationsEnvoyees++;
         await commande.update({ statut:'Retirée'});
         commandesMisesAJour++;
-        verifs.push(`comparaison date passée réussie commande #${commande.id} date retrait (${retraitTime}) - heure actuelle : ${now}`);
+        verifs.push(`comparaison date passée réussie commande #${commande.id} date retrait ${dateRetrait} (${retraitTime}) - heure actuelle : ${now}`);
 
         let titre = 'Demande d\'avis'
         let lien = `https://resto.orocom.io/ajouter-avis/2/${commande.id}`
@@ -202,7 +340,10 @@ exports.updateReservationsStatuts = async (req, res) => {
         });
         mailsEnvoyees ++;
         
-      }
+      }else{
+          verifs.push(`comparaison echouée (commande a venir) commande #${commande.id} date retrait ${dateRetrait} (${retraitTime}) - heure actuelle : ${now}`);
+
+        }
 
 
     };
