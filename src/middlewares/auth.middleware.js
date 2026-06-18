@@ -15,6 +15,8 @@ const publicRoutes = [
   '/get_stripe_payment_link_for_reservation',
   '/get_stripe_payment_link_for_commande',
   '/get_reservation_datas_by_societeID',
+  '/get_commande_recap_by_id',
+  '/get_reservation_recap_by_id',
   '/get_commande_datas_by_societeID',
   '/get_avis_reservation_by_id',
   '/get_avis_commande_by_id',

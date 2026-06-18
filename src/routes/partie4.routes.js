@@ -261,6 +261,8 @@ router.get('/get_max_reservations', getMaxReservations);
 // READ BY ID
 router.get('/get_reservation_by_id/:id', getReservationById);
 
+router.get('/get_reservation_recap_by_id/:id', getReservationById);
+
 // UPDATE
 router.put('/update_reservation/:id', updateReservation);
 
@@ -298,6 +300,8 @@ router.get('/get_max_commandes', getMaxCommandes);
 
 // READ BY ID
 router.get('/get_commande_by_id/:id', getCommandeById);
+
+router.get('/get_commande_recap_by_id/:id', getCommandeById);
 
 // UPDATE
 router.put('/update_commande/:id', updateCommande);

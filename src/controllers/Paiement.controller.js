@@ -233,7 +233,7 @@ exports.createStripePaymentForReservation = async (req, res) => {
         quantity: 1,
       }
     ],
-    success_url: `${STRIPE_SUCCESS_URL}`,
+    success_url: `${STRIPE_SUCCESS_URL}/${1}/${final_reservation.id}`,
     cancel_url: `${STRIPE_FAILURE_URL}`,
     metadata: {
       id_final_reservation: final_reservation.id,
@@ -328,7 +328,7 @@ exports.createStripePaymentForCommande = async (req, res) => {
         quantity: 1,
       }
     ],
-    success_url: `${STRIPE_SUCCESS_URL}`,
+    success_url: `${STRIPE_SUCCESS_URL}/${2}/${final_commande.id}`,
     cancel_url: `${STRIPE_FAILURE_URL}`,
     metadata: {
       type:'paiement_commande',
