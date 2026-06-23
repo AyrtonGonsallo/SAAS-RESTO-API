@@ -126,6 +126,9 @@ router.get('/get_all_utilisateurs', async (req, res) => {
       }
     }
 
+    console.log('req.societe_id',req.societe_id)
+    console.log('restaurantFilter',restaurantFilter)
+
     const utilisateurs = await Utilisateur.findAll({
       where: req.isSuperAdmin ? {} : {
         societe_id: req.societe_id

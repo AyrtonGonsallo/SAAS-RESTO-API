@@ -51,6 +51,7 @@ const {
   createPaiement,
   getPaiements, 
   getPaiementById,
+  getPaiementByResCommId,
   updatePaiement,
   deletePaiement,
   createStripePaymentForCommande,
@@ -282,6 +283,9 @@ router.get('/get_all_paiements', getPaiements);
 
 // READ BY ID
 router.get('/get_paiement_by_id/:id', getPaiementById);
+
+// READ BY ID
+router.get('/get_paiement_by_res_commande_id/:reservation_id/:commande_id', getPaiementByResCommId);
 
 // UPDATE
 router.put('/update_paiement/:id', updatePaiement);

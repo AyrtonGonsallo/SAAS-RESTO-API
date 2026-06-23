@@ -147,6 +147,45 @@ exports.getPaiementById = async (req, res) => {
   }
 };
 
+exports.getPaiementByResCommId = async (req, res) => {
+  try {
+
+    const reservation_id = req.params.reservation_id;
+    const commande_id = req.params.commande_id;
+    console.log('reservation_id',reservation_id)
+    console.log('commande_id',commande_id)
+
+    let paiement = null;
+
+    if (reservation_id !== 'null') {
+      paiement = await Paiement.findOne({
+        where: {
+          reservation_id: reservation_id
+        }
+      });
+      console.log('recherche res',reservation_id)
+    } else if (commande_id !== 'null') {
+      paiement = await Paiement.findOne({
+        where: {
+          commande_id: commande_id
+        }
+      });
+      console.log('recherche commande',commande_id)
+    }
+
+    
+
+    if (!paiement) {
+      return res.status(404).json({ message: 'Paiement non trouvé. Vous devez effectuer le paiement pour avancer.' });
+    }
+
+    res.json(paiement);
+  } catch (error) {
+    console.log(error.message)
+    res.status(500).json({ message: error.message });
+  }
+};
+
 exports.updatePaiement = async (req, res) => {
   const t = await db.sequelize.transaction();
 

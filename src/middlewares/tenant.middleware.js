@@ -15,6 +15,7 @@ const publicRoutes = [
   '/get_reservation_datas_by_societeID',
   '/get_commande_recap_by_id',
   '/get_reservation_recap_by_id',
+  '/get_paiement_by_res_commande_id',
   '/get_commande_datas_by_societeID',
   '/get_avis_reservation_by_id',
   '/get_avis_commande_by_id',
