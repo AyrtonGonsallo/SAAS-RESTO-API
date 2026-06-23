@@ -474,3 +474,188 @@ exports.watchReservationsDelais = async (req, res) => {
   }
 };
 
+
+
+exports.checkAndChangeServicesStatus = async (req, res) => {
+  try {
+
+    const actions = [];
+
+    const now = new Date();
+    const currentDay = now.getDay(); // 0=dimanche, 1=lundi, ...
+    const currentHour = now.toTimeString().slice(0, 5); // HH:mm
+
+    const isWeeklyReset =
+      currentDay === 1 &&
+      currentHour === '01:00';
+
+    const parametres = await Parametre.findAll({
+      where: {
+        type_de_valeur: 'jour_et_heure',
+        type: {
+          [Op.like]: 'heure_de_desactivation_auto_%'
+        }
+      }
+    });
+
+    const restaurantsReactivated = new Set();
+
+    for (const parametre of parametres) {
+
+      actions.push({
+        param_id: parametre.id,
+        restaurant_id: parametre.restaurant_id,
+        action: 'debut',
+        hour_of_day:parametre.hour_of_day,
+        day_of_week:parametre.day_of_week,
+        isWeeklyReset:isWeeklyReset
+      });
+
+      const restaurant = await Restaurant.findByPk(
+        parametre.restaurant_id
+      );
+
+      if (!restaurant) {
+        continue;
+      }
+
+      // Réactivation hebdomadaire
+      if (isWeeklyReset) {
+
+        if (restaurantsReactivated.has(restaurant.id)) {
+          continue;
+        }
+
+        restaurantsReactivated.add(restaurant.id);
+
+        const etatReservations = await Parametre.findOne({
+          where: {
+            restaurant_id: restaurant.id,
+            type: 'etat_des_reservations'
+          }
+        });
+
+        if (etatReservations) {
+          etatReservations.est_actif = true;
+          await etatReservations.save();
+
+          actions.push({
+            restaurant_id: restaurant.id,
+            type: 'reservations',
+            action: 'activé',
+            currentDay,
+            currentHour,
+          });
+        }
+
+        const etatClickCollect = await Parametre.findOne({
+          where: {
+            restaurant_id: restaurant.id,
+            type: 'etat_du_click_and_collect'
+          }
+        });
+
+        if (etatClickCollect) {
+          etatClickCollect.est_actif = true;
+          await etatClickCollect.save();
+
+          actions.push({
+            restaurant_id: restaurant.id,
+            type: 'commandes',
+            action: 'activé',
+            currentDay,
+            currentHour,
+          });
+        }
+
+        continue;
+      }
+
+      //console.log(parametre)
+
+      const dayOfWeek = parametre.day_of_week;
+      const hourOfDay = parametre.hour_of_day;
+
+      let  un_des_horaire_ne_coincide_pas = dayOfWeek !== currentDay || hourOfDay !== currentHour;
+
+      console.log("un_des_horaire_ne_coincide_pas",un_des_horaire_ne_coincide_pas)
+
+      if ( un_des_horaire_ne_coincide_pas ) {
+        continue;
+      }
+
+      // Désactivation des réservations
+      if (parametre.type === 'heure_de_desactivation_auto_reservations') {
+
+        const etatReservations = await Parametre.findOne({
+          where: {
+            restaurant_id: restaurant.id,
+            type: 'etat_des_reservations'
+          }
+        });
+
+        if (etatReservations && etatReservations.est_actif) {
+
+          etatReservations.est_actif = false;
+          await etatReservations.save();
+
+          actions.push({
+            restaurant_id: restaurant.id,
+            type: 'reservations',
+            action: 'désactivé',
+            dayOfWeek,
+            hourOfDay,
+            currentDay,
+            currentHour,
+          });
+        }
+      }
+
+      // Désactivation du click & collect
+      if (parametre.type === 'heure_de_desactivation_auto_commandes') {
+
+        const etatClickCollect = await Parametre.findOne({
+          where: {
+            restaurant_id: restaurant.id,
+            type: 'etat_du_click_and_collect'
+          }
+        });
+
+        if (etatClickCollect && etatClickCollect.est_actif) {
+
+          etatClickCollect.est_actif = false;
+          await etatClickCollect.save();
+
+          actions.push({
+            restaurant_id: restaurant.id,
+            type: 'commandes',
+            action: 'désactivé',
+            dayOfWeek,
+            hourOfDay,
+            currentDay,
+            currentHour,
+          });
+        }
+      }
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: `${actions.length} action(s) exécutée(s)`,
+      data: {
+        statut: 'OK',
+        actions,
+        currentDay,
+            currentHour,
+      }
+    });
+
+  } catch (error) {
+    console.error(error);
+
+    return res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+};

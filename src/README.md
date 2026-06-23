@@ -56,6 +56,6 @@ http://localhost:2026/api/v1/send_queued_messages envoi les messages de la parti
 http://localhost:2026/api/v1/update_reservations_statuts  met a jour le statut des tables et les libere
 http://localhost:2026/api/v1/watch_reservations_delais surveille les delais et annulle les reservations
 
-
+http://localhost:2026/api/v1/check_and_change_services_status desative les reservations et le click and collect un jour particulier
 
 

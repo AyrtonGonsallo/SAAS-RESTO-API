@@ -69,7 +69,9 @@ exports.ajouterRestaurant = async (req, res,next) => {
       'delai_annulation_gratuite_de_reservation',
       'delai_annulation_automatique_de_commande',
       'delai_annulation_gratuite_de_commande',
-      'duree_blocage_table'
+      'duree_blocage_table',
+      'heure_de_desactivation_auto_reservations',
+      'heure_de_desactivation_auto_commandes'
     ];
 
     // valeurs par défaut (important)
@@ -115,6 +117,10 @@ exports.ajouterRestaurant = async (req, res,next) => {
       delai_annulation_automatique_de_commande: { description: 'si cette valeur est de 1h, 1h apres la date de creation de la commande si le paiement est requis et elle est pas payée on l\'annule et libere les stocks avec un cron', unite_de_temps: 'heures', type_de_valeur: 'unite_temporelle', valeur: 2, est_actif: false, est_important: true },
       delai_annulation_gratuite_de_commande: { description: 'si cette valeur est de 2h, le client peux annuler la commande 2h apres la date de creation de la commande si il a pas payé', unite_de_temps: 'heures', type_de_valeur: 'unite_temporelle', valeur: 2, est_actif: false, est_important: true },
       duree_blocage_table: { description: 'si cette valeur est de 90 minutes on libere la table avec un cron 1h30 apres le debut de la reservation', unite_de_temps: 'minutes', type_de_valeur: 'unite_temporelle', valeur: 2, est_actif: true, est_important: true },
+      
+      heure_de_desactivation_auto_reservations: { description: 'le jour et l\'heure qui definissent le moment a partir duquel  on bloque les réservations de la semaine et le lundi a 01h on les réactivera', unite_de_temps: '', type_de_valeur: 'jour_et_heure', valeur: '', est_actif: false, est_important: false },
+      heure_de_desactivation_auto_commandes: { description: 'le jour et l\'heure qui definissent le moment a partir duquel  on bloque les commandes de la semaine et le lundi a 01h on les réactivera', unite_de_temps: '', type_de_valeur: 'jour_et_heure', valeur: '', est_actif: false, est_important: false },
+
     };
 
     const parametres = types.map(type => {
@@ -218,7 +224,9 @@ exports.recreerParametresRestaurant = async (req, res,next) => {
       'delai_annulation_gratuite_de_reservation',
       'delai_annulation_automatique_de_commande',
       'delai_annulation_gratuite_de_commande',
-      'duree_blocage_table'
+      'duree_blocage_table',
+      'heure_de_desactivation_auto_reservations',
+      'heure_de_desactivation_auto_commandes'
     ];
 
     // valeurs par défaut (important)
@@ -263,6 +271,11 @@ exports.recreerParametresRestaurant = async (req, res,next) => {
       delai_annulation_automatique_de_commande: { description: 'si cette valeur est de 1h, 1h apres la date de creation de la commande si le paiement est requis et elle est pas payée on l\'annule et libere les stocks avec un cron', unite_de_temps: 'heures', type_de_valeur: 'unite_temporelle', valeur: 2, est_actif: false, est_important: true },
       delai_annulation_gratuite_de_commande: { description: 'si cette valeur est de 2h, le client peux annuler la commande 2h apres la date de creation de la commande si il a pas payé', unite_de_temps: 'heures', type_de_valeur: 'unite_temporelle', valeur: 2, est_actif: false, est_important: true },
       duree_blocage_table: { description: 'si cette valeur est de 90 minutes on libere la table avec un cron 1h30 apres le debut de la reservation', unite_de_temps: 'minutes', type_de_valeur: 'unite_temporelle', valeur: 2, est_actif: true, est_important: true },
+    
+    
+      heure_de_desactivation_auto_reservations: { description: 'le jour et l\'heure qui definissent le moment a partir duquel  on bloque les réservations de la semaine et le lundi a 01h on les réactivera', unite_de_temps: '', type_de_valeur: 'jour_et_heure', valeur: '', est_actif: false, est_important: false },
+      heure_de_desactivation_auto_commandes: { description: 'le jour et l\'heure qui definissent le moment a partir duquel  on bloque les commandes de la semaine et le lundi a 01h on les réactivera', unite_de_temps: '', type_de_valeur: 'jour_et_heure', valeur: '', est_actif: false, est_important: false },
+
     };
 
     const parametres = types.map(type => {
