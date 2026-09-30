@@ -81,35 +81,7 @@
 
         <!-- Main Content -->
         <div class="content">
-            Bonjour <%= prenom %> <%= nom %>,<br><br>
-
-            Nous avons bien enregistré votre réservation au restaurant <%= nom_restaurant %> le <%= date_creation %>.<br><br>
-
-            ------------------------------------------------------------<br><br>
-
-           📅 Récapitulatif de votre réservation :<br><br>
-
-           - Date de réservation : <%= date_reservation %><br>
-
-
-           - Nombre de personnes : <%= nombre_personnes %><br>
-           - Nombre de couverts : <%= nombre_couverts %><br>
-           - nombre de tables : <%= nb_tables %> <br><br>
-
-           <% if (demandes_speciales) { %>
-            - Demandes spéciales : <%= demandes_speciales %><br>
-           <% } %>
-
-           <% if (commentaire) { %>
-           - Commentaire : <%= commentaire %><br>
-           <% } %>
-            <br>
-           ------------------------------------------------------------<br><br>
-
-           Nous vous remercions pour votre confiance et restons à votre disposition.<br><br>
-
-           Cordialement,<br>
-           L’équipe <%= nom_restaurant %>
+            <%- body %>
 
         </div>
         
@@ -117,22 +89,13 @@
         <!-- Footer -->
   <div class="footer">
     <div style="border:1px solid #E6E6E6 ;"></div>
-<p class="center" style="font-size: 11px;">
-Ce message a été envoyé automatiquement à  <a href="mailto:<%= email %>"><%= email %></a> dans le cadre de votre inscription au restaurant <%= nom_restaurant %>
-<br>
+        <%- footer_haut %>
 
-<strong>Une question ?</strong>  
-<br>
+    <div style="border:1px solid #E6E6E6 ;"></div>
 
-Contactez votre Conseiller Resto au <a href="tel:<%= telephone_restaurant %>"> <%= telephone_restaurant %></a>  
-Nos horaires sont <a href="#"  style="text-decoration: underline;">consultables ici</a>.
-</p>
-<div style="border:1px solid #E6E6E6 ;"></div>
-<p class="center" style="font-size: 10px;">
-<br>
-Conformément aux dispositions de la loi « Informatique et Libertés » et du règlement général sur la protection des données du 27 avril 2016, vous disposez d'un droit d'accès, de rectification et de suppression de vos données personnelles. Consulter nos <a href="#">informations légales.</a>
-</p>
-</div>
+        <%- footer_bas %>
+
+    </div>
 </div>
 </div>
 </body>

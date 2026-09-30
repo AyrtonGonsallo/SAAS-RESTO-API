@@ -22,6 +22,10 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.STRING(50),
       allowNull: true
     },
+    lien_google_my_buisness: {
+      type: DataTypes.STRING(200),
+      allowNull: true
+    },
     coordonnees_google_maps: {
       type: DataTypes.TEXT,
       allowNull: true

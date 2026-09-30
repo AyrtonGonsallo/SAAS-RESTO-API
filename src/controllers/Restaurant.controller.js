@@ -1,5 +1,5 @@
 const db = require('../models');
-const {  Societe, Restaurant,Utilisateur,Parametre  } = db;
+const {  Societe, Restaurant,Utilisateur,Parametre,Mail  } = db;
 const { Op } = require('sequelize');
 exports.ajouterRestaurant = async (req, res,next) => {
   try {
@@ -9,6 +9,7 @@ exports.ajouterRestaurant = async (req, res,next) => {
       ville,
       adresse,
       adresse_email,
+      lien_google_my_buisness,
       heure_debut,
       heure_fin,
       heure_cc_debut,
@@ -28,6 +29,7 @@ exports.ajouterRestaurant = async (req, res,next) => {
       adresse_email,
       heure_debut,
       heure_fin,
+      lien_google_my_buisness,
       heure_cc_debut,
       heure_cc_fin,
       telephone,
@@ -76,50 +78,50 @@ exports.ajouterRestaurant = async (req, res,next) => {
 
     // valeurs par défaut (important)
     const defaultValues = {
-      tva: { description: 'la tva globale du restaurant', unite_de_temps: '', type_de_valeur: 'pourcentage', valeur: 20, est_actif: true, est_important: false },
-      coefficient: { description: 'la marge gagnée sur les produits du click and collect', unite_de_temps: '', type_de_valeur: 'coefficient', valeur: 1, est_actif: true, est_important: false },
-      max_commandes_par_minute: { description: 'si dépasseé plus de commandes pendant cette minute', unite_de_temps: '', type_de_valeur: 'numerique', valeur: 10, est_actif: true, est_important: false },
-      stock_min_avant_alerte: { description: 'si des produits on leur stock inférieur a cette valeur ils apparaissent sur la home avec acces rapide pour modifier le stock', unite_de_temps: '', type_de_valeur: 'numerique', valeur: 5, est_actif: true, est_important: true },
-      max_couverts_par_jour: { description: 'si depasse ce jour ne prend plus de reservations', unite_de_temps: '', type_de_valeur: 'numerique', valeur: 100, est_actif: true, est_important: false },
+      tva: { description: 'la tva globale du restaurant', unite_de_temps: null, type_de_valeur: 'pourcentage', valeur: 20, est_actif: true, est_important: false },
+      coefficient: { description: 'la marge gagnée sur les produits du click and collect', unite_de_temps: null, type_de_valeur: 'coefficient', valeur: 1, est_actif: true, est_important: false },
+      max_commandes_par_minute: { description: 'si dépasseé plus de commandes pendant cette minute', unite_de_temps: null, type_de_valeur: 'numerique', valeur: 10, est_actif: true, est_important: false },
+      stock_min_avant_alerte: { description: 'si des produits on leur stock inférieur a cette valeur ils apparaissent sur la home avec acces rapide pour modifier le stock', unite_de_temps: null, type_de_valeur: 'numerique', valeur: 5, est_actif: true, est_important: true },
+      max_couverts_par_jour: { description: 'si depasse ce jour ne prend plus de reservations', unite_de_temps: null, type_de_valeur: 'numerique', valeur: 100, est_actif: true, est_important: false },
       delai_rappel_reservation: { description: 'le nombre de temps avant la date de la reservation du client ou en lui envoi un message de rappel', unite_de_temps: 'minutes', type_de_valeur: 'unite_temporelle', valeur: 30, est_actif: true, est_important: false },
       delai_msg_commande_prete:{ description: 'le nombre de temps avant la date de la commande du client ou on lui envoi un message "commande prete"', unite_de_temps: 'minutes', type_de_valeur: 'unite_temporelle', valeur: 30, est_actif: true, est_important: false },
 
-      delai_invitation_avis: { description: 'le nombre de temps apres la date de la reservation/commande du client ou en lui envoi un message de rappel', unite_de_temps: '', type_de_valeur: 'numerique', valeur: 30, est_actif: true, est_important: false },
-      cle_publique_stripe: { description: 'pour chaque resto permet de faire le paiement sur stripe', unite_de_temps: '', type_de_valeur: 'jeton', valeur: '', est_actif: true, est_important: false },
-      cle_privee_stripe: { description: 'pour chaque resto permet de faire le paiement sur stripe', unite_de_temps: '', type_de_valeur: 'jeton', valeur: '', est_actif: true, est_important: false },
+      delai_invitation_avis: { description: 'le nombre de temps apres la date de la reservation/commande du client ou en lui envoi un message de rappel', unite_de_temps: null, type_de_valeur: 'numerique', valeur: 30, est_actif: true, est_important: false },
+      cle_publique_stripe: { description: 'pour chaque resto permet de faire le paiement sur stripe', unite_de_temps: null, type_de_valeur: 'jeton', valeur: '', est_actif: true, est_important: false },
+      cle_privee_stripe: { description: 'pour chaque resto permet de faire le paiement sur stripe', unite_de_temps: null, type_de_valeur: 'jeton', valeur: '', est_actif: true, est_important: false },
 
-      etat_des_reservations: { description: 'si non actif les reservations sont bloquées', unite_de_temps: '', type_de_valeur: 'statut', valeur: '', est_actif: true, est_important: true },
-      etat_du_click_and_collect: { description: 'si non actif les commandes sont bloquées', unite_de_temps: '', type_de_valeur: 'statut', valeur: '', est_actif: true, est_important: true },
-      etat_paiement_acompte_reservation: { description: 'si actif il faut payer un acompte pour reserver', unite_de_temps: '', type_de_valeur: 'statut', valeur: '', est_actif: true, est_important: true },
-      montant_paiement_acompte_reservation: { description: 'pour faire payer tout mettez 100% sinon moins', unite_de_temps: '', type_de_valeur: 'numerique', valeur: 50, est_actif: true, est_important: false },
-      etat_paiement_acompte_click_and_collect: { description: 'si actif il faut payer un acompte pour commander', unite_de_temps: '', type_de_valeur: 'statut', valeur: '', est_actif: true, est_important: true },
-      montant_paiement_acompte_click_and_collect: { description: 'pour faire payer tout mettez 100% sinon moins', unite_de_temps: '', type_de_valeur: 'numerique', valeur: 50, est_actif: true, est_important: false },
-      etat_paiement_complet_click_and_collect: { description: 'si actif le client doit payer la totalité de la commande avant validation', unite_de_temps: '', type_de_valeur: 'statut', valeur: '', est_actif: true, est_important: true},
+      etat_des_reservations: { description: 'si non actif les reservations sont bloquées', unite_de_temps: null, type_de_valeur: 'statut', valeur: '', est_actif: true, est_important: true },
+      etat_du_click_and_collect: { description: 'si non actif les commandes sont bloquées', unite_de_temps: null, type_de_valeur: 'statut', valeur: '', est_actif: true, est_important: true },
+      etat_paiement_acompte_reservation: { description: 'si actif il faut payer un acompte pour reserver', unite_de_temps: null, type_de_valeur: 'statut', valeur: '', est_actif: true, est_important: true },
+      montant_paiement_acompte_reservation: { description: 'pour faire payer tout mettez 100% sinon moins', unite_de_temps: null, type_de_valeur: 'numerique', valeur: 50, est_actif: true, est_important: false },
+      etat_paiement_acompte_click_and_collect: { description: 'si actif il faut payer un acompte pour commander', unite_de_temps: null, type_de_valeur: 'statut', valeur: '', est_actif: true, est_important: true },
+      montant_paiement_acompte_click_and_collect: { description: 'pour faire payer tout mettez 100% sinon moins', unite_de_temps: null, type_de_valeur: 'numerique', valeur: 50, est_actif: true, est_important: false },
+      etat_paiement_complet_click_and_collect: { description: 'si actif le client doit payer la totalité de la commande avant validation', unite_de_temps: null, type_de_valeur: 'statut', valeur: '', est_actif: true, est_important: true},
 
-      montant_livraison_click_and_collect: { description: 'le montant fixe de la livraison du restaurant', unite_de_temps: '', type_de_valeur: 'numerique', valeur: 15, est_actif: true, est_important: true },
-      envoi_de_mail_recap_reservation: { description: 'si actif le client a la fin du formulaire de reservation recoit un mail', unite_de_temps: '', type_de_valeur: 'statut', valeur: '', est_actif: false, est_important: true },
-      envoi_de_mail_recap_click_and_collect: { description: 'si actif le client a la fin du formulaire de commande recoit un mail', unite_de_temps: '', type_de_valeur: 'statut', valeur: '', est_actif: false, est_important: true },
-      livraison_click_and_collect: { description: 'si actif la livraison sera faite et a la fin du formulaire on demande l\'adresse du client', unite_de_temps: '', type_de_valeur: 'statut', valeur: '', est_actif: false, est_important: true },
+      montant_livraison_click_and_collect: { description: 'le montant fixe de la livraison du restaurant', unite_de_temps: null, type_de_valeur: 'numerique', valeur: 15, est_actif: true, est_important: true },
+      envoi_de_mail_recap_reservation: { description: 'si actif le client a la fin du formulaire de reservation recoit un mail', unite_de_temps: null, type_de_valeur: 'statut', valeur: '', est_actif: false, est_important: true },
+      envoi_de_mail_recap_click_and_collect: { description: 'si actif le client a la fin du formulaire de commande recoit un mail', unite_de_temps: null, type_de_valeur: 'statut', valeur: '', est_actif: false, est_important: true },
+      livraison_click_and_collect: { description: 'si actif la livraison sera faite et a la fin du formulaire on demande l\'adresse du client', unite_de_temps: null, type_de_valeur: 'statut', valeur: '', est_actif: false, est_important: true },
 
 
       ecart_entre_heure_actuelle_et_heure_reservation: { description: 'si la reservation est pour aujourd\'hui et cette valeur est de 2h, s\'il est 15h au moment ou le client reserve il devra choisir au moins 17h', unite_de_temps: 'heures', type_de_valeur: 'unite_temporelle', valeur: 2, est_actif: true, est_important: true },
-      fusionner_les_tables_pour_reservation: { description: 'si le parametre est actif le client peux choisir plusieurs tables', unite_de_temps: '', type_de_valeur: 'statut', valeur: '', est_actif: true, est_important: true },
+      fusionner_les_tables_pour_reservation: { description: 'si le parametre est actif le client peux choisir plusieurs tables', unite_de_temps: null, type_de_valeur: 'statut', valeur: '', est_actif: true, est_important: true },
       
       
       commande_a_l_avance: { description: 'si cette valeur est de 2j le 15 mai le client peux commander jusqu\'au 17 mai', unite_de_temps: 'jours', type_de_valeur: 'unite_temporelle', valeur: 2, est_actif: true, est_important: true },
       delai_avant_fermetture_commandes: { description: 'si les horaires de commande pour le service du soir le lundi sont de 15h a 19h et cette valeur est de 40min le client ne peux plus commander a partir de 18h20 ', unite_de_temps: 'minutes', type_de_valeur: 'unite_temporelle', valeur: 2, est_actif: true, est_important: true },
       delai_avant_fermetture_reservations: { description: 'si les horaires de reservation pour le service du soir le lundi sont de 15h a 19h et cette valeur est de 40min le client ne peux plus reserver a partir de 18h20 ', unite_de_temps: 'minutes', type_de_valeur: 'unite_temporelle', valeur: 2, est_actif: true, est_important: true },
       delai_de_preparation: { description: 'si la commande est pour aujourd\'hui et cette valeur est de 30min, s\'il est 15h au moment ou le client commande il devra choisir au moins 15h30', unite_de_temps: 'minutes', type_de_valeur: 'unite_temporelle', valeur: 2, est_actif: true, est_important: true },
-      moyen_notification: { description: '3 choix possibles email, sms, email + sms', unite_de_temps: '', type_de_valeur: 'choix_d_options', valeur: 'email', est_actif: true, est_important: true },
-      max_commandes_par_jour: { description: 'si dépasseé plus de commandes pendant ce jour', unite_de_temps: '', type_de_valeur: 'numerique', valeur: 30, est_actif: true, est_important: true },
+      moyen_notification: { description: '3 choix possibles email, sms, email + sms', unite_de_temps: null, type_de_valeur: 'choix_d_options', valeur: 'email', est_actif: true, est_important: true },
+      max_commandes_par_jour: { description: 'si dépasseé plus de commandes pendant ce jour', unite_de_temps: null, type_de_valeur: 'numerique', valeur: 30, est_actif: true, est_important: true },
       delai_annulation_automatique_de_reservation: { description: 'si cette valeur est de 2h, 2h apres la date de creation de la reservation si le paiement est requis et elle est pas payée on l\'annule et libere les tables, services, couverts avec un cron', unite_de_temps: 'heures', type_de_valeur: 'unite_temporelle', valeur: 2, est_actif: false, est_important: true },
       delai_annulation_gratuite_de_reservation: { description: 'si cette valeur est de 1h, le client peux annuler la reservation 1h apres la date de creation de la reservation si il a pas payé', unite_de_temps: 'heures', type_de_valeur: 'unite_temporelle', valeur: 2, est_actif: false, est_important: true },
       delai_annulation_automatique_de_commande: { description: 'si cette valeur est de 1h, 1h apres la date de creation de la commande si le paiement est requis et elle est pas payée on l\'annule et libere les stocks avec un cron', unite_de_temps: 'heures', type_de_valeur: 'unite_temporelle', valeur: 2, est_actif: false, est_important: true },
       delai_annulation_gratuite_de_commande: { description: 'si cette valeur est de 2h, le client peux annuler la commande 2h apres la date de creation de la commande si il a pas payé', unite_de_temps: 'heures', type_de_valeur: 'unite_temporelle', valeur: 2, est_actif: false, est_important: true },
       duree_blocage_table: { description: 'si cette valeur est de 90 minutes on libere la table avec un cron 1h30 apres le debut de la reservation', unite_de_temps: 'minutes', type_de_valeur: 'unite_temporelle', valeur: 2, est_actif: true, est_important: true },
       
-      heure_de_desactivation_auto_reservations: { description: 'le jour et l\'heure qui definissent le moment a partir duquel  on bloque les réservations de la semaine et le lundi a 01h on les réactivera', unite_de_temps: '', type_de_valeur: 'jour_et_heure', valeur: '', est_actif: false, est_important: false },
-      heure_de_desactivation_auto_commandes: { description: 'le jour et l\'heure qui definissent le moment a partir duquel  on bloque les commandes de la semaine et le lundi a 01h on les réactivera', unite_de_temps: '', type_de_valeur: 'jour_et_heure', valeur: '', est_actif: false, est_important: false },
+      heure_de_desactivation_auto_reservations: { description: 'le jour et l\'heure qui definissent le moment a partir duquel  on bloque les réservations de la semaine et le lundi a 01h on les réactivera', unite_de_temps: null, type_de_valeur: 'jour_et_heure', valeur: '', est_actif: false, est_important: false },
+      heure_de_desactivation_auto_commandes: { description: 'le jour et l\'heure qui definissent le moment a partir duquel  on bloque les commandes de la semaine et le lundi a 01h on les réactivera', unite_de_temps: null, type_de_valeur: 'jour_et_heure', valeur: '', est_actif: false, est_important: false },
 
     };
 
@@ -231,41 +233,41 @@ exports.recreerParametresRestaurant = async (req, res,next) => {
 
     // valeurs par défaut (important)
     const defaultValues = {
-      tva: { description: 'la tva globale du restaurant', unite_de_temps: '', type_de_valeur: 'pourcentage', valeur: 20, est_actif: true, est_important: false },
-      coefficient: { description: 'la marge gagnée sur les produits du click and collect', unite_de_temps: '', type_de_valeur: 'coefficient', valeur: 1, est_actif: true, est_important: false },
-      max_commandes_par_minute: { description: 'si dépasseé plus de commandes pendant cette minute', unite_de_temps: '', type_de_valeur: 'numerique', valeur: 10, est_actif: true, est_important: false },
-      stock_min_avant_alerte: { description: 'si des produits on leur stock inférieur a cette valeur ils apparaissent sur la home avec acces rapide pour modifier le stock', unite_de_temps: '', type_de_valeur: 'numerique', valeur: 5, est_actif: true, est_important: true },
-      max_couverts_par_jour: { description: 'si depasse ce jour ne prend plus de reservations', unite_de_temps: '', type_de_valeur: 'numerique', valeur: 100, est_actif: true, est_important: false },
+      tva: { description: 'la tva globale du restaurant', unite_de_temps: null, type_de_valeur: 'pourcentage', valeur: 20, est_actif: true, est_important: false },
+      coefficient: { description: 'la marge gagnée sur les produits du click and collect', unite_de_temps: null, type_de_valeur: 'coefficient', valeur: 1, est_actif: true, est_important: false },
+      max_commandes_par_minute: { description: 'si dépasseé plus de commandes pendant cette minute', unite_de_temps: null, type_de_valeur: 'numerique', valeur: 10, est_actif: true, est_important: false },
+      stock_min_avant_alerte: { description: 'si des produits on leur stock inférieur a cette valeur ils apparaissent sur la home avec acces rapide pour modifier le stock', unite_de_temps: null, type_de_valeur: 'numerique', valeur: 5, est_actif: true, est_important: true },
+      max_couverts_par_jour: { description: 'si depasse ce jour ne prend plus de reservations', unite_de_temps: null, type_de_valeur: 'numerique', valeur: 100, est_actif: true, est_important: false },
       delai_rappel_reservation: { description: 'le nombre de temps avant la date de la reservation du client ou on lui envoi un message de rappel', unite_de_temps: 'minutes', type_de_valeur: 'unite_temporelle', valeur: 30, est_actif: true, est_important: false },
       delai_msg_commande_prete:{ description: 'le nombre de temps avant la date de la commande du client ou on lui envoi un message "commande prete"', unite_de_temps: 'minutes', type_de_valeur: 'unite_temporelle', valeur: 30, est_actif: true, est_important: false },
-      delai_invitation_avis: { description: 'le nombre de temps apres la date de la reservation/commande du client ou en lui envoi un message de rappel', unite_de_temps: '', type_de_valeur: 'numerique', valeur: 30, est_actif: true, est_important: false },
-      cle_publique_stripe: { description: 'pour chaque resto permet de faire le paiement sur stripe', unite_de_temps: '', type_de_valeur: 'jeton', valeur: '', est_actif: true, est_important: false },
-      cle_privee_stripe: { description: 'pour chaque resto permet de faire le paiement sur stripe', unite_de_temps: '', type_de_valeur: 'jeton', valeur: '', est_actif: true, est_important: false },
+      delai_invitation_avis: { description: 'le nombre de temps apres la date de la reservation/commande du client ou en lui envoi un message de rappel', unite_de_temps: null, type_de_valeur: 'numerique', valeur: 30, est_actif: true, est_important: false },
+      cle_publique_stripe: { description: 'pour chaque resto permet de faire le paiement sur stripe', unite_de_temps: null, type_de_valeur: 'jeton', valeur: '', est_actif: true, est_important: false },
+      cle_privee_stripe: { description: 'pour chaque resto permet de faire le paiement sur stripe', unite_de_temps: null, type_de_valeur: 'jeton', valeur: '', est_actif: true, est_important: false },
 
-      etat_des_reservations: { description: 'si non actif les reservations sont bloquées', unite_de_temps: '', type_de_valeur: 'statut', valeur: '', est_actif: true, est_important: true },
-      etat_du_click_and_collect: { description: 'si non actif les commandes sont bloquées', unite_de_temps: '', type_de_valeur: 'statut', valeur: '', est_actif: true, est_important: true },
-      etat_paiement_acompte_reservation: { description: 'si actif il faut payer un acompte pour reserver', unite_de_temps: '', type_de_valeur: 'statut', valeur: '', est_actif: true, est_important: true },
-      montant_paiement_acompte_reservation: { description: 'pour faire payer tout mettez 100% sinon moins', unite_de_temps: '', type_de_valeur: 'numerique', valeur: 50, est_actif: true, est_important: false },
-      etat_paiement_acompte_click_and_collect: { description: 'si actif il faut payer un acompte pour commander', unite_de_temps: '', type_de_valeur: 'statut', valeur: '', est_actif: true, est_important: true },
-      montant_paiement_acompte_click_and_collect: { description: 'pour faire payer tout mettez 100% sinon moins', unite_de_temps: '', type_de_valeur: 'numerique', valeur: 50, est_actif: true, est_important: false },
-      etat_paiement_complet_click_and_collect: { description: 'si actif le client doit payer la totalité de la commande avant validation', unite_de_temps: '', type_de_valeur: 'statut', valeur: '', est_actif: true, est_important: true},
+      etat_des_reservations: { description: 'si non actif les reservations sont bloquées', unite_de_temps: null, type_de_valeur: 'statut', valeur: '', est_actif: true, est_important: true },
+      etat_du_click_and_collect: { description: 'si non actif les commandes sont bloquées', unite_de_temps: null, type_de_valeur: 'statut', valeur: '', est_actif: true, est_important: true },
+      etat_paiement_acompte_reservation: { description: 'si actif il faut payer un acompte pour reserver', unite_de_temps: null, type_de_valeur: 'statut', valeur: '', est_actif: true, est_important: true },
+      montant_paiement_acompte_reservation: { description: 'pour faire payer tout mettez 100% sinon moins', unite_de_temps: null, type_de_valeur: 'numerique', valeur: 50, est_actif: true, est_important: false },
+      etat_paiement_acompte_click_and_collect: { description: 'si actif il faut payer un acompte pour commander', unite_de_temps: null, type_de_valeur: 'statut', valeur: '', est_actif: true, est_important: true },
+      montant_paiement_acompte_click_and_collect: { description: 'pour faire payer tout mettez 100% sinon moins', unite_de_temps: null, type_de_valeur: 'numerique', valeur: 50, est_actif: true, est_important: false },
+      etat_paiement_complet_click_and_collect: { description: 'si actif le client doit payer la totalité de la commande avant validation', unite_de_temps: null, type_de_valeur: 'statut', valeur: '', est_actif: true, est_important: true},
 
-      montant_livraison_click_and_collect: { description: 'le montant fixe de la livraison du restaurant', unite_de_temps: '', type_de_valeur: 'numerique', valeur: 15, est_actif: true, est_important: true },
-      envoi_de_mail_recap_reservation: { description: 'si actif le client a la fin du formulaire de reservation recoit un mail', unite_de_temps: '', type_de_valeur: 'statut', valeur: '', est_actif: false, est_important: true },
-      envoi_de_mail_recap_click_and_collect: { description: 'si actif le client a la fin du formulaire de commande recoit un mail', unite_de_temps: '', type_de_valeur: 'statut', valeur: '', est_actif: false, est_important: true },
-      livraison_click_and_collect: { description: 'si actif la livraison sera faite et a la fin du formulaire on demande l\'adresse du client', unite_de_temps: '', type_de_valeur: 'statut', valeur: '', est_actif: false, est_important: true },
+      montant_livraison_click_and_collect: { description: 'le montant fixe de la livraison du restaurant', unite_de_temps: null, type_de_valeur: 'numerique', valeur: 15, est_actif: true, est_important: true },
+      envoi_de_mail_recap_reservation: { description: 'si actif le client a la fin du formulaire de reservation recoit un mail', unite_de_temps: null, type_de_valeur: 'statut', valeur: '', est_actif: false, est_important: true },
+      envoi_de_mail_recap_click_and_collect: { description: 'si actif le client a la fin du formulaire de commande recoit un mail', unite_de_temps: null, type_de_valeur: 'statut', valeur: '', est_actif: false, est_important: true },
+      livraison_click_and_collect: { description: 'si actif la livraison sera faite et a la fin du formulaire on demande l\'adresse du client', unite_de_temps: null, type_de_valeur: 'statut', valeur: '', est_actif: false, est_important: true },
 
 
       ecart_entre_heure_actuelle_et_heure_reservation: { description: 'si la reservation est pour aujourd\'hui et cette valeur est de 2h, s\'il est 15h au moment ou le client reserve il devra choisir au moins 17h', unite_de_temps: 'heures', type_de_valeur: 'unite_temporelle', valeur: 2, est_actif: true, est_important: true },
-      fusionner_les_tables_pour_reservation: { description: 'si le parametre est actif le client peux choisir plusieurs tables', unite_de_temps: '', type_de_valeur: 'statut', valeur: '', est_actif: true, est_important: true },
+      fusionner_les_tables_pour_reservation: { description: 'si le parametre est actif le client peux choisir plusieurs tables', unite_de_temps: null, type_de_valeur: 'statut', valeur: '', est_actif: true, est_important: true },
 
      
       commande_a_l_avance: { description: 'si cette valeur est de 2j le 15 mai le client peux commander jusqu\'au 17 mai', unite_de_temps: 'jours', type_de_valeur: 'unite_temporelle', valeur: 2, est_actif: true, est_important: true },
       delai_avant_fermetture_commandes: { description: 'si les horaires de commande pour le service du soir le lundi sont de 15h a 19h et cette valeur est de 40min le client ne peux plus commander a partir de 18h20 ', unite_de_temps: 'minutes', type_de_valeur: 'unite_temporelle', valeur: 2, est_actif: true, est_important: true },
       delai_avant_fermetture_reservations: { description: 'si les horaires de reservation pour le service du soir le lundi sont de 15h a 19h et cette valeur est de 40min le client ne peux plus reserver a partir de 18h20 ', unite_de_temps: 'minutes', type_de_valeur: 'unite_temporelle', valeur: 2, est_actif: true, est_important: true },
       delai_de_preparation: { description: 'si la commande est pour aujourd\'hui et cette valeur est de 30min, s\'il est 15h au moment ou le client commande il devra choisir au moins 15h30', unite_de_temps: 'minutes', type_de_valeur: 'unite_temporelle', valeur: 2, est_actif: true, est_important: true },
-      moyen_notification: { description: '3 choix possibles email, sms, email + sms', unite_de_temps: '', type_de_valeur: 'choix_d_options', valeur: 'email', est_actif: true, est_important: true },
-      max_commandes_par_jour: { description: 'si dépasseé plus de commandes pendant ce jour', unite_de_temps: '', type_de_valeur: 'numerique', valeur: 30, est_actif: true, est_important: true },
+      moyen_notification: { description: '3 choix possibles email, sms, email + sms', unite_de_temps: null, type_de_valeur: 'choix_d_options', valeur: 'email', est_actif: true, est_important: true },
+      max_commandes_par_jour: { description: 'si dépasseé plus de commandes pendant ce jour', unite_de_temps: null, type_de_valeur: 'numerique', valeur: 30, est_actif: true, est_important: true },
       delai_annulation_automatique_de_reservation: { description: 'si cette valeur est de 2h, 2h apres la date de creation de la reservation si le paiement est requis et elle est pas payée on l\'annule et libere les tables, services, couverts avec un cron', unite_de_temps: 'heures', type_de_valeur: 'unite_temporelle', valeur: 2, est_actif: false, est_important: true },
       delai_annulation_gratuite_de_reservation: { description: 'si cette valeur est de 1h, le client peux annuler la reservation 1h apres la date de creation de la reservation si il a pas payé', unite_de_temps: 'heures', type_de_valeur: 'unite_temporelle', valeur: 2, est_actif: false, est_important: true },
       delai_annulation_automatique_de_commande: { description: 'si cette valeur est de 1h, 1h apres la date de creation de la commande si le paiement est requis et elle est pas payée on l\'annule et libere les stocks avec un cron', unite_de_temps: 'heures', type_de_valeur: 'unite_temporelle', valeur: 2, est_actif: false, est_important: true },
@@ -273,8 +275,8 @@ exports.recreerParametresRestaurant = async (req, res,next) => {
       duree_blocage_table: { description: 'si cette valeur est de 90 minutes on libere la table avec un cron 1h30 apres le debut de la reservation', unite_de_temps: 'minutes', type_de_valeur: 'unite_temporelle', valeur: 2, est_actif: true, est_important: true },
     
     
-      heure_de_desactivation_auto_reservations: { description: 'le jour et l\'heure qui definissent le moment a partir duquel  on bloque les réservations de la semaine et le lundi a 01h on les réactivera', unite_de_temps: '', type_de_valeur: 'jour_et_heure', valeur: '', est_actif: false, est_important: false },
-      heure_de_desactivation_auto_commandes: { description: 'le jour et l\'heure qui definissent le moment a partir duquel  on bloque les commandes de la semaine et le lundi a 01h on les réactivera', unite_de_temps: '', type_de_valeur: 'jour_et_heure', valeur: '', est_actif: false, est_important: false },
+      heure_de_desactivation_auto_reservations: { description: 'le jour et l\'heure qui definissent le moment a partir duquel  on bloque les réservations de la semaine et le lundi a 01h on les réactivera', unite_de_temps: null, type_de_valeur: 'jour_et_heure', valeur: '', est_actif: false, est_important: false },
+      heure_de_desactivation_auto_commandes: { description: 'le jour et l\'heure qui definissent le moment a partir duquel  on bloque les commandes de la semaine et le lundi a 01h on les réactivera', unite_de_temps: null, type_de_valeur: 'jour_et_heure', valeur: '', est_actif: false, est_important: false },
 
     };
 
@@ -310,6 +312,75 @@ exports.recreerParametresRestaurant = async (req, res,next) => {
       updateOnDuplicate: [ 'description', 'est_important',]//il ne va mettre a jour que ces champs
     });
 
+
+
+    const templates = [
+        {
+          type: 'recap-reservation',
+          section: 'body-1',
+          texte: `Bonjour &lt;%= prenom %&gt; &lt;%= nom %&gt;,<br><br> Nous avons bien enregistr&#233; votre r&#233;servation au restaurant &lt;%= nom_restaurant %&gt; le &lt;%= date_creation %&gt;.<br><br> ------------------------------------------------------------<br><br> &#128197; R&#233;capitulatif de votre r&#233;servation :<br><br> - Date de r&#233;servation : &lt;%= date_reservation %&gt;<br> - Nombre de personnes : &lt;%= nombre_personnes %&gt;<br> - Nombre de couverts : &lt;%= nombre_couverts %&gt;<br> - nombre de tables : &lt;%= nb_tables %&gt; <br><br> &lt;% if (demandes_speciales) { %&gt; - Demandes sp&#233;ciales : &lt;%= demandes_speciales %&gt;<br> &lt;% } %&gt; &lt;% if (commentaire) { %&gt; - Commentaire : &lt;%= commentaire %&gt;<br> &lt;% } %&gt; <br> ------------------------------------------------------------<br><br> Nous vous remercions pour votre confiance et restons &#224; votre disposition.<br><br> Cordialement,<br> L&#8217;&#233;quipe &lt;%= nom_restaurant %&gt;`
+        },
+
+        {
+          type: 'recap-reservation',
+          section: 'footer-1',
+          texte: `<p class="center"> Ce message a &#233;t&#233; envoy&#233; automatiquement &#224; <a href="mailto:&lt;%= email %&gt;">&lt;%= email %&gt;</a> dans le cadre de votre inscription au restaurant &lt;%= nom_restaurant %&gt; <br> <strong>Une question ?</strong> <br> Contactez votre Conseiller Resto au <a href="tel:&lt;%= telephone_restaurant %&gt;"> &lt;%= telephone_restaurant %&gt;</a> Nos horaires sont <a href="#">consultables ici</a>. </p>`
+        },
+
+        {
+          type: 'recap-reservation',
+          section: 'footer-2',
+          texte: `<p class="center"> <br> Conform&#233;ment aux dispositions de la loi &#171; Informatique et Libert&#233;s &#187; et du r&#232;glement g&#233;n&#233;ral sur la protection des donn&#233;es du 27 avril 2016, vous disposez d'un droit d'acc&#232;s, de rectification et de suppression de vos donn&#233;es personnelles. Consulter nos <a href="#">informations l&#233;gales.</a> </p>`
+        },
+
+        {
+          type: 'recap-commande',
+          section: 'body-1',
+          texte: `Bonjour &lt;%= prenom %&gt; &lt;%= nom %&gt;,<br><br> Nous avons bien enregistr&#233; votre commande chez &lt;%= nom_restaurant %&gt;.<br><br> &#128197; Date de retrait : &lt;%= date_commande %&gt;<br> &#128176; Total TTC : &lt;%= prix_total %&gt; &#8364;<br><br> --------------------------------------------------<br><br> D&#233;tail de votre commande :<br><br>`
+        },
+
+        {
+          type: 'recap-commande',
+          section: 'body-2',
+          texte: `<br> Merci pour votre confiance.<br><br> Cordialement,<br> L&#8217;&#233;quipe &lt;%= nom_restaurant %&gt;<br><br>`
+        },
+
+        {
+          type: 'recap-commande',
+          section: 'footer-1',
+          texte: `<p class="center"> Ce message a &#233;t&#233; envoy&#233; automatiquement &#224; <a href="mailto:&lt;%= email %&gt;">&lt;%= email %&gt;</a> dans le cadre de votre inscription au restaurant &lt;%= nom_restaurant %&gt; <br> <strong>Une question ?</strong> <br> Contactez votre Conseiller Resto au <a href="tel:&lt;%= telephone_restaurant %&gt;"> &lt;%= telephone_restaurant %&gt;</a> Nos horaires sont <a href="#">consultables ici</a>. </p>`
+        },
+         {
+          type: 'recap-commande',
+          section: 'footer-2',
+          texte: `<p class="center"> <br> Conform&#233;ment aux dispositions de la loi &#171; Informatique et Libert&#233;s &#187; et du r&#232;glement g&#233;n&#233;ral sur la protection des donn&#233;es du 27 avril 2016, vous disposez d'un droit d'acc&#232;s, de rectification et de suppression de vos donn&#233;es personnelles. Consulter nos <a href="#">informations l&#233;gales.</a> </p>`
+        }
+      ];
+
+
+      
+
+      // Supprime les anciens templates de ce restaurant
+      await Mail.destroy({
+        where: {
+          restaurant_id: restaurant.id
+        }
+      });
+
+      // Recrée les templates
+      const mails = templates.map(template => ({
+        type: template.type,
+        section: template.section,
+        texte: template.texte,
+        societe_id: restaurant.societe_id,
+        restaurant_id: restaurant.id
+      }));
+
+      await Mail.bulkCreate(mails);
+      
+
+
+    
      
 
     return res.status(201).json({
@@ -319,6 +390,8 @@ exports.recreerParametresRestaurant = async (req, res,next) => {
     });
 
   } catch (error) {
+
+    console.log('error.message',error)
     return res.status(500).json({
       success: false,
       message: error.message
@@ -486,6 +559,7 @@ exports.updateRestaurant = async (req, res, next) => {
       adresse_email,
       heure_debut,
       heure_fin,
+      lien_google_my_buisness,
       heure_cc_debut,
       heure_cc_fin,
       jours_de_fermeture,
@@ -505,6 +579,7 @@ exports.updateRestaurant = async (req, res, next) => {
     let jours_de_fermeture_splited = jours_de_fermeture.split(',');
     console.log('jours_de_fermeture',jours_de_fermeture_splited)
     console.log('jours_de_fermeture string',JSON.stringify(jours_de_fermeture_splited))
+    console.log('utilisateur_id',utilisateur_id)
 
     await restaurant.update({
       nom,
@@ -513,6 +588,7 @@ exports.updateRestaurant = async (req, res, next) => {
       adresse,
       adresse_email,
       heure_debut,
+      lien_google_my_buisness,
       heure_fin,
       heure_cc_debut,
       heure_cc_fin,

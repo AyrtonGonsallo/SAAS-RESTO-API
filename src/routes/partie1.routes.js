@@ -87,6 +87,7 @@ router.post('/ajouter_utilisateur', async (req, res,next) => {
     });
 
   } catch (error) {
+    console.log('error',error)
     return res.status(500).json({
       success: false,
       message: error.message

@@ -36,6 +36,7 @@ db.Livraison = require('./Livraison.model')(sequelize, Sequelize.DataTypes);
 db.Commande = require('./Commande.model')(sequelize, Sequelize.DataTypes);
 db.Panier = require('./Panier.model')(sequelize, Sequelize.DataTypes);
 db.Avis = require('./Avis.model')(sequelize, Sequelize.DataTypes);
+db.Mail = require('./Mail.model')(sequelize, Sequelize.DataTypes);
 
 
 // 🔗 Associations

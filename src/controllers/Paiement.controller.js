@@ -291,12 +291,23 @@ exports.createStripePaymentForReservation = async (req, res) => {
 
   const t = await db.sequelize.transaction();
 
+  text_lien = `
+  Voici le lien de paiement de votre <a href="/reservations/modifier-reservation/${final_reservation.id}" target="_blank">réservation ${final_reservation.id}</a> <br>
+  - Client : ${final_reservation.client.nom} ${final_reservation.client.prenom}<br>
+  - Statut :  ${final_reservation.statut}<br>
+  - Date de retrait :  ${final_reservation.date_reservation}<br>
+  - Montant :  ${montant} €<br>
+
+
+  <br> ${session.url}
+  `
+
   let notificationUser = await Notification.create({
       titre:`Lien de paiement pour votre réservation ${final_reservation.id}`,
       date_rappel:new Date(Date.now() + 60 * 60 * 1000),
       type:'rappel',
       canal:'site',
-      texte:`Voici le lien de paiment de votre réservation ${final_reservation.id} : ${session.url}`,
+      texte:text_lien,
       statut_lecture:'non lue',
       societe_id:final_reservation.societe_id,
       restaurant_id:final_reservation.restaurant_id,
@@ -384,12 +395,23 @@ exports.createStripePaymentForCommande = async (req, res) => {
 
   const t = await db.sequelize.transaction();
 
+  text_lien = `
+  Voici le lien de paiement de votre <a href="/commandes/modifier-commande/${final_commande.id}" target="_blank">commande ${final_commande.id}</a> <br>
+  - Client : ${final_commande.client.nom} ${final_commande.client.prenom}<br>
+  - Statut :  ${final_commande.statut}<br>
+  - Date de retrait :  ${final_commande.date_retrait}<br>
+  - Montant :  ${final_commande.totalPrice} €<br>
+
+
+  <br> ${session.url}
+  `
+
   let notificationUser = await Notification.create({
       titre:`Lien de paiement pour votre commande ${final_commande.id}`,
       date_rappel:new Date(Date.now() + 60 * 60 * 1000),
       type:'rappel',
       canal:'site',
-      texte:`Voici le lien de paiment de votre commande ${final_commande.id} : ${session.url}`,
+      texte:text_lien,
       statut_lecture:'non lue',
       societe_id:final_commande.societe_id,
       restaurant_id:final_commande.restaurant_id,

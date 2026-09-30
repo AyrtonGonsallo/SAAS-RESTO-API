@@ -44,5 +44,15 @@ module.exports = (sequelize, DataTypes) => {
     updatedAt: 'updated_at'
   });
 
+
+
+  Abonnement.associate = (models) => {
+    Abonnement.belongsTo(models.Societe, {
+      foreignKey: 'societe_id'
+    });
+
+
+  };
+
   return Abonnement;
 };

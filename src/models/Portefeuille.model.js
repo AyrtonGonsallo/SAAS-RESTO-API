@@ -36,5 +36,14 @@ module.exports = (sequelize, DataTypes) => {
     updatedAt: 'updated_at'
   });
 
+
+  Portefeuille.associate = (models) => {
+    Portefeuille.belongsTo(models.Societe, {
+      foreignKey: 'societe_id'
+    });
+
+
+  };
+
   return Portefeuille;
 };

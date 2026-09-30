@@ -250,20 +250,7 @@ exports.createReservation = async (req, res) => {
       timeZone: 'UTC',
     });
 
-    await notificationService.createNotification({
-        objet:reservation,
-        titre: `Nouvelle reservation`,
-        type:'info',
-        texte: `Vous avez une nouvelle réservation ${reservation.id} : Client "${prenom} ${nom}" pour le "${dateReservation}" dans le restaurant ${restaurant_id}`,
-    });
-
-    await notificationService.createNotification({
-         objet:reservation,
-        titre: `Nouvelle reservation`,
-        type:'rappel',
-        texte: `N'oubliez pas votre réservation ${reservation.id} pour ${dateReservation}`,
-        utilisateur_id: reservation.client_id
-    });
+    
 
   
     
@@ -288,68 +275,6 @@ exports.createReservation = async (req, res) => {
     });
 
 
-      // chercher le paramètre d'envoi mail
-    const params = await Parametre.findOne({
-      where: {
-        restaurant_id: restaurant_id,
-        type: 'envoi_de_mail_recap_reservation',
-        est_actif: true
-      }
-    });
-    
-    console.log("EMAIL PARAM CHECK =", params);
-
-    // si activation email OK
-    if (params) {
-      try {
-        const restaurant = await Restaurant.findByPk(restaurant_id);
-
-        const nom_restaurant = restaurant?.nom || '';
-        const telephone_restaurant = restaurant?.telephone || '';
-
-        const titre = 'Récapitulatif de votre réservation';
-
-        const dateReservation = new Date(reservation.date_reservation).toLocaleString('fr-FR', {
-          weekday: 'long',
-          day: 'numeric',
-          month: 'long',
-          year: 'numeric',
-          hour: '2-digit',
-          minute: '2-digit'
-        });
-
-        const dateCreation = new Date(reservation.created_at).toLocaleString('fr-FR', {
-        weekday: 'long',
-        day: 'numeric',
-        month: 'long',
-        year: 'numeric',
-      });
-
-    await emailService.sendMail({
-      to: email,
-      subject: titre,
-      template: 'recap-reservation.ejs',
-      context: {
-        titre,
-        nom,
-        prenom,
-        email,
-        nom_restaurant,
-        nb_tables:reservationObjet.tables.length,
-        telephone_restaurant,
-        date_reservation: dateReservation,
-        date_creation: dateCreation,
-        nombre_personnes: reservation.nombre_de_personnes,
-        nombre_couverts: reservation.nb_couverts,
-        demandes_speciales: reservationObjet.tags ?.map(tag => tag.titre).join(', ') || '',
-        commentaire: reservation.notes
-      }
-    });
-
-  } catch (err) {
-    console.error("Erreur email (non bloquante):", err);
-  }
-}
 
    
     res.json(reservationObjet);
@@ -360,6 +285,8 @@ exports.createReservation = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
+
 
 exports.getReservations = async (req, res) => {
   try {
@@ -862,5 +789,61 @@ exports.getReservationDatasBySocieteID = async (req, res) => {
   } catch (error) {
     console.log("err",error.message)
     res.status(500).json({ message: error.message });
+  }
+};
+
+
+
+exports.checktablesDispos = async (req, res) => {
+  try {
+    const {
+      date_reservation,
+      heure_reservation,
+      duree_reservation,
+      tables
+    } = req.body;
+
+     const dateObj = new Date(Date.UTC(
+      date_reservation.year,
+      date_reservation.month - 1,
+      date_reservation.day,
+      0,
+      0,
+      0
+    ));
+
+    const dateOnly = `${date_reservation.year}-${String(date_reservation.month).padStart(2,'0')}-${String(date_reservation.day).padStart(2,'0')}`;
+
+  
+
+    const tableIds = tables.map(table => table.id);
+    console.log('dateOnly',dateOnly)
+    console.log('tableIds',tableIds)
+    console.log('plage',`${heure_reservation} - ${duree_reservation}`)
+
+    const tablesOccupees = await ReservationsTablesParCreneauJour.findAll({
+      where: {
+        date: dateOnly,
+        table_id: tableIds,
+        plage_horaire: `${heure_reservation} - ${duree_reservation}`
+      },
+      attributes: ['table_id'],
+      raw: true
+    });
+
+    const idsOccupees = tablesOccupees.map(row => row.table_id);
+
+    const idsDisponibles = tableIds.filter(
+      id => !idsOccupees.includes(id)
+    );
+
+    return res.json(idsDisponibles);
+
+  } catch (error) {
+    console.log('err', error.message);
+
+    return res.status(500).json({
+      message: error.message
+    });
   }
 };

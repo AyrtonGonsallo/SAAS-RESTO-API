@@ -3,6 +3,7 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../models');
+const {  Societe } = db;
 const {
   createCreneau,
   getCreneaux, 
@@ -33,8 +34,25 @@ const {
   getReservationById,
   updateReservation,
   deleteReservation,
-  getReservationDatasBySocieteID
+  getReservationDatasBySocieteID,
+  checktablesDispos
 } = require('../controllers/Reservation.controller');
+
+
+const {
+  sendMailReservation,
+  sendMailCommande, 
+} = require('../controllers/Mails.controller');
+
+
+const {
+  createMail,
+  getMails, 
+  getMailById,
+  updateMail,
+  getMailByRestoSectionAndType,
+  deleteMail
+} = require('../controllers/Mail.controller');
 
 const {
   createCommande,
@@ -75,6 +93,47 @@ router.get('/get_portefeuille_by_id/:id', async (req, res, next) => {
     }
 
     return res.status(200).json(portefeuille);
+
+  } catch (error) {
+    next(error);
+  }
+});
+
+
+router.get('/get_all_portefeuilles', async (req, res, next) => {
+  try {
+        let societeFilter = {};
+    
+        let ishigh = req.role_priorite<4
+    
+        if (!ishigh) {
+           
+            societeFilter = {
+                societe_id: req.societe_id
+            };
+            
+        }else{
+          
+            societeFilter = {}
+           
+        }
+        const where = {};
+    
+    
+        const portefeuilles = await Portefeuille.findAll({
+             where:societeFilter,
+              include: [
+                {
+                    model: Societe,
+                    attributes: ['id', 'titre', ],
+                    required: false,
+                },
+            ],
+    
+        }
+    );
+    
+    res.json(portefeuilles);
 
   } catch (error) {
     next(error);
@@ -249,9 +308,15 @@ router.put('/update_tag/:id', updateTag);
 // DELETE
 router.delete('/delete_tag/:id', deleteTag);
 
-
 // CREATE
 router.post('/ajouter_reservation', createReservation);
+
+
+// Verifier tables
+router.post('/check_tables_dispos', checktablesDispos);
+
+//envoyerMail
+router.post('/send_mail_reservation/:id', sendMailReservation);
 
 // READ ALL
 router.get('/get_all_reservations', getReservations);
@@ -296,6 +361,9 @@ router.delete('/delete_paiement/:id', deletePaiement);
 // CREATE
 router.post('/ajouter_commande', createCommande);
 
+// Envoyer mail
+router.post('/send_mail_commande/:id', sendMailCommande);
+
 // READ ALL
 router.get('/get_all_commandes', getCommandes);
 
@@ -320,6 +388,25 @@ router.get('/get_commande_datas_by_societeID/:societeID', getCommandesDatasBySoc
 
 router.post('/get_stripe_payment_link_for_commande/:restaurantId', createStripePaymentForCommande);
 
+// CREATE
+router.post('/ajouter_mail', createMail);
 
+// READ ALL
+router.get('/get_all_mails', getMails);
+
+// READ BY ID
+router.get('/get_mail_by_id/:id', getMailById);
+
+// READ BY RESTo, section AND Type
+router.get(
+  '/get_mail_by_resto_section_and_type/:restaurant_id/:type/:section',
+  getMailByRestoSectionAndType
+);
+
+// UPDATE
+router.put('/update_mail/:id', updateMail);
+
+// DELETE
+router.delete('/delete_mail/:id', deleteMail);
 
 module.exports = router;

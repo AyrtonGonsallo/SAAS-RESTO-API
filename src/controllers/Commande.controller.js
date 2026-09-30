@@ -367,20 +367,7 @@ exports.createCommande = async (req, res) => {
       timeZone: 'UTC',
     });
 
-    await notificationService.createNotification({
-         objet:commande,
-        titre: `Nouvelle commande`,
-        type:'info',
-        texte: `Vous avez une nouvelle commande ${commande.id} : Client "${prenom} ${nom}" pour le "${dateRetrait}" dans le restaurant ${restaurant_id}`,
-    });
-
-    await notificationService.createNotification({
-         objet:commande,
-        titre: `Nouvelle commande`,
-        type:'rappel',
-        texte: `N'oubliez pas votre commande ${commande.id} pour ${dateRetrait}`,
-        utilisateur_id: commande.client_id
-    });
+    
 
     
     await t.commit();
@@ -398,91 +385,6 @@ exports.createCommande = async (req, res) => {
       commandeObjet.items = JSON.parse(commandeObjet.items);
     }
 
-  const params = await Parametre.findOne({
-  where: {
-    restaurant_id,
-    type: 'envoi_de_mail_recap_click_and_collect',
-    est_actif: true
-  }
-});
-
-if (params) {
-  try {
-
-    const restaurant = await Restaurant.findByPk(restaurant_id);
-    const client = commandeObjet?.client;
-
-    const titre = 'Récapitulatif de votre commande';
-
-    const dateCommande = new Date(commande.date_retrait).toLocaleString('fr-FR', {
-      weekday: 'long',
-      day: 'numeric',
-      month: 'long',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-
-    const dateCreation = new Date(commande.created_at).toLocaleString('fr-FR', {
-      weekday: 'long',
-      day: 'numeric',
-      month: 'long',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-
-    const items = typeof commande.items === 'string'
-      ? JSON.parse(commande.items)
-      : commande.items || [];
-
-    const produits = items.map(item => ({
-      titre: item.titre,
-      quantite: item.quantite,
-      prix_ht:
-        Number(item.prix_ht) +
-        (item.variations?.reduce(
-          (sum, v) =>
-            sum + Number(v.prix_supplement || 0),
-          0
-        ) || 0),
-      prix_ttc:
-        Number(item.prix_ht) +
-        (item.variations?.reduce(
-          (sum, v) =>
-            sum + Number(v.prix_supplement || 0),
-          0
-        ) || 0),
-      variations: item.variations?.length
-        ? item.variations.map((v) => v.titre).join(', ')
-        : 'Aucune'
-    }));
-
-    await emailService.sendMail({
-      to: client?.email,
-      subject: titre,
-      template: 'recap-commande.ejs',
-      context: {
-        titre,
-        nom: client?.nom,
-        prenom: client?.prenom,
-        email: client?.email,
-        nom_restaurant: restaurant?.nom,
-        telephone_restaurant: restaurant?.telephone,
-        date_commande: dateCommande,
-        date_creation: dateCreation,
-        tvaRate:tvaRate,
-        total_tva:total_tva,
-        total_coef_ht:total_coef_ht,
-        prix_total: commande.totalPrice,
-        produits
-      }
-    });
-
-  } catch (err) {
-    console.error("Erreur email commande (non bloquante):", err);
-  }
-}
 
     res.json(commandeObjet);
 
